@@ -1,0 +1,27 @@
+		#footer{
+	position: fixed;
+	left: 0;
+	bottom: 0;
+	height: 100px;
+	width: 100%;
+	color: #fff;
+	background-color: #009688;
+	padding: 0.01em 16px;
+	font-family: Verdana,sans-serif;
+	font-size: 15px;
+	line-height: 1.5;
+}
+
+/*
+  Below is the syntax for adding values to the box shadow property 
+  box-shadow: none|h-shadow v-shadow blur spread color |inset|initial|inherit;
+*/
+.boxShadow {
+	box-shadow: 6px 6px 14px 6px darkcyan;
+	width: 15%;
+	background-color: #4FB8BC;
+}
+
+body {
+  background-color: lightblue;
+}
