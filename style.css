@@ -60,11 +60,11 @@
   
   .desktop .navbar {
 	display: flex;
-	width: 605px;
+	width: 420px;
 	height: 46px;
 	align-items: flex-start;
-	gap: 36px;
-	position: absolute;
+	gap: 25%;
+	position: relative;
 	top: 49px;
 	left: 1100px;
   }
