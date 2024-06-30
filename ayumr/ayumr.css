@@ -6,7 +6,7 @@ body {
 }
 
 header {
-    background-color: #7289da;
+    background-color: #5865F2;
     padding: 20px 0;
     position: fixed;
     width: 100%;
@@ -66,16 +66,20 @@ nav ul li a:hover {
     justify-content: center;
     align-items: center;
     text-align: center;
-    background: url('hero-bg.jpg') no-repeat center center/cover;
+    background: 
+        linear-gradient(to bottom, rgba(54, 57, 63, 0) 65%, rgba(54, 57, 63, 1) 90%),
+        url('ayumr.png') no-repeat 00% center/cover;
 }
+
 
 .hero h1 {
     font-size: 3em;
     margin: 0;
+    text-shadow: #2c2f33 0px 0px 3px;
 }
 
 .hero h1 .highlight {
-    color: #ff71e0; /* Change this to the color you prefer */
+    color: #aa00c1; /* Change this to the color you prefer */
 }
 
 .hero p {
@@ -87,14 +91,14 @@ nav ul li a:hover {
     padding: 10px 20px;
     font-size: 1em;
     color: #fff;
-    background-color: #7289da;
+    background-color: #5865F2;
     border: none;
     border-radius: 5px;
     cursor: pointer;
 }
 
 .hero button:hover {
-    background-color: #5a6fa3;
+    background-color: #4c56ca;
 }
 
 section {
