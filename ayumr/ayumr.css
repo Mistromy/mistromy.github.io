@@ -36,8 +36,27 @@ nav ul {
 
 nav ul li a {
     text-decoration: none;
-    color: #ffffff;
-    font-size: 1.1em;
+    color: inherit; /* Use inherited color for nav links */
+    background:
+        linear-gradient(
+            to right,
+            rgba(100, 200, 200, 1),
+            rgba(100, 200, 200, 1)
+        ),
+        linear-gradient(
+            to right,
+            rgba(255, 0, 0, 1),
+            rgba(255, 0, 180, 1),
+            rgba(0, 100, 200, 1)
+        );
+    background-size: 100% 3px, 0 3px;
+    background-position: 100% 100%, 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 400ms;
+}
+
+nav ul li a:hover {
+    background-size: 0 3px, 100% 3px;
 }
 
 .hero {
@@ -56,7 +75,7 @@ nav ul li a {
 }
 
 .hero h1 .highlight {
-    color: #f33195; /* Change this to the color you prefer */
+    color: #ff71e0; /* Change this to the color you prefer */
 }
 
 .hero p {
@@ -110,6 +129,38 @@ section h2 {
 .feature-item img, .command-item img {
     max-width: 100%;
     border-radius: 5px;
+}
+
+.contact-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+a {
+    color: inherit; /* Use inherited color for all links */
+    text-decoration: none;
+    background:
+        linear-gradient(
+            to right,
+            rgb(236, 248, 248),
+            rgb(255, 255, 255)
+        ),
+        linear-gradient(
+            to right,
+            rgba(255, 0, 0, 1),
+            rgba(255, 0, 180, 1),
+            rgba(0, 100, 200, 1)
+        );
+    background-size: 100% 3px, 0 3px;
+    background-position: 100% 100%, 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 400ms;
+}
+
+a:hover {
+    background-size: 0 3px, 100% 3px;
 }
 
 footer {
