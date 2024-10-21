@@ -1,207 +1,73 @@
-.desktop {
-	background-color: #404040;
+body {
+	background-color: #304050;
+	color: #ffffff;
+	font-family: Helvetica;
+	padding-left: 2.5cm;
+	padding-top: 1cm;
+}
+
+h1{
+	font-size: 2cm;
+}
+
+.card1 {
+	width: 300px;
+	height: 254px;
+	margin-left: 250px ;
+	margin-top: 50px;
+	background-color: #F8FBFE;
+	border-radius: 8px;
+	z-index: 1;
+   }
+   
+   .card2 {
+	width: 300px;
+	height: 254px;
+	margin-left: 380px ;
+	margin-top: -30px;
+	background-color: #F8FBFE;
+	border-radius: 8px;
+	z-index: 1;
+	box-shadow: 0px 0px 5px #202020;
+   }
+
+.tools {
 	display: flex;
-	flex-direction: row;
-	justify-content: center;
-	width: 100%;
-  }
-  
-  .desktop .div {
-	background-color: var(--bg);
-	overflow: hidden;
-	width: 1920px;
-	height: 1747px;
-	position: relative;
-  }
-  
-  .desktop .overlap-group {
-	position: absolute;
-	width: 1920px;
-	height: 593px;
-	top: 0;
-	left: 0;
-	background-image: url(https://c.animaapp.com/yzGH6tgq/img/rectangle-1.png);
-	background-size: 100% 100%;
-  }
-  
-  .desktop .HI-i-m-STROMY {
-	position: absolute;
-	width: 734px;
-	top: 111px;
-	left: 213px;
-	font-family: var(--heading-1-font-family);
-	font-weight: var(--heading-1-font-weight);
-	color: transparent;
-	font-size: var(--heading-1-font-size);
-	letter-spacing: var(--heading-1-letter-spacing);
-	line-height: var(--heading-1-line-height);
-	font-style: var(--heading-1-font-style);
-  }
-  
-  .desktop .text-wrapper {
-	color: #ffffff;
-	font-family: var(--heading-1-font-family);
-	font-style: var(--heading-1-font-style);
-	font-weight: var(--heading-1-font-weight);
-	letter-spacing: var(--heading-1-letter-spacing);
-	line-height: var(--heading-1-line-height);
-	font-size: var(--heading-1-font-size);
-  }
-  
-  .desktop .span {
-	color: #c30000;
-	font-family: var(--heading-1-font-family);
-	font-style: var(--heading-1-font-style);
-	font-weight: var(--heading-1-font-weight);
-	letter-spacing: var(--heading-1-letter-spacing);
-	line-height: var(--heading-1-line-height);
-	font-size: var(--heading-1-font-size);
-  }
-  
-  .desktop .navbar {
-	display: flex;
-	width: 420px;
-	height: 46px;
-	align-items: flex-start;
-	gap: 25%;
-	position: relative;
-	top: 49px;
-	left: 1100px;
-  }
-  
-  .desktop .text-wrapper-2 {
-	width: 69px;
-	position: relative;
-	height: 34px;
-	margin-top: -1px;
-	font-family: var(--menu-font-family);
-	font-weight: var(--menu-font-weight);
-	color: #ffffff;
-	font-size: var(--menu-font-size);
-	letter-spacing: var(--menu-letter-spacing);
-	line-height: var(--menu-line-height);
-	white-space: nowrap;
-	font-style: var(--menu-font-style);
-  }
-  
-  .desktop .text-wrapper-3 {
-	width: 77px;
-	position: relative;
-	height: 34px;
-	margin-top: -1px;
-	font-family: var(--menu-font-family);
-	font-weight: var(--menu-font-weight);
-	color: #ffffff;
-	font-size: var(--menu-font-size);
-	letter-spacing: var(--menu-letter-spacing);
-	line-height: var(--menu-line-height);
-	white-space: nowrap;
-	font-style: var(--menu-font-style);
-  }
-  
-  .desktop .text-wrapper-4 {
-	width: 104px;
-	position: relative;
-	height: 34px;
-	margin-top: -1px;
-	font-family: var(--menu-font-family);
-	font-weight: var(--menu-font-weight);
-	color: #ffffff;
-	font-size: var(--menu-font-size);
-	letter-spacing: var(--menu-letter-spacing);
-	line-height: var(--menu-line-height);
-	white-space: nowrap;
-	font-style: var(--menu-font-style);
-  }
-  
-  .desktop .text-wrapper-5 {
-	position: relative;
-	width: 123px;
-	height: 34px;
-	margin-top: -1px;
-	font-family: var(--menu-font-family);
-	font-weight: var(--menu-font-weight);
-	color: #ffffff;
-	font-size: var(--menu-font-size);
-	letter-spacing: var(--menu-letter-spacing);
-	line-height: var(--menu-line-height);
-	white-space: nowrap;
-	font-style: var(--menu-font-style);
-  }
-  
-  .desktop .overlap {
-	position: absolute;
-	width: 1945px;
-	height: 186px;
-	top: 1561px;
-	left: -13px;
-	background-color: var(--black);
-  }
-  
-  .desktop .frame {
-	position: absolute;
-	width: 256px;
-	height: 40px;
-	top: 78px;
-	left: 1530px;
-  }
-  
-  .desktop .MY-socials {
-	position: absolute;
-	width: 601px;
-	top: 55px;
-	left: 232px;
-	font-family: var(--heading-2-font-family);
-	font-weight: var(--heading-2-font-weight);
-	color: #ffffff;
-	font-size: var(--heading-2-font-size);
-	letter-spacing: var(--heading-2-letter-spacing);
-	line-height: var(--heading-2-line-height);
-	font-style: var(--heading-2-font-style);
-  }
-  
-  .desktop .rectangle {
-	position: absolute;
-	width: 682px;
-	height: 498px;
-	top: 775px;
-	left: 213px;
-  }
-  
-  .desktop .hi-i-m-stromy {
-	position: absolute;
-	width: 601px;
-	top: 774px;
-	left: 1100px;
-	font-family: var(--heading-2-font-family);
-	font-weight: var(--heading-2-font-weight);
-	color: #ffffff;
-	font-size: var(--heading-2-font-size);
-	letter-spacing: var(--heading-2-letter-spacing);
-	line-height: var(--heading-2-line-height);
-	font-style: var(--heading-2-font-style);
-  }
-  
-  .desktop .i-m-a-programmer-and {
-	position: absolute;
-	width: 607px;
-	top: 871px;
-	left: 1121px;
-	font-family: var(--body-font-family);
-	font-weight: var(--body-font-weight);
-	color: #ffffff;
-	font-size: var(--body-font-size);
-	letter-spacing: var(--body-letter-spacing);
-	line-height: var(--body-line-height);
-	font-style: var(--body-font-style);
-  }
-  
-  .desktop .rectangle-2 {
-	position: absolute;
-	width: 3px;
-	height: 323px;
-	top: 872px;
-	left: 1100px;
-	background-color: var(--variable-collection-redtext);
-  }
-  
+	align-items: center;
+	padding: 9px;
+}
+
+.circle {
+	padding: 0 4px;
+}
+
+.box {
+	display: inline-block;
+	align-items: center;
+	width: 10px;
+	height: 10px;
+	padding: 1px;
+	border-radius: 50%;
+}
+
+.red {
+	background-color: #ff605c;
+}
+
+.yellow {
+	background-color: #ffbd44;
+}
+   
+.green {
+	background-color: #00ca4e;
+}
+
+.card__content{
+	padding-left: 0.5cm;
+	color: black;
+	font-family: consolas;
+}
+
+.card__one{
+	padding-left: 10cm;
+}
