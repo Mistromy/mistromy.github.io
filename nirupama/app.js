@@ -1,302 +1,549 @@
-// DOM Content Loaded
+// Boot sequence messages from the application data
+const bootMessages = [
+    "Booting Nirupama Discord Bot v2.0...",
+    "Loading personality modules...",
+    "Initializing ship compatibility engine...",
+    "Connecting to magic 8ball oracle...",
+    "Starting AI chat services...",
+    "All systems operational.",
+    "Ready to serve your Discord server!"
+];
+
+// DOM Elements
+let bootScreen;
+let mainTerminal;
+let bootMessagesContainer;
+let bootComplete;
+
+// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all functionality
-    initAnimatedCounters();
-    initSmoothScrolling();
-    initScrollAnimations();
-    initMobileMenu();
-    initParallaxEffect();
+    initializeTerminal();
+    startBootSequence();
+    initInviteLinks();
 });
 
-// Animated Counters for Stats
-function initAnimatedCounters() {
-    const counters = document.querySelectorAll('.stat-number');
+function initializeTerminal() {
+    bootScreen = document.getElementById('boot-screen');
+    mainTerminal = document.getElementById('main-terminal');
+    bootMessagesContainer = document.getElementById('boot-messages');
+    bootComplete = document.getElementById('boot-complete');
     
-    const animateCounter = (counter) => {
-        const target = parseInt(counter.getAttribute('data-target'));
-        const increment = target / 200;
-        let current = 0;
-        
-        const updateCounter = () => {
-            if (current < target) {
-                current += increment;
-                if (target >= 1000) {
-                    counter.textContent = Math.ceil(current).toLocaleString() + '+';
-                } else {
-                    counter.textContent = Math.ceil(current) + '+';
-                }
-                requestAnimationFrame(updateCounter);
-            } else {
-                if (target >= 1000) {
-                    counter.textContent = target.toLocaleString() + '+';
-                } else {
-                    counter.textContent = target + '+';
-                }
-            }
-        };
-        
-        updateCounter();
-    };
+    // Initialize navigation
+    initSmoothScrolling();
+    
+    // Add click listener to boot screen
+    bootScreen.addEventListener('click', enterMainTerminal);
+}
 
-    // Intersection Observer for counters
-    const counterObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const counter = entry.target;
-                if (!counter.classList.contains('animated')) {
-                    counter.classList.add('animated');
-                    animateCounter(counter);
-                }
+function initInviteLinks() {
+    // Ensure all invite links work properly
+    const inviteLinks = document.querySelectorAll('.invite-link, .btn-invite');
+    inviteLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            // Ensure the link opens in a new tab
+            const url = this.getAttribute('href');
+            if (url && url.includes('discord.com')) {
+                console.log('Opening Discord invite:', url);
+                showTerminalMessage("Opening Discord invite in new tab...");
+                // The target="_blank" and rel="noopener noreferrer" should handle this
+                return true; // Allow default behavior
             }
         });
-    }, { threshold: 0.5 });
-
-    counters.forEach(counter => {
-        counterObserver.observe(counter);
+    });
+    
+    // Add visual feedback when hovering over invite links
+    inviteLinks.forEach(link => {
+        link.addEventListener('mouseenter', function() {
+            showTerminalMessage("Ready to invite Nirupama to your server!");
+        });
     });
 }
 
-// Smooth Scrolling for Navigation Links - Fixed to handle external links properly
-function initSmoothScrolling() {
-    const navLinks = document.querySelectorAll('a[href^="#"]');
+function startBootSequence() {
+    let messageIndex = 0;
     
+    function displayNextMessage() {
+        if (messageIndex < bootMessages.length) {
+            const messageElement = document.createElement('p');
+            messageElement.textContent = `[${getCurrentTime()}] ${bootMessages[messageIndex]}`;
+            messageElement.className = 'boot-message';
+            bootMessagesContainer.appendChild(messageElement);
+            
+            // Scroll to bottom
+            bootMessagesContainer.scrollTop = bootMessagesContainer.scrollHeight;
+            
+            messageIndex++;
+            
+            // Random delay between 300-800ms for realistic boot feeling
+            const delay = Math.random() * 500 + 300;
+            setTimeout(displayNextMessage, delay);
+        } else {
+            // Show boot complete message
+            setTimeout(() => {
+                bootComplete.classList.remove('hidden');
+                // Auto-enter terminal after 3 seconds if no click
+                setTimeout(enterMainTerminal, 3000);
+            }, 1000);
+        }
+    }
+    
+    // Start the sequence after a brief delay
+    setTimeout(displayNextMessage, 500);
+}
+
+function getCurrentTime() {
+    const now = new Date();
+    return now.toTimeString().split(' ')[0];
+}
+
+function enterMainTerminal() {
+    bootScreen.classList.add('fade-out');
+    
+    setTimeout(() => {
+        bootScreen.classList.add('hidden');
+        mainTerminal.classList.remove('hidden');
+        mainTerminal.classList.add('fade-in');
+        
+        // Start typewriter effect for welcome message
+        startTypewriterEffect();
+        
+        // Initialize terminal features
+        initTerminalFeatures();
+    }, 1000);
+}
+
+function startTypewriterEffect() {
+    const elements = document.querySelectorAll('.section-content p');
+    elements.forEach((element, index) => {
+        setTimeout(() => {
+            element.style.animation = 'typing 2s steps(40, end)';
+        }, index * 200);
+    });
+}
+
+function initTerminalFeatures() {
+    // Add terminal prompt animation
+    addTerminalPrompts();
+    
+    // Initialize stats counter
+    initStatsAnimation();
+    
+    // Add keyboard navigation
+    initKeyboardNavigation();
+    
+    // Add easter eggs
+    initEasterEggs();
+    
+    // Initialize invite button interactions
+    initInviteButtonInteractions();
+}
+
+function initInviteButtonInteractions() {
+    const quickInviteBtn = document.querySelector('.btn-invite');
+    if (quickInviteBtn) {
+        quickInviteBtn.addEventListener('click', function(e) {
+            // Add click feedback animation
+            this.style.transform = 'translateY(1px)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+            
+            showTerminalMessage("Launching Discord authorization...");
+        });
+    }
+    
+    // Add deploy script simulation
+    const inviteSection = document.getElementById('invite');
+    if (inviteSection) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    simulateDeployScript();
+                    observer.unobserve(entry.target);
+                }
+            });
+        });
+        observer.observe(inviteSection);
+    }
+}
+
+function simulateDeployScript() {
+    setTimeout(() => {
+        const deployBox = document.querySelector('.deploy-box');
+        if (deployBox) {
+            deployBox.style.animation = 'pulse 1s ease-in-out';
+        }
+    }, 1000);
+}
+
+function addTerminalPrompts() {
+    // Add blinking cursor to command prompts
+    const prompts = document.querySelectorAll('.prompt');
+    prompts.forEach(prompt => {
+        const cursor = document.createElement('span');
+        cursor.className = 'blinking-cursor';
+        cursor.textContent = '█';
+        cursor.style.marginLeft = '5px';
+        prompt.appendChild(cursor);
+    });
+}
+
+function initStatsAnimation() {
+    // Animate stats when they come into view
+    const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateStats();
+                statsObserver.unobserve(entry.target);
+            }
+        });
+    });
+    
+    const statsSection = document.getElementById('stats');
+    if (statsSection) {
+        statsObserver.observe(statsSection);
+    }
+}
+
+function animateStats() {
+    // Simulate loading stats
+    const statsOutput = document.querySelector('.stats-output');
+    const originalContent = statsOutput.innerHTML;
+    
+    statsOutput.innerHTML = '<p>Scanning system resources...<span class="blinking-cursor">█</span></p>';
+    
+    setTimeout(() => {
+        statsOutput.innerHTML = originalContent;
+        
+        // Add some random blinking to the online status
+        const onlineStatus = document.querySelector('.status-online');
+        if (onlineStatus) {
+            setInterval(() => {
+                onlineStatus.style.opacity = onlineStatus.style.opacity === '0.5' ? '1' : '0.5';
+            }, 1500);
+        }
+    }, 2000);
+}
+
+function initSmoothScrolling() {
+    // Handle navigation clicks
+    const navLinks = document.querySelectorAll('.cmd-link');
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
-            // Only prevent default for internal links (starting with #)
-            const href = this.getAttribute('href');
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetSection = document.querySelector(targetId);
             
-            if (href.startsWith('#')) {
-                e.preventDefault();
+            if (targetSection) {
+                // Add terminal-style navigation feedback
+                showTerminalFeedback(`Navigating to ${targetId.substring(1)}...`);
                 
-                const targetId = href;
-                const targetSection = document.querySelector(targetId);
-                
-                if (targetSection) {
-                    const headerHeight = document.querySelector('.header').offsetHeight;
-                    const targetPosition = targetSection.offsetTop - headerHeight - 20;
-                    
-                    window.scrollTo({
-                        top: targetPosition,
-                        behavior: 'smooth'
+                setTimeout(() => {
+                    targetSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
                     });
-                }
-            }
-            // External links (like Discord invite) will work normally without preventDefault
-        });
-    });
-
-    // Also handle smooth scrolling for buttons with # hrefs
-    const internalButtons = document.querySelectorAll('button[data-target], a.btn[href^="#"]');
-    internalButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            const target = this.getAttribute('href') || this.getAttribute('data-target');
-            if (target && target.startsWith('#')) {
-                e.preventDefault();
-                const targetSection = document.querySelector(target);
-                if (targetSection) {
-                    const headerHeight = document.querySelector('.header').offsetHeight;
-                    const targetPosition = targetSection.offsetTop - headerHeight - 20;
                     
-                    window.scrollTo({
-                        top: targetPosition,
-                        behavior: 'smooth'
-                    });
-                }
+                    // Highlight the target section briefly
+                    highlightSection(targetSection);
+                }, 300);
             }
         });
     });
 }
 
-// Scroll Animations
-function initScrollAnimations() {
-    const animateOnScroll = (entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
-        });
-    };
-
-    const scrollObserver = new IntersectionObserver(animateOnScroll, {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    });
-
-    // Elements to animate on scroll
-    const elementsToAnimate = document.querySelectorAll(
-        '.feature-card, .stat-card, .section-header, .discord-widget-container, .kofi-widget-container'
-    );
-
-    elementsToAnimate.forEach(element => {
-        element.style.opacity = '0';
-        element.style.transform = 'translateY(30px)';
-        element.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        scrollObserver.observe(element);
-    });
-}
-
-// Mobile Menu Toggle
-function initMobileMenu() {
-    const nav = document.querySelector('.nav');
-    const navMenu = document.querySelector('.nav-menu');
+function showTerminalFeedback(message) {
+    // Create temporary feedback in nav area
+    const navPrompt = document.querySelector('.nav-prompt');
+    const originalText = navPrompt.textContent;
     
-    // Add mobile menu button
-    const mobileMenuBtn = document.createElement('button');
-    mobileMenuBtn.className = 'mobile-menu-btn';
-    mobileMenuBtn.innerHTML = `
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
+    navPrompt.textContent = message;
+    navPrompt.style.color = '#ffff00';
+    
+    setTimeout(() => {
+        navPrompt.textContent = originalText;
+        navPrompt.style.color = '#00ffff';
+    }, 800);
+}
+
+function highlightSection(section) {
+    const originalBorderColor = section.style.borderColor;
+    section.style.borderColor = '#ffff00';
+    section.style.boxShadow = '0 0 10px #ffff00';
+    
+    setTimeout(() => {
+        section.style.borderColor = originalBorderColor || '#00ff00';
+        section.style.boxShadow = 'none';
+    }, 1500);
+}
+
+function initKeyboardNavigation() {
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + key combinations
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key.toLowerCase()) {
+                case '1':
+                    e.preventDefault();
+                    navigateToSection('#about');
+                    break;
+                case '2':
+                    e.preventDefault();
+                    navigateToSection('#features');
+                    break;
+                case '3':
+                    e.preventDefault();
+                    navigateToSection('#stats');
+                    break;
+                case '4':
+                    e.preventDefault();
+                    navigateToSection('#invite');
+                    break;
+                case '5':
+                    e.preventDefault();
+                    navigateToSection('#community');
+                    break;
+                case '6':
+                    e.preventDefault();
+                    navigateToSection('#support');
+                    break;
+                case 'i':
+                    e.preventDefault();
+                    // Quick invite with keyboard shortcut
+                    const inviteUrl = 'https://discord.com/oauth2/authorize?client_id=1209887142839586836&permissions=8&integration_type=0&scope=bot';
+                    window.open(inviteUrl, '_blank', 'noopener,noreferrer');
+                    showTerminalMessage("Discord invite opened in new tab (Ctrl+I)");
+                    break;
+            }
+        }
+        
+        // Easter egg: Konami code
+        handleKonamiCode(e);
+    });
+}
+
+function navigateToSection(sectionId) {
+    const section = document.querySelector(sectionId);
+    if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+        highlightSection(section);
+    }
+}
+
+// Konami code easter egg
+let konamiCode = [];
+const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
+
+function handleKonamiCode(e) {
+    konamiCode.push(e.code);
+    
+    if (konamiCode.length > konamiSequence.length) {
+        konamiCode.shift();
+    }
+    
+    if (konamiCode.length === konamiSequence.length && 
+        konamiCode.every((key, index) => key === konamiSequence[index])) {
+        activateMatrixMode();
+        konamiCode = [];
+    }
+}
+
+function activateMatrixMode() {
+    // Matrix digital rain effect
+    const body = document.body;
+    
+    // Create matrix canvas
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100vw';
+    canvas.style.height = '100vh';
+    canvas.style.zIndex = '10000';
+    canvas.style.pointerEvents = 'none';
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const ctx = canvas.getContext('2d');
+    const characters = '01ニルパマ';
+    const fontSize = 14;
+    const columns = canvas.width / fontSize;
+    const drops = Array(Math.floor(columns)).fill(1);
+    
+    body.appendChild(canvas);
+    
+    function drawMatrix() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = '#00ff00';
+        ctx.font = fontSize + 'px monospace';
+        
+        for (let i = 0; i < drops.length; i++) {
+            const text = characters.charAt(Math.floor(Math.random() * characters.length));
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                drops[i] = 0;
+            }
+            drops[i]++;
+        }
+    }
+    
+    const matrixInterval = setInterval(drawMatrix, 33);
+    
+    // Stop after 5 seconds
+    setTimeout(() => {
+        clearInterval(matrixInterval);
+        body.removeChild(canvas);
+        showTerminalMessage("Matrix mode deactivated. Welcome back to the terminal.");
+    }, 5000);
+    
+    showTerminalMessage("Matrix mode activated! The code is everywhere...");
+}
+
+function initEasterEggs() {
+    // Click counter for robot ASCII
+    let robotClickCount = 0;
+    const robotAscii = document.querySelector('.robot-ascii');
+    
+    if (robotAscii) {
+        robotAscii.addEventListener('click', function() {
+            robotClickCount++;
+            
+            if (robotClickCount === 3) {
+                this.style.color = '#ff0000';
+                showTerminalMessage("Robot is angry! Click 2 more times to calm it down.");
+            } else if (robotClickCount === 5) {
+                this.style.color = '#00ffff';
+                showTerminalMessage("Robot is happy again!");
+                robotClickCount = 0;
+            } else if (robotClickCount === 1) {
+                showTerminalMessage("Robot says: Beep boop!");
+            }
+        });
+    }
+    
+    // Add help command
+    addHelpCommand();
+    
+    // Add secret admin command
+    addAdminCommand();
+}
+
+function addHelpCommand() {
+    // Listen for help command in console
+    let helpTyped = '';
+    document.addEventListener('keypress', function(e) {
+        helpTyped += e.key;
+        if (helpTyped.includes('help')) {
+            showHelpMessage();
+            helpTyped = '';
+        }
+        if (helpTyped.length > 10) {
+            helpTyped = helpTyped.slice(-10);
+        }
+    });
+}
+
+function addAdminCommand() {
+    let adminTyped = '';
+    document.addEventListener('keypress', function(e) {
+        adminTyped += e.key;
+        if (adminTyped.includes('sudo')) {
+            showTerminalMessage("sudo: command not found. Nice try though! 😉");
+            adminTyped = '';
+        }
+        if (adminTyped.length > 10) {
+            adminTyped = adminTyped.slice(-10);
+        }
+    });
+}
+
+function showHelpMessage() {
+    const helpText = `
+    NIRUPAMA TERMINAL - HELP COMMANDS
+    ================================
+    Ctrl+1-6: Quick navigation
+    Ctrl+I: Quick Discord invite
+    Click robot 5 times: Easter egg
+    Konami code: Matrix mode
+    Type 'help': Show this message
+    Type 'sudo': Secret message
+    Click any command link: Navigate
     `;
     
-    // Insert before nav menu
-    nav.insertBefore(mobileMenuBtn, navMenu);
-    
-    // Toggle mobile menu
-    mobileMenuBtn.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
-        mobileMenuBtn.classList.toggle('active');
-    });
-
-    // Close mobile menu when clicking on a link
-    const navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            navMenu.classList.remove('active');
-            mobileMenuBtn.classList.remove('active');
-        });
-    });
+    showTerminalMessage(helpText);
 }
 
-// Parallax Effect for Background Shapes
-function initParallaxEffect() {
-    const shapes = document.querySelectorAll('.floating-shape');
+function showTerminalMessage(message) {
+    // Create a temporary terminal message
+    const messageDiv = document.createElement('div');
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #000;
+        border: 2px solid #00ff00;
+        padding: 15px;
+        color: #00ff00;
+        font-family: 'Courier New', monospace;
+        z-index: 9999;
+        max-width: 300px;
+        animation: slideIn 0.5s ease-out;
+    `;
     
-    window.addEventListener('scroll', () => {
-        const scrolled = window.pageYOffset;
-        const parallax = scrolled * 0.2;
-        
-        shapes.forEach((shape, index) => {
-            const speed = (index + 1) * 0.1;
-            shape.style.transform = `translateY(${parallax * speed}px) rotate(${scrolled * 0.05}deg)`;
-        });
-    });
-}
-
-// Header Background on Scroll
-window.addEventListener('scroll', () => {
-    const header = document.querySelector('.header');
-    const scrolled = window.pageYOffset;
-    
-    if (scrolled > 100) {
-        header.style.background = 'rgba(10, 10, 10, 0.95)';
-        header.style.backdropFilter = 'blur(20px)';
-    } else {
-        header.style.background = 'rgba(10, 10, 10, 0.8)';
-        header.style.backdropFilter = 'blur(20px)';
-    }
-});
-
-// Add loading animation
-window.addEventListener('load', () => {
-    document.body.classList.add('loaded');
-    
-    // Animate hero elements
-    const heroContent = document.querySelector('.hero-content');
-    if (heroContent) {
-        heroContent.style.opacity = '0';
-        heroContent.style.transform = 'translateY(50px)';
-        heroContent.style.transition = 'opacity 1s ease, transform 1s ease';
-        
-        setTimeout(() => {
-            heroContent.style.opacity = '1';
-            heroContent.style.transform = 'translateY(0)';
-        }, 100);
-    }
-});
-
-// Add hover effects for feature cards
-document.addEventListener('DOMContentLoaded', () => {
-    const featureCards = document.querySelectorAll('.feature-card');
-    
-    featureCards.forEach(card => {
-        card.addEventListener('mouseenter', () => {
-            // Add glow effect
-            card.style.boxShadow = '0 20px 40px rgba(139, 92, 246, 0.3)';
-        });
-        
-        card.addEventListener('mouseleave', () => {
-            // Remove glow effect
-            card.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)';
-        });
-    });
-});
-
-// Ensure external links work properly - specifically for Discord invite
-document.addEventListener('DOMContentLoaded', () => {
-    // Force external links to open in new tab and work properly
-    const externalLinks = document.querySelectorAll('a[href^="https://discord.com"], a[href^="http"]');
-    externalLinks.forEach(link => {
-        // Make sure target is set to _blank
-        if (!link.hasAttribute('target')) {
-            link.setAttribute('target', '_blank');
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-        
-        // Add rel for security
-        link.setAttribute('rel', 'noopener noreferrer');
-        
-        // Ensure click works
-        link.addEventListener('click', function(e) {
-            // Don't prevent default for external links
-            console.log('Opening external link:', this.href);
-        });
+    `;
+    document.head.appendChild(style);
+    
+    messageDiv.innerHTML = `<pre>${message}</pre>`;
+    document.body.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        messageDiv.style.animation = 'slideIn 0.5s ease-out reverse';
+        setTimeout(() => {
+            if (document.body.contains(messageDiv)) {
+                document.body.removeChild(messageDiv);
+            }
+            if (document.head.contains(style)) {
+                document.head.removeChild(style);
+            }
+        }, 500);
+    }, 3000);
+}
+
+// Handle window resize for responsive canvas
+window.addEventListener('resize', function() {
+    // Update any canvas elements if needed
+    const canvases = document.querySelectorAll('canvas');
+    canvases.forEach(canvas => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     });
 });
 
-// Typing animation for hero subtitle (optional enhancement)
-function typeWriter(element, text, speed = 50) {
-    let i = 0;
-    element.innerHTML = '';
-    
-    function type() {
-        if (i < text.length) {
-            element.innerHTML += text.charAt(i);
-            i++;
-            setTimeout(type, speed);
-        }
-    }
-    
-    type();
-}
+// Add console welcome message
+console.log(`
+╔══════════════════════════════════════════════════════════════╗
+║                    NIRUPAMA TERMINAL v2.0                   ║
+║                                                              ║
+║  Welcome to the retro terminal interface!                   ║
+║  Created by Stromy (Alt255) with love for the community.    ║
+║                                                              ║
+║  Easter eggs and keyboard shortcuts available!              ║
+║  Type 'help' while focused on page for commands.            ║
+║  Press Ctrl+I for quick Discord invite!                     ║
+╚══════════════════════════════════════════════════════════════╝
+`);
 
-// Add some Easter eggs
-let clickCount = 0;
-document.querySelector('.bot-avatar')?.addEventListener('click', function() {
-    clickCount++;
-    if (clickCount === 5) {
-        this.style.animation = 'spin 2s linear infinite';
-        setTimeout(() => {
-            this.style.animation = 'pulse 2s ease-in-out infinite';
-        }, 4000);
-        clickCount = 0;
-    }
-});
-
-// CSS for spin animation (injected via JS)
-const spinKeyframes = `
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-`;
-
-const styleSheet = document.createElement('style');
-styleSheet.textContent = spinKeyframes;
-document.head.appendChild(styleSheet);
-
-// Performance optimization: Throttle scroll events
-function throttle(func, wait) {
+// Performance optimization
+function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
         const later = () => {
@@ -308,59 +555,104 @@ function throttle(func, wait) {
     };
 }
 
-// Apply throttling to scroll events
-const throttledScrollHandler = throttle(() => {
-    // Any heavy scroll computations can go here
+// Optimized scroll handler
+const optimizedScrollHandler = debounce(() => {
+    // Any scroll-based animations or updates can go here
 }, 16);
 
-window.addEventListener('scroll', throttledScrollHandler);
+window.addEventListener('scroll', optimizedScrollHandler);
 
-// Add console message for developers
-console.log(`
-🤖 Nirupama Discord Bot Website
-Created by Stromy (Alt255)
-Built with modern web technologies
-
-Features:
-- Glassmorphism design
-- Smooth animations
-- Responsive layout
-- Accessible navigation
-
-Want to contribute? Check out the GitHub repo!
-`);
-
-// Error handling for iframe loading
-document.querySelectorAll('iframe').forEach(iframe => {
-    iframe.addEventListener('load', function() {
-        console.log('Iframe loaded successfully:', this.src);
+// Initialize accessibility features
+function initAccessibility() {
+    // Add skip link for keyboard users
+    const skipLink = document.createElement('a');
+    skipLink.href = '#main-terminal';
+    skipLink.textContent = 'Skip to main content';
+    skipLink.style.cssText = `
+        position: fixed;
+        top: -100px;
+        left: 20px;
+        background: #00ff00;
+        color: #000;
+        padding: 8px 16px;
+        text-decoration: none;
+        z-index: 10001;
+        transition: top 0.3s ease;
+        font-family: 'Courier New', monospace;
+    `;
+    
+    skipLink.addEventListener('focus', () => {
+        skipLink.style.top = '20px';
     });
     
-    iframe.addEventListener('error', function() {
-        console.warn('Failed to load iframe:', this.src);
-        const fallback = document.createElement('div');
-        fallback.className = 'iframe-fallback glass';
-        fallback.style.padding = '2rem';
-        fallback.style.textAlign = 'center';
-        fallback.style.borderRadius = '12px';
-        fallback.innerHTML = `
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Content temporarily unavailable</p>
-            <a href="${this.src}" target="_blank" class="btn btn-secondary">
-                Open in new tab
-            </a>
-        `;
-        this.parentNode.replaceChild(fallback, this);
+    skipLink.addEventListener('blur', () => {
+        skipLink.style.top = '-100px';
+    });
+    
+    document.body.insertBefore(skipLink, document.body.firstChild);
+}
+
+// Initialize accessibility features when DOM loads
+document.addEventListener('DOMContentLoaded', initAccessibility);
+
+// Handle iframe loading states
+document.addEventListener('DOMContentLoaded', function() {
+    const iframes = document.querySelectorAll('iframe');
+    
+    iframes.forEach(iframe => {
+        iframe.addEventListener('load', function() {
+            console.log('Iframe loaded successfully:', this.src);
+        });
+        
+        iframe.addEventListener('error', function() {
+            console.warn('Failed to load iframe:', this.src);
+            // Create fallback content
+            const fallback = document.createElement('div');
+            fallback.style.cssText = `
+                padding: 20px;
+                text-align: center;
+                border: 1px dashed #ff0000;
+                color: #ff0000;
+                font-family: 'Courier New', monospace;
+                background: #330000;
+            `;
+            fallback.innerHTML = `
+                <p>Content temporarily unavailable</p>
+                <a href="${this.src}" target="_blank" style="color: #ffff00;" rel="noopener noreferrer">Open in new tab</a>
+            `;
+            this.parentNode.replaceChild(fallback, this);
+        });
     });
 });
 
-// Debug function to check if sections exist
-function debugSections() {
-    const sections = ['#home', '#features', '#community', '#support'];
-    sections.forEach(section => {
-        const element = document.querySelector(section);
-        console.log(`Section ${section}:`, element ? 'Found' : 'Missing');
+// Add ARIA labels and improve accessibility
+document.addEventListener('DOMContentLoaded', function() {
+    // Add ARIA labels to navigation
+    const navLinks = document.querySelectorAll('.cmd-link');
+    navLinks.forEach((link, index) => {
+        const sectionName = link.textContent.replace('[', '').replace(']', '');
+        link.setAttribute('aria-label', `Navigate to ${sectionName} section`);
     });
-}
+    
+    // Add ARIA label to invite buttons
+    const inviteButtons = document.querySelectorAll('.invite-link, .btn-invite');
+    inviteButtons.forEach(button => {
+        button.setAttribute('aria-label', 'Invite Nirupama Discord bot to your server');
+    });
+});
 
-// Call debug function
-setTimeout(debugSections, 1000);
+// Add focus management for better keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+        // Ensure focus is visible
+        document.activeElement.style.outline = '2px solid #ffff00';
+        document.activeElement.style.outlineOffset = '2px';
+    }
+});
+
+// Remove outline when clicking (mouse users)
+document.addEventListener('mousedown', function(e) {
+    if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') {
+        e.target.style.outline = 'none';
+    }
+});

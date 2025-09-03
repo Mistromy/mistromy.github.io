@@ -3,175 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nirupama - Discord Bot</title>
+    <title>Nirupama Terminal</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Background Elements -->
-    <div class="background-elements">
-        <div class="floating-shape shape-1"></div>
-        <div class="floating-shape shape-2"></div>
-        <div class="floating-shape shape-3"></div>
-        <div class="floating-shape shape-4"></div>
+    <!-- Boot Sequence Screen -->
+    <div id="boot-screen" class="boot-screen">
+        <div class="terminal">
+            <div class="terminal-header">NIRUPAMA OS v2.0 - BOOT SEQUENCE</div>
+            <div class="boot-content">
+                <div id="boot-messages"></div>
+                <div class="boot-prompt">
+                    <span class="blinking-cursor">█</span>
+                </div>
+                <div id="boot-complete" class="boot-complete hidden">
+                    <p>[ OK ] All systems initialized successfully</p>
+                    <p>Click anywhere to enter terminal...</p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <nav class="nav">
-                <div class="nav-brand">
-                    <h2>Nirupama</h2>
-                </div>
-                <ul class="nav-menu">
-                    <li><a href="#home" class="nav-link">Home</a></li>
-                    <li><a href="#features" class="nav-link">Features</a></li>
-                    <li><a href="https://discord.com/oauth2/authorize?client_id=1209887142839586836&permissions=8&integration_type=0&scope=bot" target="_blank" class="nav-link">Add Bot</a></li>
-                    <li><a href="#support" class="nav-link">Support</a></li>
-                    <li><a href="#community" class="nav-link">Community</a></li>
-                </ul>
-            </nav>
+    <!-- Main Terminal Interface -->
+    <div id="main-terminal" class="main-terminal hidden">
+        <!-- Terminal Header -->
+        <div class="terminal-title">
+            <pre class="ascii-title">
+ ███▄    █  ██▓ ██▀███   █    ██  ██▓███   ▄▄▄       ███▄ ▄███▓ ▄▄▄      
+ ██ ▀█   █ ▓██▒▓██ ▒ ██▒ ██  ▓██▒▓██░  ██▒▒████▄    ▓██▒▀█▀ ██▒▒████▄    
+▓██  ▀█ ██▒▒██▒▓██ ░▄█ ▒▓██  ▒██░▓██░ ██▓▒▒██  ▀█▄  ▓██    ▓██░▒██  ▀█▄  
+▓██▒  ▐▌██▒░██░▒██▀▀█▄  ▓▓█  ░██░▒██▄█▓▒ ▒░██▄▄▄▄██ ▒██    ▒██ ░██▄▄▄▄██ 
+▒██░   ▓██░░██░░██▓ ▒██▒▒▒█████▓ ▒██▒ ░  ░ ▓█   ▓██▒▒██▒   ░██▒ ▓█   ▓██▒
+░ ▒░   ▒ ▒ ░▓  ░ ▒▓ ░▒▓░░▒▓▒ ▒ ▒ ▒▓▒░ ░  ░ ▒▒   ▓▒█░░ ▒░   ░  ░ ▒▒   ▓▒█░
+░ ░░   ░ ▒░ ▒ ░  ░▒ ░ ▒░░░▒░ ░ ░ ░▒ ░       ▒   ▒▒ ░░  ░      ░  ▒   ▒▒ ░
+   ░   ░ ░  ▒ ░  ░░   ░  ░░░ ░ ░ ░░         ░   ▒   ░      ░     ░   ▒   
+         ░  ░     ░        ░                     ░  ░       ░         ░  ░
+            </pre>
+            <div class="subtitle">Discord Bot Terminal Interface v2.0</div>
+            <div class="sys-info">System Administrator: Stromy (Alt255) | Status: ONLINE</div>
         </div>
-    </header>
 
-    <!-- Hero Section -->
-    <section id="home" class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <div class="hero-avatar">
-                    <div class="avatar-glow">
-                        <div class="bot-avatar"><img src="nirupama.png", width="200"></div>
+        <!-- Navigation Menu -->
+        <div class="terminal-nav">
+            <div class="nav-prompt">user@nirupama:~$ </div>
+            <div class="nav-commands">
+                <a href="#about" class="cmd-link">[about]</a>
+                <a href="#features" class="cmd-link">[features]</a>
+                <a href="#stats" class="cmd-link">[stats]</a>
+                <a href="#invite" class="cmd-link">[invite]</a>
+                <a href="#community" class="cmd-link">[community]</a>
+                <a href="#support" class="cmd-link">[support]</a>
+            </div>
+        </div>
+
+        <!-- About Section -->
+        <section id="about" class="terminal-section">
+            <div class="section-header">
+                <div class="prompt">user@nirupama:~$ cat about.txt</div>
+            </div>
+            <div class="section-content">
+                <pre class="robot-ascii">
+   [0_0]   
+  /[___]\  
+   |   |   
+  _|___|_  
+                </pre>
+                <p>> Hey there! Welcome to Nirupama's terminal interface.</p>
+                <p>> I'm a feature-packed Discord bot that brings fun and utility to your server.</p>
+                <p>> From ship compatibility checking to AI-powered conversations,</p>
+                <p>> I've got everything you need for an awesome Discord experience!</p>
+                <p>> Built with love by Stromy using modern Discord.py and AI technologies.</p>
+                <br>
+                <p class="status-line">[STATUS] Bot is online and ready to serve your server!</p>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="terminal-section">
+            <div class="section-header">
+                <div class="prompt">user@nirupama:~$ ls -la features/</div>
+            </div>
+            <div class="section-content">
+                <div class="file-listing">
+                    <div class="file-item">
+                        <span class="file-perms">-rwxr--r--</span>
+                        <span class="file-name">ship.exe</span>
+                        <span class="file-desc">Check compatibility between two users with fancy graphics</span>
+                    </div>
+                    <div class="file-item">
+                        <span class="file-perms">-rwxr--r--</span>
+                        <span class="file-name">eightball.exe</span>
+                        <span class="file-desc">Ask the magic 8ball any question you want</span>
+                    </div>
+                    <div class="file-item">
+                        <span class="file-perms">-rwxr--r--</span>
+                        <span class="file-name">ai_chat.exe</span>
+                        <span class="file-desc">Talk to AI with different personalities (Discord/Helper/Coder)</span>
+                    </div>
+                    <div class="file-item">
+                        <span class="file-perms">-rwxr--r--</span>
+                        <span class="file-name">ai_settings.exe</span>
+                        <span class="file-desc">Adjust temperature, thinking modes, and AI models</span>
+                    </div>
+                    <div class="file-item">
+                        <span class="file-perms">-rwxr--r--</span>
+                        <span class="file-name">admin_tools.exe</span>
+                        <span class="file-desc">Bot management, updates, and server tools</span>
                     </div>
                 </div>
-                <div class="hero-text">
-                    <h1 class="hero-title">Meet <span class="gradient-text">Nirupama</span></h1>
-                    <p class="hero-subtitle">Your feature-packed Discord companion with AI chat, ship compatibility, magic 8ball, and so much more!</p>
-                    <div class="hero-buttons">
-                        <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586836&permissions=8&integration_type=0&scope=bot" target="_blank" class="btn btn-primary">
-                            <span>Add to Server</span>
-                        </a>
-                        <a href="#features" class="btn btn-secondary">
-                            <span>Explore Features</span>
-                        </a>
+                <p class="total-line">total 5 executable programs</p>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section id="stats" class="terminal-section">
+            <div class="section-header">
+                <div class="prompt">user@nirupama:~$ ./stats.sh</div>
+            </div>
+            <div class="section-content">
+                <div class="stats-output">
+                    <p>Scanning system resources...</p>
+                    <br>
+                    <div class="stat-line">
+                        <span class="stat-label">SERVERS_CONNECTED:</span>
+                        <span class="stat-value" id="servers-count">500+</span>
+                    </div>
+                    <div class="stat-line">
+                        <span class="stat-label">ACTIVE_USERS:</span>
+                        <span class="stat-value" id="users-count">10,000+</span>
+                    </div>
+                    <div class="stat-line">
+                        <span class="stat-label">TOTAL_COMMANDS:</span>
+                        <span class="stat-value" id="commands-count">12</span>
+                    </div>
+                    <div class="stat-line">
+                        <span class="stat-label">UPTIME:</span>
+                        <span class="stat-value">99.9%</span>
+                    </div>
+                    <div class="stat-line">
+                        <span class="stat-label">SYSTEM_STATUS:</span>
+                        <span class="stat-value status-online">[ONLINE]</span>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Stats Section -->
-    <section class="stats">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-card glass">
-                    <div class="stat-number" data-target="500">0</div>
-                    <div class="stat-label">Servers</div>
-                </div>
-                <div class="stat-card glass">
-                    <div class="stat-number" data-target="10000">0</div>
-                    <div class="stat-label">Users</div>
-                </div>
-                <div class="stat-card glass">
-                    <div class="stat-number" data-target="12">0</div>
-                    <div class="stat-label">Commands</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="features">
-        <div class="container">
+        <!-- Invite Section -->
+        <section id="invite" class="terminal-section">
             <div class="section-header">
-                <h2 class="section-title">Amazing <span class="gradient-text">Features</span></h2>
-                <p class="section-subtitle">Discover what makes Nirupama special</p>
+                <div class="prompt">user@nirupama:~$ ./deploy_bot.sh</div>
             </div>
-            <div class="features-grid">
-                <div class="feature-card glass">
-                    <div class="feature-icon">💕</div>
-                    <h3 class="feature-title">Ship Compatibility</h3>
-                    <p class="feature-description">Check how compatible two users are with beautiful visual results and percentage matching</p>
+            <div class="section-content">
+                <p>Preparing bot deployment to your server...</p>
+                <br>
+                <div class="deploy-box">
+                    <p>┌─────────────────────────────────────────────────────┐</p>
+                    <p>│  Ready to add Nirupama to your Discord server?     │</p>
+                    <p>│  Click the link below to invite me!                │</p>
+                    <p>├─────────────────────────────────────────────────────┤</p>
+                    <p>│  <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586836&permissions=8&integration_type=0&scope=bot" target="_blank" rel="noopener noreferrer" class="invite-link" id="invite-btn">[INVITE BOT TO SERVER]</a>               │</p>
+                    <p>└─────────────────────────────────────────────────────┘</p>
                 </div>
-                <div class="feature-card glass">
-                    <div class="feature-icon">🎱</div>
-                    <h3 class="feature-title">Magic 8Ball</h3>
-                    <p class="feature-description">Ask questions and get mystical answers from the ancient magic 8ball oracle</p>
-                </div>
-                <div class="feature-card glass">
-                    <div class="feature-icon">🤖</div>
-                    <h3 class="feature-title">AI Chat Assistant</h3>
-                    <p class="feature-description">Intelligent conversational AI powered by Gemini with multiple personalities and advanced settings</p>
-                </div>
-                <div class="feature-card glass">
-                    <div class="feature-icon">🎭</div>
-                    <h3 class="feature-title">Personality System</h3>
-                    <p class="feature-description">Switch between Discord, Helper, and Coder personalities to match your server's vibe</p>
-                </div>
-                <div class="feature-card glass">
-                    <div class="feature-icon">⚙️</div>
-                    <h3 class="feature-title">Advanced AI Settings</h3>
-                    <p class="feature-description">Fine-tune AI responses with temperature controls, thinking modes, and model selection</p>
-                </div>
-                <div class="feature-card glass">
-                    <div class="feature-icon">🛠️</div>
-                    <h3 class="feature-title">Bot Management</h3>
-                    <p class="feature-description">Comprehensive admin tools for bot maintenance, updates, and server management</p>
-                </div>
-                <div class="feature-card glass coming-soon">
-                    <div class="feature-icon">✨</div>
-                    <h3 class="feature-title">More Coming Soon!</h3>
-                    <p class="feature-description">We're constantly working on new features to make Nirupama even better</p>
+                <br>
+                <p class="warning-text">WARNING: Bot requires administrator permissions for full functionality</p>
+                <br>
+                <div class="quick-invite">
+                    <p>Quick invite button:</p>
+                    <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586836&permissions=8&integration_type=0&scope=bot" target="_blank" rel="noopener noreferrer" class="btn-invite">ADD TO DISCORD</a>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Community Section -->
-    <section id="community" class="community">
-        <div class="container">
+        <!-- Community Section -->
+        <section id="community" class="terminal-section">
             <div class="section-header">
-                <h2 class="section-title">Join our <span class="gradient-text">Community</span></h2>
-                <p class="section-subtitle">Connect with other users and get support</p>
+                <div class="prompt">user@nirupama:~$ connect discord_server</div>
             </div>
-            <div class="community-content">
-                <div class="discord-widget-container glass">
-                    <iframe src="https://discord.com/widget?id=1252034372970741841&theme=dark" width="100%" height="400" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
+            <div class="section-content">
+                <p>Establishing connection to Discord server...</p>
+                <p>Connection established! Join our community:</p>
+                <br>
+                <div class="discord-box">
+                    <iframe src="https://discord.com/widget?id=1252034372970741841&theme=dark" width="100%" height="300" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Support Section -->
-    <section id="support" class="support">
-        <div class="container">
+        <!-- Support Section -->
+        <section id="support" class="terminal-section">
             <div class="section-header">
-                <h2 class="section-title">Support <span class="gradient-text">Development</span></h2>
-                <p class="section-subtitle">Help us keep Nirupama running and growing</p>
+                <div class="prompt">user@nirupama:~$ support --donate</div>
             </div>
-            <div class="support-content">
-                <div class="kofi-widget-container glass">
-                    <iframe id='kofiframe' src='https://ko-fi.com/lilavati/?hidefeed=true&widget=true&embed=true&preview=true' style='border:none;width:100%;padding:4px;background:#f9f9f9;' height='712' title='lilavati'></iframe>
+            <div class="section-content">
+                <p>Loading support options...</p>
+                <br>
+                <div class="support-ascii">
+                    <pre>
+    ╔══════════════════════════════════════╗
+    ║          SUPPORT THE PROJECT         ║
+    ║                                      ║
+    ║  Help keep Nirupama running and      ║
+    ║  support future development!         ║
+    ╚══════════════════════════════════════╝
+                    </pre>
+                </div>
+                <div class="kofi-box">
+                    <iframe id='kofiframe' src='https://ko-fi.com/lilavati/?hidefeed=true&widget=true&embed=true&preview=true' style='border:none;width:100%;padding:4px;background:#0c0c0c;' height='400' title='lilavati' sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
+        <!-- Footer -->
+        <footer class="terminal-footer">
+            <div class="footer-separator">
+                <p>================================================================================</p>
+            </div>
             <div class="footer-content">
-                <div class="footer-text">
-                    <p>&copy; 2025 Created by <span class="gradient-text">Stromy (Alt255)</span></p>
-                </div>
-                <div class="footer-links">
-                    <a href="https://github.com/mistromy" target="_blank" class="footer-link">GitHub</a>
-                    <a href="#community" class="footer-link">Discord</a>
-                </div>
+                <p>user@nirupama:~$ whoami</p>
+                <p>Created by Stromy (Alt255) | 2025 | Made with ♥ for the Discord community</p>
+                <p>user@nirupama:~$ exit</p>
             </div>
-        </div>
-    </footer>
+        </footer>
+    </div>
 
     <script src="app.js"></script>
 </body>
