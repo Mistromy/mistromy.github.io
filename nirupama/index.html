@@ -3,106 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ayumr - Your Ultimate Discord Bot</title>
-    <link rel="stylesheet" href="ayumr.css">
-    <link rel="icon" type="image/x-icon" href="ayumr.ico">
+    <title>Nirupama - Discord Bot</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">Ayumr</div>
-            <ul>
-                <li><a href="#home">Home</a></li>
-                <li><a href="#commands">Commands</a></li>
-                <li><a href="#discord">Contact</a></li>
-                <li><a href="#donate">Donate</a></li>
-            </ul>
-        </nav>
+    <!-- Background Elements -->
+    <div class="background-elements">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+        <div class="floating-shape shape-4"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="nav-brand">
+                    <h2>Nirupama</h2>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="#home" class="nav-link">Home</a></li>
+                    <li><a href="#features" class="nav-link">Features</a></li>
+                    <li><a href="https://discord.com/oauth2/authorize?client_id=1209887142839586836&permissions=8&integration_type=0&scope=bot" target="_blank" class="nav-link">Add Bot</a></li>
+                    <li><a href="#support" class="nav-link">Support</a></li>
+                    <li><a href="#community" class="nav-link">Community</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
 
-    <section id="home">
-        <div class="hero">
-            <h1>This is <span class="highlight">Nirupama</span>.</h1>
-            <p>A feature-packed bot for any server</p>
-            <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586876&permissions=8&integration_type=0&scope=bot" target="_blank" rel="noopener noreferrer">
-                <button>Add to server</button>
-        </div>
-    </section>
-
-    <!-- <section id="features">
-        <h2>Features</h2>
-        <div class="features-container">
-            <div class="feature-item">
-                <img src="feature1.png" alt="Feature 1">
-                <h3>Feature 1</h3>
-                <p>Detail about the first amazing feature of Ayumr.</p>
-            </div>
-            <div class="feature-item">
-                <img src="feature2.png" alt="Feature 2">
-                <h3>Feature 2</h3>
-                <p>Detail about the second amazing feature of Ayumr.</p>
-            </div>
-            <div class="feature-item">
-                <img src="feature3.png" alt="Feature 3">
-                <h3>Feature 3</h3>
-                <p>Detail about the third amazing feature of Ayumr.</p>
-            </div>
-        </div>
-    </section> -->
-
-    <section id="commands">
-        <h2>Features</h2>
-        <div class="commands-container">
-            <div class="command-item">
-                <h3>/ship</h3>
-                <p>Check if two users make a good pair.</p>
-            </div>
-            <div class="command-item">
-                <h3>Chatbot</h3>
-                <p>Silly chatbot</p>
-            </div>
-            <div class="command-item">
-                <h3><s>/top</s></h3>
-                <p>See the most active users.</p>
-            </div>
-            <div class="command-item">
-                <h3><s>/closest</s></h3>
-                <p>See who is closest to you on the leadrboard.</p>
-            </div>
-            <div class="command-item">
-                <h3>/apod</h3>
-                <p>See the Nasa Astronomy Picture Of The Day.</p>
-            </div>
-            <div class="command-item">
-                <h3>/eightball</h3>
-                <p>Ask the magic 8Ball any question.</p>
-            </div>
-            <div class="command-item">
-                <h3>More coming soon!</h3>
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-avatar">
+                    <div class="avatar-glow">
+                        <div class="bot-avatar"><img src="nirupama.png", width="200"></div>
+                    </div>
+                </div>
+                <div class="hero-text">
+                    <h1 class="hero-title">Meet <span class="gradient-text">Nirupama</span></h1>
+                    <p class="hero-subtitle">Your feature-packed Discord companion with AI chat, ship compatibility, magic 8ball, and so much more!</p>
+                    <div class="hero-buttons">
+                        <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586836&permissions=8&integration_type=0&scope=bot" target="_blank" class="btn btn-primary">
+                            <span>Add to Server</span>
+                        </a>
+                        <a href="#features" class="btn btn-secondary">
+                            <span>Explore Features</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-
-    <section id="discord">
-        <h2>Join the discord!</h2>
-        <center>
-            <iframe src="https://discord.com/widget?id=1252034372970741873&theme=dark" width="350" height="500" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
-        </center>
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card glass">
+                    <div class="stat-number" data-target="500">0</div>
+                    <div class="stat-label">Servers</div>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-number" data-target="10000">0</div>
+                    <div class="stat-label">Users</div>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-number" data-target="12">0</div>
+                    <div class="stat-label">Commands</div>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <section id="donate">
-        <h2>Donate please</h2>
-        <center>
-            <iframe id='kofiframe' src='https://ko-fi.com/lilavati/?hidefeed=true&widget=true&embed=true&preview=true' style='border:4px solid #3e3e3e;width:35%;padding:4px;background:#f9f9f9;border-radius: 1cm; box-shadow: rgb(48, 48, 48) 0px 0px 10px;' height='650' title='lilavati'></iframe>
-        </center>
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Amazing <span class="gradient-text">Features</span></h2>
+                <p class="section-subtitle">Discover what makes Nirupama special</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card glass">
+                    <div class="feature-icon">💕</div>
+                    <h3 class="feature-title">Ship Compatibility</h3>
+                    <p class="feature-description">Check how compatible two users are with beautiful visual results and percentage matching</p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">🎱</div>
+                    <h3 class="feature-title">Magic 8Ball</h3>
+                    <p class="feature-description">Ask questions and get mystical answers from the ancient magic 8ball oracle</p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">🤖</div>
+                    <h3 class="feature-title">AI Chat Assistant</h3>
+                    <p class="feature-description">Intelligent conversational AI powered by Gemini with multiple personalities and advanced settings</p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">🎭</div>
+                    <h3 class="feature-title">Personality System</h3>
+                    <p class="feature-description">Switch between Discord, Helper, and Coder personalities to match your server's vibe</p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">⚙️</div>
+                    <h3 class="feature-title">Advanced AI Settings</h3>
+                    <p class="feature-description">Fine-tune AI responses with temperature controls, thinking modes, and model selection</p>
+                </div>
+                <div class="feature-card glass">
+                    <div class="feature-icon">🛠️</div>
+                    <h3 class="feature-title">Bot Management</h3>
+                    <p class="feature-description">Comprehensive admin tools for bot maintenance, updates, and server management</p>
+                </div>
+                <div class="feature-card glass coming-soon">
+                    <div class="feature-icon">✨</div>
+                    <h3 class="feature-title">More Coming Soon!</h3>
+                    <p class="feature-description">We're constantly working on new features to make Nirupama even better</p>
+                </div>
+            </div>
+        </div>
     </section>
 
+    <!-- Community Section -->
+    <section id="community" class="community">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Join our <span class="gradient-text">Community</span></h2>
+                <p class="section-subtitle">Connect with other users and get support</p>
+            </div>
+            <div class="community-content">
+                <div class="discord-widget-container glass">
+                    <iframe src="https://discord.com/widget?id=1252034372970741841&theme=dark" width="100%" height="400" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <footer>
-        <p>Created By Stromy (Alt255)</p>
+    <!-- Support Section -->
+    <section id="support" class="support">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Support <span class="gradient-text">Development</span></h2>
+                <p class="section-subtitle">Help us keep Nirupama running and growing</p>
+            </div>
+            <div class="support-content">
+                <div class="kofi-widget-container glass">
+                    <iframe id='kofiframe' src='https://ko-fi.com/lilavati/?hidefeed=true&widget=true&embed=true&preview=true' style='border:none;width:100%;padding:4px;background:#f9f9f9;' height='712' title='lilavati'></iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-text">
+                    <p>&copy; 2025 Created by <span class="gradient-text">Stromy (Alt255)</span></p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/mistromy" target="_blank" class="footer-link">GitHub</a>
+                    <a href="#community" class="footer-link">Discord</a>
+                </div>
+            </div>
+        </div>
     </footer>
 
-    <script src="scripts.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
