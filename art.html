@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIST — the archive</title>
+  <meta name="description"
+    content="The full art archive of Mist (Mistromy) — 3D environment renders, product visualization, and 2D poster art.">
+  <link rel="canonical" href="https://mistromy.github.io/art.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Allerta+Stencil&family=Archivo:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-sector="archive">
+
+  <!-- cursor fringe — follows the pointer, never replaces it -->
+  <div class="cursor-fx" id="cursorFx" aria-hidden="true"></div>
+
+  <!-- boot sequence — plays once per session, click to skip -->
+  <div class="boot" id="boot" aria-hidden="true">
+    <div class="bootlog" id="bootLog"></div>
+    <span class="boot-skip">click anywhere to skip</span>
+  </div>
+
+  <!-- system bar -->
+  <header class="sysbar">
+    <div class="sys-left">
+      <span class="dot" id="sysDot"></span>
+      <span class="sys-name">MIST.SYS</span>
+      <span class="sys-item" id="sysStatus">condensing…</span>
+    </div>
+    <div class="sys-right">
+      <span class="sys-item" id="epoch">SYS_EPOCH // ——————————</span>
+      <span class="sys-item" id="visits">VISITS // ———</span>
+      <div class="audio" id="audio">
+        <button id="audioBtn" aria-label="Play or pause audio">►</button>
+        <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="audio-title" id="audioTitle">no_signal.mp3</span>
+        <input type="range" id="audioVol" min="0" max="100" value="12" aria-label="Volume">
+      </div>
+    </div>
+  </header>
+
+  <!-- nav — same on every page. /ART and /SYS drop down to the full pages -->
+  <nav class="nav" aria-label="Primary">
+    <button class="nav-burger" id="navBurger" aria-expanded="false" aria-controls="navLinks">/// menu</button>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html#about">/ABOUT</a>
+      <a href="index.html#links">/LINKS</a>
+      <div class="nav-item">
+        <a href="index.html#art" class="active">/ART</a>
+        <div class="nav-drop"><a href="art.html">FULL ARCHIVE -&gt;</a></div>
+      </div>
+      <div class="nav-item">
+        <a href="index.html#sys">/SYS</a>
+        <div class="nav-drop"><a href="projects.html">ALL PROJECTS -&gt;</a></div>
+      </div>
+      <a href="index.html#log">/BIO</a>
+      <a href="index.html#plans">/PLANS</a>
+    </div>
+    <span class="nav-note" data-random-note>// stay condensed</span>
+  </nav>
+
+  <main>
+
+    <section id="archive">
+      <div class="wrap">
+        <div class="section-head rv">
+          <p class="eyebrow">// the archive — running diagnostic… all loud</p>
+          <h2 class="chroma scramble">Art</h2>
+          <p>Everything. 2D and CGI in one pile — posters, environments, light studies,
+            type experiments. Filter if you must. Click anything to see it full size.</p>
+          <div class="hero-cta" style="margin-top:28px">
+            <a class="btn btn-solid" href="https://www.artstation.com/mistromy" target="_blank"
+              rel="noopener">artstation -&gt;</a>
+            <a class="btn" href="https://www.instagram.com/mi5tromy" target="_blank" rel="noopener">instagram -&gt;</a>
+          </div>
+        </div>
+        <!-- chips generate themselves from the mediums in js/data.js -->
+        <div class="chips rv" id="artChips" role="group" aria-label="Filter artworks"></div>
+        <!-- search — the js is already wired; uncomment when the archive
+             is big enough to need it:  
+        <input type="search" id="artSearch" class="art-search" placeholder="search the archive…"
+          aria-label="Search artworks">
+        -->
+
+        <div class="jgrid" id="artGrid"></div>
+      </div>
+    </section>
+
+    <div class="marquee" aria-hidden="true">
+      <span class="marquee-track" id="marqueeTrack"></span>
+    </div>
+
+  </main>
+
+  <!-- lightbox -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Artwork viewer">
+    <button class="close" id="lbClose">close [esc]</button>
+    <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous artwork">&lt;</button>
+    <button class="lb-nav lb-next" id="lbNext" aria-label="Next artwork">&gt;</button>
+    <figure>
+      <div class="lb-stack" id="lbStack"></div>
+      <figcaption><span id="lbCap"></span><span class="lb-links" id="lbLinks"></span></figcaption>
+    </figure>
+  </div>
+
+  <footer>
+    <div class="wrap foot-grid">
+      <div>
+        <div class="sig">Mist</div>
+        <p>SYS_EPOCH // <span id="footEpoch">—</span> · visibility low, signal holding</p>
+      </div>
+      <p>© <span id="year"></span> mist · <a href="https://github.com/mistromy" target="_blank"
+          rel="noopener">github</a> · <a href="https://www.artstation.com/mistromy" target="_blank"
+          rel="noopener">artstation</a> · into thin air</p>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>

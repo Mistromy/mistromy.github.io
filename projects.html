@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIST — projects</title>
+  <meta name="description"
+    content="Software projects by Mist (Mistromy) — the Nirupama Discord bot (Python, Go, PostgreSQL) and public repositories, with live stats.">
+  <link rel="canonical" href="https://mistromy.github.io/projects.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Allerta+Stencil&family=Archivo:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-sector="projects">
+
+  <!-- cursor fringe — follows the pointer, never replaces it -->
+  <div class="cursor-fx" id="cursorFx" aria-hidden="true"></div>
+
+  <!-- boot sequence — plays once per session, click to skip -->
+  <div class="boot" id="boot" aria-hidden="true">
+    <div class="bootlog" id="bootLog"></div>
+    <span class="boot-skip">click anywhere to skip</span>
+  </div>
+
+  <!-- system bar -->
+  <header class="sysbar">
+    <div class="sys-left">
+      <span class="dot" id="sysDot"></span>
+      <span class="sys-name">MIST.SYS</span>
+      <span class="sys-item" id="sysStatus">condensing…</span>
+    </div>
+    <div class="sys-right">
+      <span class="sys-item" id="epoch">SYS_EPOCH // ——————————</span>
+      <span class="sys-item" id="visits">VISITS // ———</span>
+      <div class="audio" id="audio">
+        <button id="audioBtn" aria-label="Play or pause audio">►</button>
+        <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="audio-title" id="audioTitle">no_signal.mp3</span>
+        <input type="range" id="audioVol" min="0" max="100" value="12" aria-label="Volume">
+      </div>
+    </div>
+  </header>
+
+  <!-- nav — same on every page. /ART and /SYS drop down to the full pages -->
+  <nav class="nav" aria-label="Primary">
+    <button class="nav-burger" id="navBurger" aria-expanded="false" aria-controls="navLinks">/// menu</button>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html#about">/ABOUT</a>
+      <a href="index.html#links">/LINKS</a>
+      <div class="nav-item">
+        <a href="index.html#art">/ART</a>
+        <div class="nav-drop"><a href="art.html">FULL ARCHIVE -&gt;</a></div>
+      </div>
+      <div class="nav-item">
+        <a href="index.html#sys" class="active">/SYS</a>
+        <div class="nav-drop"><a href="projects.html">ALL PROJECTS -&gt;</a></div>
+      </div>
+      <a href="index.html#log">/BIO</a>
+      <a href="index.html#plans">/PLANS</a>
+    </div>
+    <span class="nav-note" data-random-note>// stay condensed</span>
+  </nav>
+
+  <main>
+
+    <section id="projects">
+      <div class="wrap">
+        <div class="section-head rv">
+          <p class="eyebrow">// sector_sys — everything that runs, in one place</p>
+          <h2 class="chroma scramble">Projects</h2>
+          <p>The flagship up top, the rest below. Live numbers where the wires reach —
+            if one's cut, it says so instead of making something up.</p>
+          <div class="hero-cta" style="margin-top:28px">
+            <a class="btn btn-solid" href="https://github.com/mistromy" target="_blank" rel="noopener">github -&gt;</a>
+          </div>
+        </div>
+
+        <!-- flagship project — rendered from PROJECTS in js/data.js -->
+        <div id="flagshipMount"></div>
+
+        <!-- the rest of PROJECTS -->
+        <div class="projects-grid" id="projectsGrid"></div>
+
+        <p class="section-note" style="margin-top:40px">// public repos — fetched from the github api on load. if you
+          see cached data, the api is rate-limiting or unreachable.</p>
+        <div class="repo-grid" id="repoGrid"></div>
+      </div>
+    </section>
+
+    <div class="marquee" aria-hidden="true">
+      <span class="marquee-track" id="marqueeTrack"></span>
+    </div>
+
+  </main>
+
+  <footer>
+    <div class="wrap foot-grid">
+      <div>
+        <div class="sig">Mist</div>
+        <p>SYS_EPOCH // <span id="footEpoch">—</span> · visibility low, signal holding</p>
+      </div>
+      <p>© <span id="year"></span> mist · <a href="https://github.com/mistromy" target="_blank"
+          rel="noopener">github</a> · <a href="https://www.artstation.com/mistromy" target="_blank"
+          rel="noopener">artstation</a> · into thin air</p>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>

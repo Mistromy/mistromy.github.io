@@ -1,6 +1,32 @@
-change mistromy names to mist.
-update domain
-add mist puns
-add working numbers
-combine 2d and 3d pages
-remove some cringe lines
+- [x] change mistromy names to mist.
+- [ ] update domain — CNAME file + DNS record still needed, steps in DOCS.md
+- [x] add mist puns
+- [x] add working numbers — github repos/followers/commits live; nirupama servers/members/uptime/messages live from the stats gist; visits waits on the go backend
+- [x] combine 2d and 3d pages — one /ART section with filter chips
+- [x] remove some cringe lines
+- [x] add cooler effects. but no scrolljacking, scroll effects, cursor effects can be added. but dont replace the actual cursor.
+- [ ] drop cgi renders into assets/art/ (tiles show stencil placeholders until then; any export ratio works — the gallery lays out native ratios)
+- [x] wire the stats gist — done, reads nirupama's stats.json gist live (api first, raw url fallback)
+- [ ] crank gist push interval to ~10 s (bot side) — site now reads the gist API (uncached), so 10 s updates will actually show
+- [x] split into taster homepage + art.html (full archive) + projects.html (flagship + project cards + repos)
+- [x] artworks counter = ART.length, no redeploy for count changes
+- [x] messages tracked → nirupama box, 713K big + full number in the label
+- [x] marquee: seamless loop (no off-screen dead time), shuffled every load
+- [x] random marquee quote in the about block + nav corner note
+- [x] mystery link — placeholder social rolls wikipedia-unusual / rickroll / zombo per click
+- [x] gallery: sparse last row folds into the previous one — no more tile-sized holes
+- [x] multi-image posts (images: [...]) + artstation/instagram links (post: {...}) in fullscreen view
+- [x] nav unified across all pages, /ART + /SYS hover-dropdown to full pages
+- [x] art + sys headers clickable, big artstation link on /art, github link on /projects
+- [x] dropdown fade/slide animation
+- [x] audio: quiet default (0.12) + volume slider; audio:null in data.js removes the widget
+- [x] video/animation support in the gallery (.mp4/.webm = looping muted tile, controls in fullscreen)
+- [x] multi-tag mediums (["cgi","2d"]) + filter chips auto-generate from data
+- [x] search wired, input commented out in art.html until the archive needs it
+- [x] lightbox: per-image sizing (vertical frames no longer zoomed), raw ↗ button on every image
+- [x] lightbox swipe left/right on touch
+- [x] mobile: burger menu (closes on outside tap), general layout polish
+- [x] SEO/AEO: factual meta + JSON-LD person schema, auto alt texts, data-nosnippet on the fun-facts bio
+- [x] stats pipe merges every *.json file in the gist — one file per project, no override risk
+- [ ] google analytics: paste the G-… id into the commented snippet (all 3 heads) once the data stream exists
+- [ ] displaying GA visitor counts = go backend (GA4 Data API needs a service account)

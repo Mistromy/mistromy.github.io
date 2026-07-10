@@ -1,921 +1,307 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MISTROMY.SYS — design / 3d / code</title>
-<meta name="description" content="Mistromy — posters that glitch, rooms that don't exist, code that runs (mostly). 2D design, 3D environments and software from one person.">
-<meta property="og:title" content="MISTROMY.SYS">
-<meta property="og:description" content="2D design / 3D environments / code. One person, all of it.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Allerta+Stencil&family=Archivo:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-/* ============================================================
-   MISTROMY.SYS — design tokens
-   palette pulled from the posters:
-   maroon/aubergine darks (DON'T STOP), bone stencil (DON'T LOOK
-   DOWN), signal red (the traffic light), cyan fringe (the
-   chromatic aberration). not black-and-acid-green. on purpose.
-   ============================================================ */
-:root{
-  --ink:      #150a11;   /* page background — maroon-black       */
-  --panel:    #20101b;   /* raised surfaces                      */
-  --panel-2:  #2b1424;   /* hover / active surfaces              */
-  --line:     #3b1e30;   /* borders                              */
-  --bone:     #e9e3d3;   /* primary text — concrete stencil      */
-  --concrete: #9b917f;   /* secondary text                       */
-  --magenta:  #c22a6c;   /* brand accent — poster magenta        */
-  --signal:   #ff2e3f;   /* live / alerts only                   */
-  --cyan:     #5df2ff;   /* interactive fringe / links           */
-  --sysbar-h: 46px;
-  --nav-h:    42px;
-  --mono:'IBM Plex Mono',ui-monospace,monospace;
-  --body:'Archivo',system-ui,sans-serif;
-  --stencil:'Allerta Stencil','Archivo',sans-serif;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{
-  background:var(--ink);color:var(--bone);
-  font-family:var(--body);font-size:16px;line-height:1.6;
-  padding-top:calc(var(--sysbar-h) + var(--nav-h));
-  overflow-x:hidden;
-}
-/* film grain + scanlines, very faint */
-body::before{
-  content:"";position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.05;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-body::after{
-  content:"";position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.20;
-  background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,0,0,.35) 3px 4px);
-}
-::selection{background:var(--magenta);color:var(--bone)}
-a{color:var(--cyan);text-decoration:none}
-a:hover{text-decoration:underline}
-a:focus-visible,button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
-img{max-width:100%;display:block}
-.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
-
-/* ---------- system bar ---------- */
-.sysbar{
-  position:fixed;top:0;left:0;right:0;height:var(--sysbar-h);z-index:60;
-  display:flex;align-items:center;justify-content:space-between;gap:16px;
-  padding:0 20px;background:rgba(21,10,17,.92);backdrop-filter:blur(6px);
-  border-bottom:1px solid var(--line);
-  font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--concrete);
-}
-.sys-left,.sys-right{display:flex;align-items:center;gap:14px;min-width:0}
-.sys-name{color:var(--bone);font-weight:700}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--signal);flex:none;animation:pulse 2s infinite}
-.dot.ok{background:var(--cyan)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.sys-item{white-space:nowrap}
-.audio{display:flex;align-items:center;gap:8px;padding:4px 10px;border:1px solid var(--line);background:var(--panel)}
-.audio button{
-  background:none;border:none;color:var(--bone);cursor:pointer;
-  font-family:var(--mono);font-size:11px;line-height:1;padding:2px 2px;
-}
-.audio button:hover{color:var(--cyan)}
-.eq{display:flex;align-items:flex-end;gap:2px;height:12px}
-.eq i{width:3px;background:var(--magenta);height:30%;animation:eq 0.9s ease-in-out infinite;animation-play-state:paused}
-.eq i:nth-child(2){animation-delay:.15s;height:80%}
-.eq i:nth-child(3){animation-delay:.35s;height:55%}
-.eq i:nth-child(4){animation-delay:.55s;height:95%}
-.audio.playing .eq i{animation-play-state:running}
-.audio.playing{border-color:var(--magenta)}
-@keyframes eq{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
-.audio-title{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-/* ---------- nav ---------- */
-.nav{
-  position:fixed;top:var(--sysbar-h);left:0;right:0;height:var(--nav-h);z-index:59;
-  display:flex;align-items:stretch;gap:0;
-  background:rgba(21,10,17,.92);backdrop-filter:blur(6px);
-  border-bottom:1px solid var(--line);
-  font-family:var(--mono);font-size:12px;letter-spacing:.1em;
-  overflow-x:auto;
-}
-.nav a{
-  display:flex;align-items:center;padding:0 22px;color:var(--concrete);
-  border-right:1px solid var(--line);text-decoration:none;white-space:nowrap;
-  transition:color .15s,background .15s;
-}
-.nav a:hover{color:var(--bone);background:var(--panel);text-decoration:none}
-.nav a.active{color:var(--bone);background:var(--panel-2);box-shadow:inset 0 -2px 0 var(--magenta)}
-.nav .nav-note{margin-left:auto;display:flex;align-items:center;padding:0 20px;color:var(--concrete);opacity:.6;border-right:none}
-
-/* ---------- boot overlay ---------- */
-.boot{
-  position:fixed;inset:0;z-index:100;background:var(--ink);
-  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
-  padding:12vw;cursor:pointer;transition:opacity .4s;
-}
-.boot.done{opacity:0;pointer-events:none}
-.boot .bootlog{font-family:var(--mono);font-size:14px;color:var(--concrete);line-height:1.9;white-space:pre-wrap}
-.boot .bootlog b{color:var(--bone);font-weight:500}
-.boot .boot-skip{position:absolute;bottom:24px;right:24px;font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--concrete);opacity:.5}
-
-/* ---------- shared section furniture ---------- */
-main section[data-page]{display:none;min-height:60vh;padding-bottom:0}
-main section[data-page].current{display:block}
-.eyebrow{
-  font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:lowercase;
-  color:var(--magenta);margin-bottom:14px;
-}
-.page-head{padding:72px 0 40px;border-bottom:1px solid var(--line)}
-.page-head h1{
-  font-family:var(--stencil);font-size:clamp(42px,7vw,88px);line-height:.95;
-  text-transform:uppercase;letter-spacing:.01em;
-}
-.page-head p{max-width:560px;color:var(--concrete);margin-top:16px}
-.chroma{transition:text-shadow .15s}
-.chroma:hover{text-shadow:-2px 0 var(--signal),2px 0 var(--cyan)}
-
-/* ---------- hero ---------- */
-.hero{position:relative;padding:11vh 0 8vh;border-bottom:1px solid var(--line)}
-.bin{
-  position:absolute;top:40px;bottom:40px;width:14px;overflow:hidden;
-  font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--concrete);
-  opacity:.35;pointer-events:none;user-select:none;
-  writing-mode:vertical-rl;letter-spacing:.3em;
-}
-.bin-l{left:8px}.bin-r{right:8px;transform:rotate(180deg)}
-.glitch{
-  font-family:var(--stencil);font-size:clamp(58px,12.5vw,176px);line-height:.92;
-  text-transform:uppercase;position:relative;display:inline-block;
-  color:var(--bone);
-}
-.glitch::before,.glitch::after{
-  content:attr(data-text);position:absolute;inset:0;opacity:0;pointer-events:none;
-}
-.glitch.on::before{
-  opacity:.8;color:var(--signal);transform:translate(-4px,-1px);
-  clip-path:inset(15% 0 55% 0);animation:slice-a .35s steps(3) both;
-}
-.glitch.on::after{
-  opacity:.8;color:var(--cyan);transform:translate(4px,1px);
-  clip-path:inset(60% 0 10% 0);animation:slice-b .35s steps(3) both;
-}
-@keyframes slice-a{
-  0%{clip-path:inset(15% 0 55% 0)}
-  50%{clip-path:inset(45% 0 20% 0)}
-  100%{clip-path:inset(5% 0 80% 0)}
-}
-@keyframes slice-b{
-  0%{clip-path:inset(60% 0 10% 0)}
-  50%{clip-path:inset(10% 0 70% 0)}
-  100%{clip-path:inset(75% 0 2% 0)}
-}
-.lede{max-width:600px;color:var(--concrete);font-size:18px;margin:28px 0 36px}
-.lede b{color:var(--bone);font-weight:500}
-.hero-cta{display:flex;gap:14px;flex-wrap:wrap}
-.btn{
-  display:inline-flex;align-items:center;gap:10px;
-  font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;
-  padding:13px 22px;border:1px solid var(--line);color:var(--bone);
-  background:transparent;transition:all .15s;text-decoration:none;
-}
-.btn:hover{border-color:var(--cyan);color:var(--cyan);text-decoration:none;transform:translate(-1px,-1px);box-shadow:3px 3px 0 rgba(93,242,255,.25)}
-.btn-solid{background:var(--magenta);border-color:var(--magenta);color:var(--bone)}
-.btn-solid:hover{background:var(--panel-2);color:var(--bone);border-color:var(--magenta);box-shadow:3px 3px 0 rgba(194,42,108,.35)}
-
-/* ---------- sector cards ---------- */
-.sectors{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
-.sector{
-  display:block;background:var(--ink);padding:44px 32px 52px;
-  color:var(--bone);text-decoration:none;position:relative;overflow:hidden;
-  transition:background .15s;
-}
-.sector:hover{background:var(--panel);text-decoration:none}
-.sector-id{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--magenta)}
-.sector h2{
-  font-family:var(--stencil);font-size:clamp(24px,2.6vw,34px);line-height:1.05;
-  text-transform:uppercase;margin:16px 0 12px;transition:text-shadow .15s;
-}
-.sector:hover h2{text-shadow:-2px 0 var(--signal),2px 0 var(--cyan)}
-.sector p{color:var(--concrete);font-size:14px;max-width:300px}
-.sector-tag{
-  position:absolute;bottom:18px;left:32px;font-family:var(--mono);font-size:10px;
-  letter-spacing:.15em;text-transform:lowercase;color:var(--concrete);opacity:.55;
-}
-.sector .go{position:absolute;top:40px;right:28px;font-family:var(--mono);color:var(--concrete);transition:all .15s}
-.sector:hover .go{color:var(--cyan);transform:translateX(4px)}
-
-/* ---------- numbers strip ---------- */
-.numbers{padding:64px 0;border-bottom:1px solid var(--line)}
-.numbers-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:var(--line);margin-top:28px}
-.stat{background:var(--ink);padding:26px 22px}
-.stat b{
-  display:block;font-family:var(--stencil);font-size:clamp(30px,3.4vw,46px);
-  line-height:1;color:var(--bone);font-weight:400;min-height:1em;
-}
-.stat b.live-err{color:var(--concrete);opacity:.5}
-.stat span{display:block;margin-top:10px;font-size:13px;color:var(--concrete)}
-.stat i{
-  display:block;font-style:normal;font-family:var(--mono);font-size:10px;
-  letter-spacing:.12em;text-transform:uppercase;margin-top:6px;color:var(--magenta);opacity:.9;
-}
-.stat i.off{color:var(--concrete);opacity:.5}
-
-/* ---------- featured / latest transmission ---------- */
-.latest{padding:64px 0 80px;border-bottom:1px solid var(--line)}
-.latest-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:44px;align-items:center;margin-top:28px}
-.latest-img{border:1px solid var(--line);position:relative;background:var(--panel)}
-.latest-img img{width:100%;height:auto}
-.latest-img .stamp{
-  position:absolute;top:12px;left:12px;font-family:var(--mono);font-size:10px;
-  letter-spacing:.15em;background:var(--ink);border:1px solid var(--line);
-  padding:4px 8px;color:var(--concrete);
-}
-.latest-info h2{font-family:var(--stencil);font-size:clamp(28px,4vw,48px);text-transform:uppercase;line-height:1}
-.latest-info p{color:var(--concrete);margin:18px 0 26px}
-
-/* ---------- marquee ---------- */
-.marquee{
-  overflow:hidden;border-bottom:1px solid var(--line);padding:16px 0;
-  font-family:var(--mono);font-size:12px;letter-spacing:.25em;text-transform:uppercase;
-  color:var(--concrete);white-space:nowrap;user-select:none;
-}
-.marquee-track{display:inline-block;animation:marquee 28s linear infinite;padding-left:100%}
-.marquee-track em{font-style:normal;color:var(--magenta);margin:0 1.5em}
-@keyframes marquee{to{transform:translateX(-100%)}}
-
-/* ---------- work grids ---------- */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;padding:48px 0 80px}
-.grid.wide{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
-.card{
-  background:var(--panel);border:1px solid var(--line);cursor:pointer;
-  transition:transform .15s,border-color .15s;position:relative;text-align:left;
-  color:var(--bone);font-family:var(--body);padding:0;display:block;width:100%;
-}
-.card:hover{transform:translate(-2px,-2px);border-color:var(--magenta);box-shadow:4px 4px 0 rgba(194,42,108,.3)}
-.card .frame{aspect-ratio:3/4;overflow:hidden;background:var(--panel-2);position:relative}
-.grid.wide .card .frame{aspect-ratio:16/10}
-.card img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
-.card:hover img{transform:scale(1.03)}
-/* fallback tile when the image file isn't there yet */
-.card.noimg .frame{display:flex;align-items:center;justify-content:center;padding:20px}
-.card.noimg .frame::after{
-  content:attr(data-title);font-family:var(--stencil);font-size:clamp(22px,2.4vw,32px);
-  text-transform:uppercase;line-height:1.05;color:var(--bone);opacity:.85;
-  text-align:center;text-shadow:-2px 0 rgba(255,46,63,.5),2px 0 rgba(93,242,255,.5);
-}
-.card.noimg .frame::before{
-  content:"missing: " attr(data-src);position:absolute;bottom:10px;left:12px;right:12px;
-  font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--concrete);opacity:.6;
-}
-.card-meta{padding:16px 18px 18px;border-top:1px solid var(--line)}
-.card-meta h3{font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;font-weight:500}
-.card-meta .sub{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:12px;color:var(--concrete)}
-.card-meta .tags{font-family:var(--mono);font-size:10px;letter-spacing:.08em}
-
-/* ---------- lightbox ---------- */
-.lightbox{
-  position:fixed;inset:0;z-index:90;background:rgba(13,5,10,.94);
-  display:none;align-items:center;justify-content:center;padding:5vh 4vw;
-}
-.lightbox.open{display:flex}
-.lightbox img{max-width:min(92vw,900px);max-height:80vh;object-fit:contain;border:1px solid var(--line)}
-.lightbox figcaption{
-  position:absolute;bottom:22px;left:0;right:0;text-align:center;
-  font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--concrete);
-}
-.lightbox .close{
-  position:absolute;top:calc(var(--sysbar-h) + 14px);right:22px;background:none;border:1px solid var(--line);
-  color:var(--bone);font-family:var(--mono);font-size:12px;padding:8px 14px;cursor:pointer;
-}
-.lightbox .close:hover{border-color:var(--signal);color:var(--signal)}
-
-/* ---------- code / sys page ---------- */
-.featured-proj{
-  border:1px solid var(--line);background:var(--panel);padding:36px;margin-top:48px;
-  display:grid;grid-template-columns:1.3fr .7fr;gap:36px;
-}
-.featured-proj h2{font-family:var(--stencil);font-size:clamp(26px,3.4vw,42px);text-transform:uppercase;line-height:1}
-.featured-proj .desc{color:var(--concrete);margin:16px 0 24px}
-.pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
-.pill{
-  font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
-  border:1px solid var(--line);padding:5px 10px;color:var(--concrete);
-}
-.pill.hot{border-color:var(--magenta);color:var(--magenta)}
-.mini-stats{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);align-self:start}
-.mini-stat{background:var(--ink);padding:16px 18px;display:flex;justify-content:space-between;gap:14px;align-items:baseline}
-.mini-stat b{font-family:var(--stencil);font-size:24px;font-weight:400}
-.mini-stat span{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--concrete)}
-.repo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;padding:40px 0 80px}
-.repo{border:1px solid var(--line);background:var(--panel);padding:22px 22px 18px;display:flex;flex-direction:column;gap:10px;color:var(--bone);text-decoration:none;transition:all .15s}
-.repo:hover{border-color:var(--cyan);transform:translate(-2px,-2px);box-shadow:4px 4px 0 rgba(93,242,255,.2);text-decoration:none}
-.repo h3{font-family:var(--mono);font-size:14px;letter-spacing:.06em;font-weight:700}
-.repo p{font-size:13px;color:var(--concrete);flex:1}
-.repo .repo-foot{display:flex;gap:16px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--concrete)}
-.repo .lang::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--magenta);margin-right:6px}
-.section-note{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--concrete);margin-top:40px}
-
-/* ---------- me page ---------- */
-.me-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:48px;padding:56px 0 80px}
-.me-copy p{color:var(--concrete);margin-bottom:18px;max-width:560px}
-.me-copy p b{color:var(--bone);font-weight:500}
-.socials{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);align-self:start}
-.social{
-  display:flex;justify-content:space-between;align-items:center;gap:16px;
-  background:var(--ink);padding:18px 20px;color:var(--bone);text-decoration:none;transition:background .15s;
-}
-.social:hover{background:var(--panel-2);text-decoration:none}
-.social:hover .social-name{text-shadow:-1px 0 var(--signal),1px 0 var(--cyan)}
-.social-name{font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
-.social-sub{font-size:12px;color:var(--concrete)}
-.social .go{font-family:var(--mono);color:var(--concrete)}
-
-/* ---------- footer ---------- */
-footer{padding:44px 0 60px;color:var(--concrete)}
-.foot-grid{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:flex-end}
-.foot-grid .sig{font-family:var(--stencil);font-size:22px;text-transform:uppercase;color:var(--bone)}
-.foot-grid p{font-family:var(--mono);font-size:11px;letter-spacing:.1em}
-.foot-grid a{color:var(--concrete)}
-.foot-grid a:hover{color:var(--cyan)}
-
-/* ---------- responsive ---------- */
-@media (max-width:900px){
-  .sectors{grid-template-columns:1fr}
-  .latest-grid,.featured-proj,.me-grid{grid-template-columns:1fr}
-  .bin{display:none}
-  .sys-item#visits{display:none}
-  .audio-title{display:none}
-}
-@media (max-width:600px){
-  .sys-item#epoch{display:none}
-  .nav .nav-note{display:none}
-  .page-head{padding:48px 0 32px}
-}
-/* ---------- reduced motion ---------- */
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important}
-  .boot{display:none}
-  html{scroll-behavior:auto}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIST — art / signal / the occasional thing that runs</title>
+  <!-- the boring, literal version — this is what search engines and AI
+       overviews should repeat, not the fun facts from the bio -->
+  <meta name="description"
+    content="Mist (Mistromy) — student, CGI artist and developer. 3D environment renders and 2D poster art, plus software projects including the Nirupama Discord bot. Portfolio and links.">
+  <meta property="og:title" content="MIST — art & code portfolio">
+  <meta property="og:description"
+    content="Mist (Mistromy) — student, CGI artist and developer. 3D renders, 2D posters, and software projects.">
+  <link rel="canonical" href="https://mistromy.github.io/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Mist",
+    "alternateName": ["Mistromy", "sudomist"],
+    "url": "https://mistromy.github.io/",
+    "description": "Student, CGI artist and developer. Makes 3D environment renders and 2D poster art, and builds software projects including the Nirupama Discord bot.",
+    "knowsAbout": ["CGI", "3D rendering", "Blender", "2D design", "Python", "Go", "PostgreSQL"],
+    "sameAs": [
+      "https://www.artstation.com/mistromy",
+      "https://github.com/mistromy",
+      "https://www.instagram.com/mi5tromy",
+      "https://ko-fi.com/mist",
+      "https://nirupama.mista.tech"
+    ]
+  }
+  </script>
+  <!-- google analytics — make a data stream for this site in GA, paste
+       the measurement id, uncomment. displaying visitor counts on the
+       page is a different story: the GA4 Data API needs oauth / a
+       service account, i.e. the go backend. see DOCS.md.
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Allerta+Stencil&family=Archivo:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<!-- boot sequence — plays on load, click to skip -->
-<div class="boot" id="boot" aria-hidden="true">
-  <div class="bootlog" id="bootLog"></div>
-  <span class="boot-skip">click anywhere to skip</span>
-</div>
+  <!-- cursor fringe — follows the pointer, never replaces it -->
+  <div class="cursor-fx" id="cursorFx" aria-hidden="true"></div>
 
-<!-- system bar -->
-<header class="sysbar">
-  <div class="sys-left">
-    <span class="dot" id="sysDot"></span>
-    <span class="sys-name">MISTROMY.SYS</span>
-    <span class="sys-item" id="sysStatus">booting…</span>
+  <!-- boot sequence — plays once per session, click to skip -->
+  <div class="boot" id="boot" aria-hidden="true">
+    <div class="bootlog" id="bootLog"></div>
+    <span class="boot-skip">click anywhere to skip</span>
   </div>
-  <div class="sys-right">
-    <span class="sys-item" id="epoch">SYS_EPOCH // ——————————</span>
-    <span class="sys-item" id="visits">VISITS // ———</span>
-    <div class="audio" id="audio">
-      <button id="audioBtn" aria-label="Play or pause audio">►</button>
-      <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-      <span class="audio-title" id="audioTitle">no_signal.mp3</span>
+
+  <!-- system bar -->
+  <header class="sysbar">
+    <div class="sys-left">
+      <span class="dot" id="sysDot"></span>
+      <span class="sys-name">MIST.SYS</span>
+      <span class="sys-item" id="sysStatus">condensing…</span>
     </div>
-  </div>
-</header>
-
-<!-- nav -->
-<nav class="nav" aria-label="Primary">
-  <a href="#/home" data-nav="home">HOME</a>
-  <a href="#/2d"   data-nav="2d">/2D</a>
-  <a href="#/3d"   data-nav="3d">/3D</a>
-  <a href="#/sys"  data-nav="sys">/SYS</a>
-  <a href="#/me"   data-nav="me">/ME</a>
-  <span class="nav-note">// one person, all of it</span>
-</nav>
-
-<main>
-
-<!-- ==================== HOME ==================== -->
-<section data-page="home">
-  <div class="hero">
-    <div class="bin bin-l" aria-hidden="true"></div>
-    <div class="bin bin-r" aria-hidden="true"></div>
-    <div class="wrap">
-      <p class="eyebrow">// transmission open — can you hear me?</p>
-      <h1 class="glitch" id="glitchName" data-text="MISTROMY">MISTROMY</h1>
-      <p class="lede">
-        Posters that glitch. Rooms that don't exist. Code that runs — <b>mostly</b>.<br>
-        2D design, 3D environments and software, built by one person who refuses to pick a lane.
-      </p>
-      <div class="hero-cta">
-        <a class="btn btn-solid" href="#/2d">enter the archive</a>
-        <a class="btn" href="#/me">find the operator</a>
+    <div class="sys-right">
+      <span class="sys-item" id="epoch">SYS_EPOCH // ——————————</span>
+      <span class="sys-item" id="visits">VISITS // ———</span>
+      <div class="audio" id="audio">
+        <button id="audioBtn" aria-label="Play or pause audio">►</button>
+        <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="audio-title" id="audioTitle">no_signal.mp3</span>
+        <input type="range" id="audioVol" min="0" max="100" value="12" aria-label="Volume">
       </div>
     </div>
-  </div>
+  </header>
 
-  <div class="sectors">
-    <a class="sector" href="#/2d">
-      <span class="sector-id">SECTOR /2D</span>
-      <span class="go">-&gt;</span>
-      <h2>Design,<br>loud on purpose</h2>
-      <p>Distressed type, scan noise, ship schematics turned into posters. Things that shout.</p>
-      <span class="sector-tag">don't look down</span>
-    </a>
-    <a class="sector" href="#/3d">
-      <span class="sector-id">SECTOR /3D</span>
-      <span class="go">-&gt;</span>
-      <h2>Rooms that<br>don't exist</h2>
-      <p>Environments, light studies, product renders. Mostly light, honestly.</p>
-      <span class="sector-tag">open your eyes</span>
-    </a>
-    <a class="sector" href="#/sys">
-      <span class="sector-id">SECTOR /SYS</span>
-      <span class="go">-&gt;</span>
-      <h2>Things<br>that run</h2>
-      <p>Bots, backends, live data. Built, broken, and fixed by the same person.</p>
-      <span class="sector-tag">don't stop</span>
-    </a>
-  </div>
-
-  <div class="numbers">
-    <div class="wrap">
-      <p class="eyebrow">// the numbers — live where the wires reach, honest everywhere</p>
-      <div class="numbers-grid">
-        <div class="stat"><b id="stRepos">░░░</b><span>public repos</span><i id="stReposSrc">github // live</i></div>
-        <div class="stat"><b id="stFollowers">░░░</b><span>github followers</span><i id="stFollowersSrc">github // live</i></div>
-        <div class="stat"><b id="stServers">░░░</b><span>servers running Nirupama</span><i id="stServersSrc">nirupama api // live</i></div>
-        <div class="stat"><b id="stCommits">278+</b><span>commits on one bot</span><i class="off">counted by hand</i></div>
-        <div class="stat"><b id="stVisits">░░░</b><span>visits to this console</span><i id="stVisitsSrc">your backend // wire me</i></div>
+  <!-- nav — same on every page. /ART and /SYS drop down to the full pages -->
+  <nav class="nav" aria-label="Primary">
+    <button class="nav-burger" id="navBurger" aria-expanded="false" aria-controls="navLinks">/// menu</button>
+    <div class="nav-links" id="navLinks">
+      <a href="#about" data-nav="about">/ABOUT</a>
+      <a href="#links" data-nav="links">/LINKS</a>
+      <div class="nav-item">
+        <a href="#art" data-nav="art">/ART</a>
+        <div class="nav-drop"><a href="art.html">FULL ARCHIVE -&gt;</a></div>
       </div>
+      <div class="nav-item">
+        <a href="#sys" data-nav="sys">/SYS</a>
+        <div class="nav-drop"><a href="projects.html">ALL PROJECTS -&gt;</a></div>
+      </div>
+      <a href="#log" data-nav="log">/BIO</a>
+      <a href="#plans" data-nav="plans">/PLANS</a>
     </div>
-  </div>
+    <span class="nav-note" data-random-note>// stay condensed</span>
+  </nav>
 
-  <div class="latest">
-    <div class="wrap">
-      <p class="eyebrow">// latest transmission</p>
-      <div class="latest-grid">
-        <figure class="latest-img">
-          <span class="stamp" id="latestStamp">FILE 001 // 2D</span>
-          <img id="latestImg" src="" alt="">
-        </figure>
-        <div class="latest-info">
-          <h2 id="latestTitle" class="chroma">—</h2>
-          <p id="latestNote">—</p>
-          <a class="btn" href="#/2d">see the rest -&gt;</a>
+  <main>
+
+    <!-- ==================== ABOUT ==================== -->
+    <section id="about">
+      <div class="hero">
+        <div class="bin bin-l" aria-hidden="true"></div>
+        <div class="bin bin-r" aria-hidden="true"></div>
+        <div class="wrap">
+          <p class="eyebrow">// transmission open — can you hear me?</p>
+          <h1 class="glitch" id="glitchName" data-text="MIST">MIST</h1>
+          <p class="lede">
+            Posters that look like recovered evidence. Rooms that don't exist.<br>
+            The occasional thing that <b>runs</b>.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-solid" href="#art">the art</a>
+            <a class="btn" href="#links">everything else</a>
+          </div>
         </div>
       </div>
+
+      <div class="wrap">
+        <div class="about-grid">
+          <div class="about-copy rv">
+            <!-- filled with a random MARQUEE line on every load -->
+            <blockquote><span>// stdout</span><span class="random-quote">—</span></blockquote>
+            <p><b>Mist.</b> aka <b>sudomist</b> or <b>Mistromy</b> depending on what usernames were taken.
+              I do CGI, coding, recently started 2D art, and generally anything that is involved with computers.</p>
+            <p>I try to pretend I know what I'm doing, and apparently it's working?
+              the <a href="#sys">numbers further down</a> are fetched live and can speak for themselves.</p>
+            <p>How it got this bad — <a href="#log">the bio</a>, near the bottom.</p>
+          </div>
+          <!-- latest transmission — auto-filled from ART[0] in js/data.js -->
+          <aside class="latest rv" aria-label="Latest artwork">
+            <div class="latest-head"><span>LATEST // TRANSMISSION</span><b id="latestStamp">—</b></div>
+            <button class="latest-frame" id="latestFrame" type="button" aria-label="View latest artwork full size">
+              <img id="latestImg" src="" alt="">
+            </button>
+            <div class="latest-meta">
+              <h3 id="latestTitle">—</h3>
+              <p id="latestNote"></p>
+              <a href="#art" class="latest-more">full archive -&gt;</a>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== LINKS ==================== -->
+    <section id="links">
+      <div class="wrap">
+        <div class="section-head rv">
+          <p class="eyebrow">// all wires lead here</p>
+          <h2 class="chroma scramble">Links</h2>
+        </div>
+        <div class="links-grid" id="linksGrid"></div>
+      </div>
+    </section>
+
+    <!-- ==================== ART ==================== -->
+    <section id="art">
+      <div class="wrap">
+        <div class="section-head rv">
+          <p class="eyebrow">// the newest transmissions — full archive one door down</p>
+          <h2 class="chroma"><a class="scramble" href="art.html">Art</a></h2>
+          <p>2D and CGI in one pile — posters, environments, light studies, type
+            experiments. The newest few live here; the rest are in the archive.</p>
+        </div>
+        <div class="jgrid" id="artGrid" data-limit="6"></div>
+        <div class="hero-cta rv" style="padding-bottom:80px">
+          <a class="btn btn-solid" href="art.html">full archive -&gt;</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="marquee" aria-hidden="true">
+      <span class="marquee-track" id="marqueeTrack"></span>
     </div>
+
+    <!-- ==================== SYS ==================== -->
+    <section id="sys">
+      <div class="wrap">
+        <div class="section-head rv">
+          <p class="eyebrow">// sector_sys — err… nominal</p>
+          <h2 class="chroma"><a class="scramble" href="projects.html">Sys</a></h2>
+          <p>The dabbling, in public. Every number below is fetched live —
+            if a wire's cut, it says so instead of making something up.</p>
+        </div>
+
+        <!-- flagship project — rendered from PROJECTS in js/data.js -->
+        <div id="flagshipMount"></div>
+
+        <div class="numbers rv">
+          <p class="eyebrow">// the numbers — live where the wires reach, honest everywhere</p>
+          <div class="numbers-grid">
+            <div class="stat"><b id="stRepos">░░░</b><span>public repos</span><i id="stReposSrc">github // live</i>
+            </div>
+            <div class="stat"><b id="stFollowers">░░░</b><span>github followers</span><i id="stFollowersSrc">github //
+                live</i></div>
+            <div class="stat"><b id="stCommits">░░░</b><span>commits on one bot</span><i id="stCommitsSrc">github //
+                live</i></div>
+            <div class="stat"><b id="stServers" data-stat-key="guild_count">░░░</b><span>servers running
+                Nirupama</span><i id="stServersSrc">stats pipe // live</i></div>
+            <div class="stat"><b id="stArtworks">░░░</b><span>pieces in the archive</span><i>counted by the site //
+                live</i></div>
+            <div class="stat"><b id="stVisits">░░░</b><span>visits to this console</span><i id="stVisitsSrc">stats pipe
+                // wire me</i></div>
+          </div>
+        </div>
+
+        <div class="hero-cta rv" style="padding:40px 0 80px">
+          <a class="btn btn-solid" href="projects.html">all projects -&gt;</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== LOG ==================== -->
+    <section id="log">
+      <div class="wrap">
+        <div class="section-head rv">
+          <p class="eyebrow">// bio — how it got this bad</p>
+          <h2 class="chroma scramble">Bio</h2>
+          <p>The long version, as written. One take, no hindsight.</p>
+        </div>
+        <div class="log-grid">
+          <!-- data-nosnippet: search engines / AI overviews must not quote
+               the fun facts as if they were the resume -->
+          <div class="log-prose rv" data-nosnippet>
+            <p>I started getting involved with computers in 2018, when I first tried Scratch.
+              After that, <b>it only got worse</b>. God knows when and why I tried HTML, then I started
+              making some websites for my own use. Then I learned about Python, and around that time —
+              it was 2021 — I started using Discord. And I just never moved on.</p>
+            <p>During 2021 I also started trying other things. Until then my "hobby" was origami.
+              But I started learning piano, and I was following my dad's footsteps, developing a liking
+              for computers, photography and Photoshop. I never made anything serious back then, but it
+              was fun — which is the biggest mistake I ever made, as I now know that <b>fun is for the
+                weak</b>. Around early 2022, I tried Blender. I don't know what made me do that, but I gave
+              it a go. And I failed. I don't remember if my friend showed it to me first, or how I found
+              it, but at some point I watched the donut tutorial. As they say, ignorance is bliss, and I
+              was quite literally unaware of how bad my work was. I was completely blinded by the fact
+              that the render engine did the lighting for me and made a basic room look good. And then I
+              just started doing Blender. I never watch tutorials, so over the 4–5 years I've done it,
+              and the 800+ hours poured into Blender alone, I am nowhere near where I wanna be.
+              But <i>We ball</i>.</p>
+            <p>During this entire time I had this pent-up desire for more, though. So I was making
+              Discord bots — my biggest project yet, <a href="#sys">Nirupama</a>, started as a super
+              basic levels bot, and I just kept adding more to him. And even though I completely switched
+              to Blender, some seed of creativity from Photoshop stayed, until very recently — where I
+              tried 2D art for the first time in a long time. And oh, my old friend <b>blissful
+                ignorance</b>: I think it looks good, so I'll do that for a while now, if I don't get
+              bored. Because I'm having fun.</p>
+          </div>
+          <aside class="log-side rv" aria-hidden="true">
+            <span>FILE // BIO.LOG</span>
+            <span>SPAN // 2018 → now</span>
+            <span>LOADING // 100%</span>
+            <span class="ok">STATUS // huh?</span>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== PLANS ==================== -->
+    <section id="plans">
+      <div class="wrap">
+        <div class="section-head rv">
+          <p class="eyebrow">// forecast — subject to evaporation</p>
+          <h2 class="chroma scramble">Plans</h2>
+          <p>What's queued, what's running, and one deadline that keeps slipping.</p>
+        </div>
+        <div class="plans-grid" id="plansGrid"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- lightbox -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Artwork viewer">
+    <button class="close" id="lbClose">close [esc]</button>
+    <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous artwork">&lt;</button>
+    <button class="lb-nav lb-next" id="lbNext" aria-label="Next artwork">&gt;</button>
+    <figure>
+      <div class="lb-stack" id="lbStack"></div>
+      <figcaption><span id="lbCap"></span><span class="lb-links" id="lbLinks"></span></figcaption>
+    </figure>
   </div>
 
-  <div class="marquee" aria-hidden="true">
-    <span class="marquee-track">
-      please, wake up <em>///</em> can you hear me? <em>///</em> don't stop <em>///</em> open your eyes <em>///</em> don't look down <em>///</em>
-      please, wake up <em>///</em> can you hear me? <em>///</em> don't stop <em>///</em> open your eyes <em>///</em> don't look down <em>///</em>
-    </span>
-  </div>
-</section>
-
-<!-- ==================== /2D ==================== -->
-<section data-page="2d">
-  <div class="wrap">
-    <div class="page-head">
-      <p class="eyebrow">// sector_2d — running diagnostic… all loud</p>
-      <h1 class="chroma">2D Design</h1>
-      <p>Posters and type experiments. Built from schematics, scan noise, binary, and whatever the signal dragged in. Click anything to see it full size.</p>
-    </div>
-    <div class="grid" id="grid2d"></div>
-  </div>
-</section>
-
-<!-- ==================== /3D ==================== -->
-<section data-page="3d">
-  <div class="wrap">
-    <div class="page-head">
-      <p class="eyebrow">// sector_3d — geometry loaded, lights on</p>
-      <h1 class="chroma">3D Worlds</h1>
-      <p>Environments, interiors and renders. Drop your files into <code>assets/3d/</code> and update the list in the script — the cards below fall back to stencil tiles until the images exist.</p>
-    </div>
-    <div class="grid wide" id="grid3d"></div>
-  </div>
-</section>
-
-<!-- ==================== /SYS ==================== -->
-<section data-page="sys">
-  <div class="wrap">
-    <div class="page-head">
-      <p class="eyebrow">// sector_sys — err… nominal</p>
-      <h1 class="chroma">Code</h1>
-      <p>Software that exists in public. Live numbers where an API answers; honest placeholders where it doesn't.</p>
-    </div>
-
-    <div class="featured-proj">
+  <footer>
+    <div class="wrap foot-grid">
       <div>
-        <p class="eyebrow">// flagship — long-running playground</p>
-        <h2 class="chroma">Nirupama</h2>
-        <p class="desc">
-          A do-a-bit-of-everything Discord bot: AI chat with a tunable personality, a /ship command
-          that reads actual user data instead of rolling dice, activity graphs backed by Postgres.
-          Started as a level bot storing JSON. Never stopped evolving.
-        </p>
-        <div class="pills">
-          <span class="pill hot">python</span><span class="pill">go</span><span class="pill">postgres · supabase</span><span class="pill">discord api</span><span class="pill">cronitor uptime</span>
-        </div>
-        <div class="hero-cta">
-          <a class="btn btn-solid" href="https://nirupama.mista.tech" target="_blank" rel="noopener">visit the site</a>
-          <a class="btn" href="https://github.com/mistromy/Nirupama" target="_blank" rel="noopener">read the source</a>
-        </div>
+        <div class="sig">Mist</div>
+        <p>SYS_EPOCH // <span id="footEpoch">—</span> · visibility low, signal holding</p>
       </div>
-      <div class="mini-stats">
-        <div class="mini-stat"><span>servers</span><b id="nServers">░░░</b></div>
-        <div class="mini-stat"><span>members reached</span><b id="nMembers">░░░</b></div>
-        <div class="mini-stat"><span>uptime, 30d</span><b id="nUptime">░░░</b></div>
-        <div class="mini-stat"><span>status</span><b id="nStatus" style="font-size:14px;font-family:var(--mono)">checking…</b></div>
-      </div>
+      <p>© <span id="year"></span> mist · <a href="https://github.com/mistromy" target="_blank"
+          rel="noopener">github</a> · <a href="https://www.artstation.com/mistromy" target="_blank"
+          rel="noopener">artstation</a> · into thin air</p>
     </div>
+  </footer>
 
-    <p class="section-note">// public repos — fetched from the github api on load. if you see cached data, the api is rate-limiting or unreachable.</p>
-    <div class="repo-grid" id="repoGrid"></div>
-  </div>
-</section>
-
-<!-- ==================== /ME ==================== -->
-<section data-page="me">
-  <div class="wrap">
-    <div class="page-head">
-      <p class="eyebrow">// operator located</p>
-      <h1 class="chroma">The Operator</h1>
-    </div>
-    <div class="me-grid">
-      <div class="me-copy">
-        <p><b>Mistromy.</b> I design posters that look like recovered evidence, build 3D spaces that
-        only exist for the render, and write software that keeps a heartbeat when I'm not looking.</p>
-        <p>Everything on this site is one person's output — the design, the code, the bad decisions
-        and the fixes for them. The recurring theme across all of it is <b>signal</b>: machines waking up,
-        transmissions half-received, systems insisting they're fine.</p>
-        <p>If a number on this site is live, it's really live. If it's not, it says so.
-        That policy has occasionally been humbling.</p>
-        <p style="font-family:var(--mono);font-size:12px;letter-spacing:.1em;margin-top:28px">
-          // open to: commissions · collabs · interesting problems
-        </p>
-      </div>
-      <div class="socials">
-        <a class="social" href="https://www.artstation.com/mistromy" target="_blank" rel="noopener">
-          <span><span class="social-name">ArtStation</span><br><span class="social-sub">2D + 3D archive, the full pile</span></span><span class="go">-&gt;</span>
-        </a>
-        <a class="social" href="https://github.com/mistromy" target="_blank" rel="noopener">
-          <span><span class="social-name">GitHub</span><br><span class="social-sub">source, commits, issues</span></span><span class="go">-&gt;</span>
-        </a>
-        <a class="social" href="https://discord.com/users/859371145076932619" target="_blank" rel="noopener">
-          <span><span class="social-name">Discord</span><br><span class="social-sub">@Mistromy — fastest way to reach me</span></span><span class="go">-&gt;</span>
-        </a>
-        <a class="social" href="https://nirupama.mista.tech" target="_blank" rel="noopener">
-          <span><span class="social-name">Nirupama</span><br><span class="social-sub">the bot, the site, the playground</span></span><span class="go">-&gt;</span>
-        </a>
-        <a class="social" href="https://ko-fi.com/mistromy" target="_blank" rel="noopener">
-          <span><span class="social-name">Ko-fi</span><br><span class="social-sub">covers the API bills</span></span><span class="go">-&gt;</span>
-        </a>
-        <a class="social" href="mailto:you@mista.tech">
-          <span><span class="social-name">Email</span><br><span class="social-sub">swap in your real address</span></span><span class="go">-&gt;</span>
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
-
-</main>
-
-<!-- lightbox -->
-<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Artwork viewer">
-  <button class="close" id="lbClose">close [esc]</button>
-  <figure>
-    <img id="lbImg" src="" alt="">
-    <figcaption id="lbCap"></figcaption>
-  </figure>
-</div>
-
-<footer>
-  <div class="wrap foot-grid">
-    <div>
-      <div class="sig">Mistromy</div>
-      <p>SYS_EPOCH // <span id="footEpoch">—</span> · signal holding</p>
-    </div>
-    <p>© <span id="year"></span> mistromy · <a href="https://github.com/mistromy" target="_blank" rel="noopener">github</a> · <a href="https://www.artstation.com/mistromy" target="_blank" rel="noopener">artstation</a> · please, wake up</p>
-  </div>
-</footer>
-
-<script>
-/* ============================================================
-   MISTROMY.SYS — wiring
-   everything you need to edit lives in CONFIG and the WORK_*
-   arrays right below. the rest is machinery.
-   ============================================================ */
-
-const CONFIG = {
-  githubUser: "Mistromy",
-
-  endpoints: {
-    // your Nirupama stats endpoint — should return JSON like:
-    // { "servers": 2, "members": 140, "uptime": "99.9%" , "online": true }
-    nirupamaStats: "https://nirupama.mista.tech/api/stats",
-
-    // your backend's visit counter — GET returns { "visits": 1234 }.
-    // point this at your own API; it fails politely until you do.
-    visits: "/api/visits",
-  },
-
-  audio: {
-    // drop an mp3 into assets/ and set the name here.
-    src: "assets/track.mp3",
-    title: "pick_a_song.mp3",
-  },
-};
-
-/* ---------- the archive ---------- */
-const WORK_2D = [
-  {
-    title: "DON'T STOP",
-    year: "2026",
-    img: "assets/lights.png",
-    tags: "glitch · datamosh · signal",
-    note: "System offline… err. Running diagnostic. A traffic light that won't take no for an answer.",
-  },
-  {
-    title: "OPEN YOUR EYES",
-    year: "2026",
-    img: "assets/eyes.png",
-    tags: "photo · binary · type",
-    note: "please, wake up — repeated until it works.",
-  },
-  {
-    title: "DON'T LOOK DOWN",
-    year: "2026",
-    img: "assets/dontlook_down.png",
-    tags: "stencil · schematic · collage",
-    note: "Stencil type over a ship's electrical one-line diagram. General notes included.",
-  },
-];
-
-/* real titles from the ArtStation archive — drop renders into
-   assets/3d/ with these filenames (or change the paths) and the
-   stencil placeholders become images automatically. */
-const WORK_3D = [
-  { title: "180SX Wrap",        year: "2025", img: "assets/3d/180sx.png",    tags: "vehicle · livery",        note: "Full sticker-bomb livery study." },
-  { title: "Smart Juice",       year: "2025", img: "assets/3d/juice.png",    tags: "product · packaging",     note: "Product viz for a drink that thinks." },
-  { title: "Manor Interior",    year: "2025", img: "assets/3d/manor.png",    tags: "environment · interior",  note: "Green walls, old money, heavy air." },
-  { title: "Library Light",     year: "2025", img: "assets/3d/library.png",  tags: "environment · lighting",  note: "A light study with books in the way." },
-  { title: "The Corridor",      year: "2025", img: "assets/3d/corridor.png", tags: "environment · mood",      note: "Fluorescent, wet, and going somewhere bad." },
-  { title: "Dark Kitchen",      year: "2025", img: "assets/3d/kitchen.png",  tags: "interior · archviz",      note: "Matte black everything, one warm strip." },
-  { title: "Indoor Pool",       year: "2025", img: "assets/3d/pool.png",     tags: "interior · water",        note: "Stone, steam, caustics." },
-  { title: "Flower Field",      year: "2025", img: "assets/3d/field.png",    tags: "nature · scatter",        note: "Proof the renderer can also be gentle." },
-  { title: "The Falling",       year: "2025", img: "assets/3d/falling.png",  tags: "scene · story",           note: "A person, a forest, and gravity." },
-];
-
-/* cached repo fallback — shown if the GitHub API is unreachable */
-const REPO_FALLBACK = [
-  { name: "Nirupama", description: "Discord bot with AI features — Python, Go, Postgres.", language: "Python", stargazers_count: 2, html_url: "https://github.com/Mistromy/Nirupama" },
-];
-
-/* ============================================================ */
-const $  = (s, r=document) => r.querySelector(s);
-const $$ = (s, r=document) => [...r.querySelectorAll(s)];
-const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-/* ---------- router ---------- */
-const pages = $$("[data-page]");
-function route(){
-  const hash = (location.hash.replace(/^#\//,"") || "home").toLowerCase();
-  const target = pages.some(p => p.dataset.page === hash) ? hash : "home";
-  pages.forEach(p => p.classList.toggle("current", p.dataset.page === target));
-  $$(".nav a").forEach(a => a.classList.toggle("active", a.dataset.nav === target));
-  window.scrollTo(0, 0);
-  $("#sysStatus").textContent = "sector:/" + target + " · online";
-}
-window.addEventListener("hashchange", route);
-
-/* ---------- boot sequence ---------- */
-const boot = $("#boot");
-const bootLines = [
-  "MISTROMY.SYS v1.0",
-  "> mounting sectors… [/2d] [/3d] [/sys] [/me]",
-  "> restoring archive…………… ok",
-  "> heartbeat…………………… found",
-  "> can you hear me?",
-];
-function runBoot(){
-  if (reducedMotion){ boot.remove(); return; }
-  const log = $("#bootLog");
-  let i = 0;
-  const timer = setInterval(() => {
-    if (i >= bootLines.length){ clearInterval(timer); endBoot(); return; }
-    const line = document.createElement("div");
-    if (i === bootLines.length - 1){ line.innerHTML = "<b>" + bootLines[i] + "</b>"; }
-    else { line.textContent = bootLines[i]; }
-    log.appendChild(line);
-    i++;
-  }, 260);
-  boot.addEventListener("click", () => { clearInterval(timer); endBoot(); }, { once: true });
-  function endBoot(){
-    setTimeout(() => {
-      boot.classList.add("done");
-      glitchOnce();
-      setTimeout(() => boot.remove(), 500);
-    }, 350);
-  }
-}
-
-/* ---------- epoch ticker + year ---------- */
-function tickEpoch(){
-  const now = Math.floor(Date.now() / 1000);
-  $("#epoch").textContent = "SYS_EPOCH // " + now;
-  const fe = $("#footEpoch"); if (fe) fe.textContent = now;
-}
-setInterval(tickEpoch, 1000); tickEpoch();
-$("#year").textContent = new Date().getFullYear();
-
-/* ---------- binary side columns ---------- */
-(function fillBinary(){
-  const word = "mistromy";
-  const bin = [...word].map(c => c.charCodeAt(0).toString(2).padStart(8, "0")).join(" ");
-  $$(".bin").forEach(el => { el.textContent = (bin + "  ").repeat(6); });
-})();
-
-/* ---------- hero glitch pulse ---------- */
-const glitchEl = $("#glitchName");
-function glitchOnce(){
-  if (reducedMotion || !glitchEl) return;
-  glitchEl.classList.add("on");
-  setTimeout(() => glitchEl.classList.remove("on"), 380);
-}
-if (!reducedMotion) setInterval(glitchOnce, 6500);
-
-/* ---------- work grids + lightbox ---------- */
-function buildCards(list, mount){
-  const grid = $(mount);
-  if (!grid) return;
-  list.forEach(item => {
-    const card = document.createElement("button");
-    card.className = "card";
-    card.type = "button";
-    card.innerHTML =
-      '<div class="frame" data-title="' + item.title.replace(/"/g,"&quot;") + '" data-src="' + item.img + '"></div>' +
-      '<div class="card-meta"><h3>' + item.title + "</h3>" +
-      '<div class="sub"><span class="tags">' + item.tags + "</span><span>" + item.year + "</span></div></div>";
-    const frame = card.querySelector(".frame");
-    const img = new Image();
-    img.alt = item.title + " — " + item.tags;
-    img.loading = "lazy";
-    img.onload  = () => frame.appendChild(img);
-    img.onerror = () => card.classList.add("noimg");
-    img.src = item.img;
-    card.addEventListener("click", () => {
-      if (card.classList.contains("noimg")) return;
-      openLightbox(item);
-    });
-    grid.appendChild(card);
-  });
-}
-const lb = $("#lightbox");
-function openLightbox(item){
-  $("#lbImg").src = item.img;
-  $("#lbImg").alt = item.title;
-  $("#lbCap").textContent = item.title + " · " + item.year + " — " + (item.note || item.tags);
-  lb.classList.add("open");
-}
-function closeLightbox(){ lb.classList.remove("open"); $("#lbImg").src = ""; }
-$("#lbClose").addEventListener("click", closeLightbox);
-lb.addEventListener("click", e => { if (e.target === lb) closeLightbox(); });
-window.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
-
-buildCards(WORK_2D, "#grid2d");
-buildCards(WORK_3D, "#grid3d");
-
-/* ---------- latest transmission (newest 2D piece) ---------- */
-(function latest(){
-  const item = WORK_2D[0];
-  if (!item) return;
-  $("#latestTitle").textContent = item.title;
-  $("#latestNote").textContent = item.note;
-  $("#latestStamp").textContent = "FILE 001 // 2D // " + item.year;
-  const img = $("#latestImg");
-  img.alt = item.title;
-  img.onerror = () => { img.closest(".latest").style.display = "none"; };
-  img.src = item.img;
-})();
-
-/* ---------- number animation ---------- */
-function countUp(el, target, suffix=""){
-  if (reducedMotion){ el.textContent = target.toLocaleString() + suffix; return; }
-  const dur = 900, start = performance.now();
-  function step(t){
-    const p = Math.min((t - start) / dur, 1);
-    el.textContent = Math.floor(target * (1 - Math.pow(1 - p, 3))).toLocaleString() + suffix;
-    if (p < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
-function statFail(id, srcId){
-  const el = $(id); if (el){ el.textContent = "░░░"; el.classList.add("live-err"); }
-  const src = $(srcId); if (src){ src.textContent = "offline // no answer"; src.classList.add("off"); }
-}
-
-/* ---------- live data: GitHub ---------- */
-(async function github(){
-  try {
-    const res = await fetch("https://api.github.com/users/" + CONFIG.githubUser);
-    if (!res.ok) throw new Error(res.status);
-    const u = await res.json();
-    countUp($("#stRepos"), u.public_repos);
-    countUp($("#stFollowers"), u.followers);
-  } catch {
-    statFail("#stRepos", "#stReposSrc");
-    statFail("#stFollowers", "#stFollowersSrc");
-  }
-  const grid = $("#repoGrid");
-  try {
-    const res = await fetch("https://api.github.com/users/" + CONFIG.githubUser + "/repos?sort=updated&per_page=6");
-    if (!res.ok) throw new Error(res.status);
-    renderRepos(await res.json());
-  } catch {
-    renderRepos(REPO_FALLBACK, true);
-  }
-  function renderRepos(repos, cached=false){
-    grid.innerHTML = "";
-    repos.forEach(r => {
-      const a = document.createElement("a");
-      a.className = "repo";
-      a.href = r.html_url; a.target = "_blank"; a.rel = "noopener";
-      a.innerHTML =
-        "<h3>" + r.name + (cached ? ' <span style="color:var(--concrete)">// cached</span>' : "") + "</h3>" +
-        "<p>" + (r.description || "no description. it knows what it did.") + "</p>" +
-        '<div class="repo-foot"><span class="lang">' + (r.language || "misc") + "</span>" +
-        "<span>★ " + (r.stargazers_count ?? 0) + "</span></div>";
-      grid.appendChild(a);
-    });
-  }
-})();
-
-/* ---------- live data: Nirupama (your private API) ---------- */
-(async function nirupama(){
-  try {
-    const res = await fetch(CONFIG.endpoints.nirupamaStats);
-    if (!res.ok) throw new Error(res.status);
-    const d = await res.json();
-    if (d.servers != null){ countUp($("#stServers"), d.servers); countUp($("#nServers"), d.servers); }
-    if (d.members != null) countUp($("#nMembers"), d.members);
-    if (d.uptime  != null) $("#nUptime").textContent = d.uptime;
-    $("#nStatus").textContent = d.online === false ? "offline" : "online";
-    $("#nStatus").style.color = d.online === false ? "var(--signal)" : "var(--cyan)";
-    $("#sysDot").classList.add("ok");
-  } catch {
-    statFail("#stServers", "#stServersSrc");
-    ["#nServers","#nMembers","#nUptime"].forEach(id => { $(id).textContent = "░░░"; $(id).classList.add("live-err"); });
-    $("#nStatus").textContent = "no answer";
-  }
-})();
-
-/* ---------- live data: visit counter (your backend) ---------- */
-(async function visits(){
-  try {
-    const res = await fetch(CONFIG.endpoints.visits);
-    if (!res.ok) throw new Error(res.status);
-    const d = await res.json();
-    if (d.visits != null){
-      countUp($("#stVisits"), d.visits);
-      $("#visits").textContent = "VISITS // " + Number(d.visits).toLocaleString();
-      $("#stVisitsSrc").textContent = "your backend // live";
-    }
-  } catch {
-    statFail("#stVisits", "#stVisitsSrc");
-    $("#visits").textContent = "VISITS // ———";
-  }
-})();
-
-/* ---------- audio module ---------- */
-(function audio(){
-  const player = new Audio(CONFIG.audio.src);
-  player.loop = true;
-  player.volume = 0.6;
-  const wrap = $("#audio"), btn = $("#audioBtn");
-  $("#audioTitle").textContent = CONFIG.audio.title;
-  let broken = false;
-  player.onerror = () => { broken = true; $("#audioTitle").textContent = "no_signal.mp3"; };
-  btn.addEventListener("click", async () => {
-    if (broken){ $("#audioTitle").textContent = "add assets/track.mp3"; return; }
-    if (player.paused){
-      try { await player.play(); wrap.classList.add("playing"); btn.textContent = "❚❚"; }
-      catch { $("#audioTitle").textContent = "blocked by browser"; }
-    } else {
-      player.pause(); wrap.classList.remove("playing"); btn.textContent = "►";
-    }
-  });
-})();
-
-/* go */
-route();
-runBoot();
-</script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
 </body>
+
 </html>
