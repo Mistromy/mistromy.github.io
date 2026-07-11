@@ -86,6 +86,14 @@
         <!-- the rest of PROJECTS -->
         <div class="projects-grid" id="projectsGrid"></div>
 
+        <!-- a year of commits — ghchart renders it from the public github data.
+             frame hides itself if the service dies (handled in app.js). -->
+        <div class="heatmap rv">
+          <p class="eyebrow">// a year of commits — github, live</p>
+          <img id="ghHeat" src="https://ghchart.rshah.org/c22a6c/Mistromy"
+            alt="GitHub contribution heatmap for Mistromy, one year of commits" loading="lazy">
+        </div>
+
         <p class="section-note" style="margin-top:40px">// public repos — fetched from the github api on load. if you
           see cached data, the api is rate-limiting or unreachable.</p>
         <div class="repo-grid" id="repoGrid"></div>

@@ -306,9 +306,17 @@ section{border-bottom:1px solid var(--line)}
 .crumb a:hover{color:var(--cyan);border-color:var(--cyan);text-decoration:none}
 .crumb span{align-self:center;opacity:.6}
 
-/* ---------- the stack — b&w icon strip, hover pops + label ---------- */
-.stack-block{padding:0 0 80px}
-.stack-strip{display:flex;flex-wrap:wrap;gap:6px;padding-bottom:34px}
+/* ---------- bio "currently" block — prose beside the stack grid ---------- */
+.bio-now{
+  display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:start;
+  padding:8px 0 48px;margin-bottom:48px;border-bottom:1px solid var(--line);
+}
+.bio-now-copy p{color:var(--concrete);max-width:520px;margin-bottom:16px}
+.bio-now-copy p b{color:var(--bone);font-weight:500}
+.bio-now-copy .eyebrow,.bio-now .eyebrow{margin-bottom:18px}
+
+/* the stack — b&w icon tiles, hover pops + label */
+.stack-grid{display:flex;flex-wrap:wrap;gap:6px;align-content:start;padding-bottom:30px}
 .tool{
   position:relative;width:52px;height:52px;flex:none;
   display:flex;align-items:center;justify-content:center;
@@ -525,6 +533,9 @@ section{border-bottom:1px solid var(--line)}
 .mini-stats{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);align-self:start}
 .mini-stat{background:var(--ink);padding:16px 18px;display:flex;justify-content:space-between;gap:14px;align-items:baseline}
 .mini-stat b{font-family:var(--stencil);font-size:24px;font-weight:400}
+/* sparkline inside a stat — chart left, latest value beside it */
+.mini-stat b:has(.spark),.stat b:has(.spark){display:flex;align-items:center;gap:10px}
+.spark{flex:none;display:block}
 .mini-stat span{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--concrete)}
 
 .numbers{padding:56px 0 0}
@@ -550,6 +561,14 @@ section{border-bottom:1px solid var(--line)}
 .proj .pills{margin-bottom:0}
 .proj .mini-stats.proj-stats{align-self:stretch}
 .proj .hero-cta{margin-top:4px}
+
+/* a year of commits — ghchart svg in a panel frame */
+.heatmap{
+  border:1px solid var(--line);background:var(--panel);
+  padding:22px 22px 16px;margin:36px 0 8px;overflow-x:auto;
+}
+.heatmap .eyebrow{margin-bottom:14px}
+.heatmap img{min-width:680px;width:100%;display:block;opacity:.92}
 
 .repo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;padding:16px 0 80px}
 .repo{border:1px solid var(--line);background:var(--panel);padding:22px 22px 18px;display:flex;flex-direction:column;gap:10px;color:var(--bone);text-decoration:none;transition:all .15s}
@@ -611,15 +630,21 @@ footer{padding:44px 0 60px;color:var(--concrete)}
 .foot-grid p{font-family:var(--mono);font-size:11px;letter-spacing:.1em}
 .foot-grid a{color:var(--concrete)}
 .foot-grid a:hover{color:var(--cyan)}
+/* 88x31 badge row — rendered only when BADGES has entries */
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:28px}
+.badges img{width:88px;height:31px;image-rendering:pixelated;border:1px solid var(--line);display:block}
+.badges a:hover img{border-color:var(--cyan)}
 
 /* ---------- responsive ---------- */
 @media (max-width:900px){
-  .about-grid,.featured-proj,.log-grid{grid-template-columns:1fr}
+  .about-grid,.featured-proj,.log-grid,.bio-now{grid-template-columns:1fr}
+  .bio-now{gap:32px}
   .log-aside{position:static;gap:20px}
   .log-side{flex-direction:row;flex-wrap:wrap;gap:16px;border-left:none;padding-left:0}
   .queue{border-left:none;padding-left:0}
   .bin{display:none}
   .sys-item#visits{display:none}
+  .sys-item#presence{display:none}
   .audio-title{display:none}
   .lightbox .lb-nav{display:none}
 }

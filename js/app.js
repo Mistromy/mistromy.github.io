@@ -159,6 +159,75 @@ function scramble(el){
   window.addEventListener("keydown", e => { if (e.key === "Escape") setOpen(false); });
 })();
 
+/* ---------- discord presence via lanyard ----------
+   surfaces the live activity — custom rich presences included (vsc,
+   blender…) — as a sysbar item. lanyard only serves ids registered by
+   joining their discord server; until then this stays silent. */
+(function presence(){
+  const left = $(".sys-left");
+  if (!left || !SITE.discordId) return;
+  let el = null;
+  const trim = (s, n=42) => s.length > n ? s.slice(0, n - 1) + "…" : s;
+  async function tick(){
+    try {
+      const res = await fetch("https://api.lanyard.rest/v1/users/" + SITE.discordId);
+      if (!res.ok) return;
+      const j = await res.json();
+      if (!j.success) return;              // not registered with lanyard yet
+      const d = j.data;
+      /* type 0 = playing/rich presence (vsc, blender, games), 2 = spotify */
+      const act = (d.activities || []).find(a => a.type === 0 || a.type === 2);
+      let txt = "operator // " + d.discord_status;
+      if (act){
+        txt = "operator // " + act.name.toLowerCase();
+        if (act.details) txt += " · " + act.details.toLowerCase();
+      }
+      if (!el){
+        el = document.createElement("span");
+        el.className = "sys-item";
+        el.id = "presence";
+        left.appendChild(el);
+      }
+      el.textContent = trim(txt);
+      el.style.color = d.discord_status === "offline" ? "" : "var(--cyan)";
+    } catch { /* lanyard down — nothing to show, nothing to break */ }
+  }
+  tick();
+  setInterval(tick, 60000);
+})();
+
+/* ---------- 88x31 badges — footer row, only if BADGES has entries ---------- */
+(function buildBadges(){
+  const foot = $("footer .wrap");
+  if (!foot || typeof BADGES === "undefined" || !BADGES.length) return;
+  const row = document.createElement("div");
+  row.className = "badges";
+  BADGES.forEach(b => {
+    const img = document.createElement("img");
+    img.src = b.img;
+    img.alt = b.alt || "";
+    img.loading = "lazy";
+    img.width = 88; img.height = 31;
+    img.onerror = () => (b.url ? img.parentElement : img).remove();
+    if (b.url){
+      const a = document.createElement("a");
+      a.href = b.url; a.target = "_blank"; a.rel = "noopener";
+      a.appendChild(img);
+      row.appendChild(a);
+    } else row.appendChild(img);
+  });
+  foot.appendChild(row);
+})();
+
+/* ---------- github heatmap — hide the frame if the image dies ---------- */
+(function heatmap(){
+  const img = $("#ghHeat");
+  if (!img) return;
+  const kill = () => { const box = img.closest(".heatmap"); if (box) box.style.display = "none"; };
+  if (img.complete && !img.naturalWidth) kill();
+  img.onerror = kill;
+})();
+
 /* ---------- nav scrollspy (index) / static sector (subpages) ---------- */
 (function scrollspy(){
   const fixed = document.body.dataset.sector;
@@ -649,6 +718,29 @@ function countUp(el, target, compact=false){
   });
   countUp.io.observe(el);
 }
+/* ---------- sparkline — an array in the stats gist becomes a graph.
+   single series on the site surface: one hue (cyan), 2px line, end dot,
+   last value as text beside it. min/max/last live in the tooltip. ---------- */
+function sparkline(el, arr, compact=false){
+  const data = arr.filter(v => typeof v === "number");
+  if (data.length < 2){ el.textContent = "░░░"; el.classList.add("live-err"); return; }
+  const fmt = compact ? fmtCompact : (v => v.toLocaleString());
+  const w = 96, h = 26, pad = 3;
+  const min = Math.min(...data), max = Math.max(...data), span = (max - min) || 1;
+  const x = i => pad + i * (w - 2 * pad) / (data.length - 1);
+  const y = v => h - pad - (v - min) * (h - 2 * pad) / span;
+  const pts = data.map((v, i) => x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ");
+  const last = data[data.length - 1];
+  el.innerHTML =
+    '<svg class="spark" viewBox="0 0 ' + w + " " + h + '" width="' + w + '" height="' + h + '" role="img" ' +
+      'aria-label="trend, latest ' + fmt(last) + '">' +
+      '<polyline points="' + pts + '" fill="none" stroke="var(--cyan)" stroke-width="2" ' +
+        'stroke-linejoin="round" stroke-linecap="round"/>' +
+      '<circle cx="' + x(data.length - 1).toFixed(1) + '" cy="' + y(last).toFixed(1) + '" r="2.5" fill="var(--cyan)"/>' +
+    "</svg><span>" + fmt(last) + "</span>";
+  el.title = "latest " + last.toLocaleString() + " · min " + min.toLocaleString() + " · max " + max.toLocaleString();
+}
+
 function statFail(id, srcId, label="offline // no answer"){
   const el = $(id); if (el){ el.textContent = "░░░"; el.classList.add("live-err"); }
   const src = $(srcId); if (src){ src.textContent = label; src.classList.add("off"); }
@@ -769,6 +861,8 @@ countUp($("#stArtworks"), ART.length);
   slots.forEach(el => {
     const v = d[el.dataset.statKey];
     if (v == null){ el.textContent = "░░░"; el.classList.add("live-err"); return; }
+    /* an array value renders as a sparkline instead of a number */
+    if (Array.isArray(v)){ sparkline(el, v, el.dataset.compact != null); return; }
     if (el.dataset.fmt === "percent"){ el.textContent = (Math.round(v * 100) / 100) + "%"; return; }
     const compact = el.dataset.compact != null;
     countUp(el, v, compact);

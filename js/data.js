@@ -11,6 +11,12 @@ const SITE = {
   githubUser: "Mistromy",
   flagshipRepo: "Mistromy/Nirupama",
 
+  /* discord presence via lanyard (api.lanyard.rest) — shows the live
+     activity (custom rich presences included: vsc, blender…) in the
+     sysbar. stays completely silent until this id is registered by
+     joining the lanyard discord server: https://discord.gg/lanyard */
+  discordId: "859371145076932619",
+
   /* the stats pipe — Nirupama pushes stats.json to this gist.
      expected JSON shape (every key optional):
      {
@@ -67,6 +73,13 @@ const SOCIALS = [
     ]
   },
   */
+];
+
+/* ---------- 88x31 badges — the footer row. empty = no row rendered.
+   drop files into assets/badges/ (or hotlink) and add lines:
+   { img: "assets/badges/whatever.gif", url: "https://...", alt: "what it is" },
+   url is optional — badges without one just sit there looking retro. */
+const BADGES = [
 ];
 
 /* the availability strip (commissions / collabs) lives directly in
@@ -150,7 +163,16 @@ const ART = [
   },
   {
     title: "Smart Juice", year: "2026", medium: "cgi", img: "https://cdna.artstation.com/p/assets/images/images/098/445/890/large/mist-pillswatermarked.webp?1777062281", tags: "product · packaging",
-    note: "My lawyers say i can't sell this.", post: { artstation: "https://www.artstation.com/artwork/8BABGm" }, images: ["https://cdna.artstation.com/p/assets/images/images/098/446/088/large/mist-pillswireframe.webp?1777062954", "https://cdnb.artstation.com/p/assets/images/images/098/446/139/large/mist-zrzut-ekranu-2026-04-24-213724.webp?1777063052", "https://cdnb.artstation.com/p/assets/images/images/098/446/199/large/mist-zrzut-ekranu-2026-04-24-213823.webp?1777063122", "https://cdna.artstation.com/p/assets/images/images/098/446/228/large/mist-zrzut-ekranu-2026-04-24-213938.webp?1777063183"]
+    note: "My lawyers say i can't sell this.", post: { artstation: "https://www.artstation.com/artwork/8BABGm" },
+    /* images entries can be a plain url OR { src, tag } — the tag shows
+       as a chip on that frame in the fullscreen view ("final",
+       "wireframe", "iteration", any word). mix both forms freely: */
+    images: [
+      { src: "https://cdna.artstation.com/p/assets/images/images/098/446/088/large/mist-pillswireframe.webp?1777062954", tag: "wireframe" },
+      { src: "https://cdnb.artstation.com/p/assets/images/images/098/446/139/large/mist-zrzut-ekranu-2026-04-24-213724.webp?1777063052", tag: "viewport" },
+      "https://cdnb.artstation.com/p/assets/images/images/098/446/199/large/mist-zrzut-ekranu-2026-04-24-213823.webp?1777063122",
+      "https://cdna.artstation.com/p/assets/images/images/098/446/228/large/mist-zrzut-ekranu-2026-04-24-213938.webp?1777063183",
+    ]
   },
   {
     title: "180SX Wrap", year: "2026", medium: ["cgi", "2d"], img: "https://cdnb.artstation.com/p/assets/images/images/098/027/683/large/mist-180sxposter.webp?1775906831", tags: "vehicle · livery",
@@ -270,7 +292,7 @@ const MARQUEE = [
   "big facts, no printer", "si vis pacem, para bellum", "Local bars hate this simple trick",
   "will a turtle not be part of the choir?", "bajo jajo, bajo jajo", "BLOOD FOR THE BLOOD GOD",
   "please uninstall", "pool's closed", "GOLD GOLD GOLD", "TITAN HOLO", "GREEN, GREEN",
-  "biggest torta, workin' hard or hardly workin'?",
+  "biggest torta", "workin' hard or hardly workin' ? ",
   "my code runs, but i sprint", "to nie sprzęt, a technicka robi z ciebie zawodnika", "wąchaj gume leszcu",
   "jestem oazą spokoju", "brzuch boli od pizzy", "Press F to pay respects.",
   "You cannot rest now, there are monsters nearby.", "The cake is a lie.", "F",

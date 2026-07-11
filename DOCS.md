@@ -177,6 +177,43 @@ where it was, not from zero.
   `{ src: "url", tag: "final" }` — the tag renders as a chip on that
   frame in the fullscreen view ("final", "iteration", "wireframe"…).
 
+## Live presence (lanyard)
+
+The sysbar shows "operator // <activity>" pulled from
+`api.lanyard.rest/v1/users/<SITE.discordId>` — the whole activities
+array, so custom rich presences (VSC, Blender) show, not just Spotify.
+**It stays invisible until you join the Lanyard Discord server**
+(discord.gg/lanyard) — that's what registers the ID with their API.
+Refreshes every 60 s; hidden on narrow screens.
+
+## Sparklines (graphs from the gist)
+
+Any stats-gist key whose value is an **array of numbers** renders as a
+sparkline instead of a number — cyan line, latest value beside it,
+min/max/latest in the hover tooltip. So when ComputerCraft (or anything
+else) starts pushing history, e.g.
+
+```json
+{ "cc_energy_history": [410, 388, 402, 455, 431] }
+```
+
+…wiring it is one stats line in `PROJECTS`:
+`{ label: "energy, last 5h", key: "cc_energy_history" }`.
+No code changes. Keep arrays to ~50 points max — it's a sparkline,
+not a dashboard.
+
+## 88x31 badges
+
+`BADGES` in data.js. Empty array = no row. Add entries and a badge row
+appears at the bottom of the footer on every page, pixelated and
+bordered like the old web intended. `url` optional.
+
+## GitHub heatmap
+
+`projects.html` embeds `ghchart.rshah.org/c22a6c/Mistromy` (a year of
+commits, magenta ramp, no auth needed). The frame hides itself if the
+service dies. Change the hex in the url to recolor.
+
 ## The queue (ex-plans)
 
 `PLANS` in data.js still exists but renders as the compact "QUEUE //
