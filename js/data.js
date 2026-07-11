@@ -57,7 +57,7 @@ const SOCIALS = [
   { name: "Google.com", sub: "I needed to fill the space", url: "https://www.google.com/search?q=mistromy" },
   /* random: [...] instead of url → every click picks one at random */
   {
-    name: "another placeholder", sub: "huh, mabye i don't have enough socials.", random: [
+    name: "another placeholder", sub: "huh, maybe i don't have enough socials.", random: [
       "https://en.wikipedia.org/wiki/Wikipedia:Unusual_articles",
       "https://www.rickroll.it/rickroll.mp4",
       "https://html5zombo.com/",
@@ -124,21 +124,25 @@ const ART = [
     note: "Fluorescent, wet, and going somewhere bad."
   },
   {
-    title: "Dark Kitchen", year: "2025", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/088/487/019/large/mist-kimchen.jpg?1748424326", tags: "interior · archviz",
-    note: "I didnt know how to texture walls."
-  },
-  {
-    title: "Indoor Pool", year: "2025", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/088/486/999/large/mist-richassbathroom.jpg?1748424270", tags: "interior · water",
+    title: "Indoor Pool", year: "2024", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/088/486/999/large/mist-richassbathroom.jpg?1748424270", tags: "interior · water",
     note: "Inspired by some pinterest post."
   },
   {
-    title: "Flower Field", year: "2025", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/090/255/863/large/mist-field.jpg?1753366060", tags: "nature · scatter",
+    title: "Flower Field", year: "2024", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/090/255/863/large/mist-field.jpg?1753366060", tags: "nature · scatter",
     note: "I don't like this one."
   },
   {
-    title: "Some cult area", year: "2025", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/088/487/197/large/mist-ancient-gatewayfinal.jpg?1748424711", tags: "scene · story",
+    title: "Some cult area", year: "2024", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/088/487/197/large/mist-ancient-gatewayfinal.jpg?1748424711", tags: "scene · story",
     note: "I think they're dead."
   },
+  {
+    title: "Dark Kitchen", year: "2024", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/088/487/019/large/mist-kimchen.jpg?1748424326", tags: "interior · archviz",
+    note: "I didnt know how to texture walls."
+  },
+  {
+    title: "Moody Bar/room", year: "2024", medium: "cgi", img: "https://cdna.artstation.com/p/assets/images/images/088/489/024/medium/mist-unreal-bar-final1080p.jpg?1748428191", tags: "interior · lighting",
+    note: "First interior render I like."
+  }
 ];
 
 /* ---------- numbers no API will admit to. update by hand. ---------- */
@@ -217,5 +221,5 @@ const MARQUEE = [
   "I choose UNLIMITED games, but no games", "mist you too", "visibility: low", "do not evaporate",
   "stay condensed", "into thin air", "起きてください", "mgła gęstnieje", "もやもや", "67", "mist-er Worldwide",
   '"Hey you, you\'re finally awake."', '"Protocol 3: Protect the Pilot"', "The fog is coming.", "rendered in 240p",
-  "gęsto tu", "it works on my machine", "znowu mam hikikomori"
+  "gęsto tu", "it works on my machine", "znowu mam hikikomori", "cicho wszędzie, głucho wszędzie"
 ];
