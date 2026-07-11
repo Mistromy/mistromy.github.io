@@ -299,5 +299,5 @@ const MARQUEE = [
   "patio is closed because it's not open", "Veni, vidi, abii",
   "I came, i saw, i conquered", "i saw, i conquered, i came", "i'd betray my country for confetti",
   "we win these", "not even close", "technoblade never dies", "fist me", "MIST from DOWNTOWN",
-  "that's a lot of science"
+  "that's a lot of science", "funny quote"
 ]
