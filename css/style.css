@@ -29,6 +29,8 @@ body{
   padding-top:calc(var(--sysbar-h) + var(--nav-h));
   overflow-x:hidden;
 }
+/* set while the lightbox is open — the page behind must not scroll */
+body.no-scroll{overflow:hidden}
 /* film grain + scanlines, very faint */
 body::before{
   content:"";position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.05;
@@ -90,7 +92,28 @@ img{max-width:100%;display:block}
 .audio.playing{border-color:var(--magenta)}
 @keyframes eq{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
 .audio-title{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.audio input[type=range]{width:60px;height:10px;accent-color:var(--magenta);cursor:pointer}
+/* volume — a thin filled line with a square thumb, no browser chrome.
+   --fill is kept in sync by app.js */
+.audio input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:64px;height:12px;background:transparent;cursor:pointer;
+}
+.audio input[type=range]::-webkit-slider-runnable-track{
+  height:2px;
+  background:linear-gradient(90deg,var(--magenta) var(--fill,12%),var(--line) 0);
+}
+.audio input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:7px;height:12px;margin-top:-5px;border:none;border-radius:0;
+  background:var(--bone);
+}
+.audio input[type=range]:hover::-webkit-slider-thumb{background:var(--cyan)}
+.audio input[type=range]::-moz-range-track{height:2px;background:var(--line)}
+.audio input[type=range]::-moz-range-progress{height:2px;background:var(--magenta)}
+.audio input[type=range]::-moz-range-thumb{
+  width:7px;height:12px;border:none;border-radius:0;background:var(--bone);
+}
+.audio input[type=range]:hover::-moz-range-thumb{background:var(--cyan)}
 
 /* ---------- nav ---------- */
 .nav{
@@ -107,7 +130,11 @@ img{max-width:100%;display:block}
 }
 .nav a:hover{color:var(--bone);background:var(--panel);text-decoration:none}
 .nav a.active{color:var(--bone);background:var(--panel-2);box-shadow:inset 0 -2px 0 var(--magenta)}
-.nav .nav-note{margin-left:auto;display:flex;align-items:center;padding:0 20px;color:var(--concrete);opacity:.6;border-right:none}
+.nav .nav-note{
+  margin-left:auto;display:block;line-height:var(--nav-h);padding:0 20px;
+  color:var(--concrete);opacity:.6;border-right:none;
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
 .nav-links{display:flex;align-items:stretch}
 .nav-burger{
   display:none;align-items:center;gap:10px;padding:0 20px;
@@ -127,6 +154,10 @@ img{max-width:100%;display:block}
 .nav-item:hover .nav-drop,.nav-item:focus-within .nav-drop{opacity:1;transform:none;pointer-events:auto}
 .nav-drop a{border-right:none;padding:12px 22px;color:var(--concrete)}
 .nav-drop a:hover{color:var(--cyan)}
+/* invisible backdrop behind the open mobile menu — swallows the tap
+   that closes it so nothing underneath gets clicked by accident */
+.nav-scrim{display:none;position:fixed;inset:0;z-index:58;background:transparent}
+.nav-scrim.show{display:block}
 /* mobile: burger + cascading panel, closes on tap outside */
 @media (max-width:700px){
   .nav-burger{display:flex}
@@ -345,10 +376,13 @@ section{border-bottom:1px solid var(--line)}
 .lightbox.open{display:flex}
 /* the stack — cover on top, extra images scroll below it.
    every frame sizes itself: max 78vh tall, max stack width — mixed
-   orientations coexist without zooming each other */
+   orientations coexist without zooming each other. the framed panel
+   is the viewer: anything clicked outside of it closes. */
 .lb-stack{
-  width:min(92vw,980px);max-height:80vh;overflow-y:auto;
+  width:fit-content;max-width:min(92vw,980px);max-height:80vh;overflow-y:auto;
   display:flex;flex-direction:column;align-items:center;gap:16px;
+  padding:10px;background:var(--panel);border:1px solid var(--magenta);
+  box-shadow:0 0 0 1px rgba(194,42,108,.15),0 24px 60px rgba(0,0,0,.55);
   scrollbar-width:thin;scrollbar-color:var(--magenta) var(--panel);
 }
 .lb-item{position:relative;flex:none;max-width:100%;display:flex;justify-content:center}
@@ -496,7 +530,6 @@ footer{padding:44px 0 60px;color:var(--concrete)}
 @media (max-width:600px){
   .wrap{padding:0 16px}
   .sys-item#epoch{display:none}
-  .nav .nav-note{display:none}
   .audio input[type=range]{display:none}
   .section-head{padding:52px 0 28px}
   .hero{padding:9vh 0 7vh}
@@ -509,11 +542,17 @@ footer{padding:44px 0 60px;color:var(--concrete)}
   .proj{padding:22px 18px}
   .plans-grid,.repo-grid,.projects-grid{grid-template-columns:1fr}
   .jrow{gap:10px;margin-bottom:10px}
-  .lightbox{padding:2vh 3vw}
-  .lightbox figcaption{bottom:8px;padding:0 12px;font-size:10px}
+  /* lightbox becomes a column: close row on top, framed stack in the
+     middle, caption in the flow below — nothing overlaps anything */
+  .lightbox{padding:0;align-items:stretch;justify-content:flex-start}
+  .lightbox figure{
+    display:flex;flex-direction:column;gap:10px;
+    width:100%;height:100%;padding:52px 10px 10px;
+  }
+  .lb-stack{width:100%;max-width:none;max-height:none;flex:1;min-height:0;padding:8px}
+  .lightbox figcaption{position:static;padding:0;font-size:10px}
   .lightbox figcaption .lb-links a{margin-left:10px;font-size:10px}
-  .lb-stack{width:94vw;max-height:82vh}
-  .lightbox .close{top:calc(var(--sysbar-h) + 8px);right:10px;padding:6px 10px}
+  .lightbox .close{top:10px;right:10px;padding:6px 10px;background:var(--ink);z-index:1}
 }
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion:reduce){

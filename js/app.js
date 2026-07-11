@@ -139,21 +139,22 @@ function scramble(el){
   })(start);
 }
 
-/* ---------- mobile menu — burger opens, tapping anywhere else closes ---------- */
+/* ---------- mobile menu — burger opens, tapping anywhere else closes.
+   an invisible scrim sits under the open panel and swallows the
+   closing tap, so it can't also click whatever was underneath. */
 (function mobileMenu(){
   const nav = $(".nav"), burger = $("#navBurger");
   if (!nav || !burger) return;
+  const scrim = document.createElement("div");
+  scrim.className = "nav-scrim";
+  document.body.appendChild(scrim);
   const setOpen = open => {
     nav.classList.toggle("open", open);
+    scrim.classList.toggle("show", open);
     burger.setAttribute("aria-expanded", open);
   };
-  burger.addEventListener("click", e => {
-    e.stopPropagation();
-    setOpen(!nav.classList.contains("open"));
-  });
-  document.addEventListener("click", e => {
-    if (nav.classList.contains("open") && !nav.contains(e.target)) setOpen(false);
-  });
+  burger.addEventListener("click", () => setOpen(!nav.classList.contains("open")));
+  scrim.addEventListener("click", () => setOpen(false));
   $$(".nav-links a", nav).forEach(a => a.addEventListener("click", () => setOpen(false)));
   window.addEventListener("keydown", e => { if (e.key === "Escape") setOpen(false); });
 })();
@@ -269,24 +270,43 @@ function makeTile(item, w, h){
 function layoutJustified(mount, items, onTileClick){
   const W = mount.clientWidth;
   if (!W) return;
-  const mobile = window.innerWidth <= 600;  // must match the css breakpoint
+  /* clientWidth, not innerWidth — it tracks the css media queries even
+     when the visual viewport is pinch-zoomed */
+  const mobile = document.documentElement.clientWidth <= 600;
   const gap = mobile ? 10 : 14;
   const target = mobile ? 200 : 300;        // ideal row height
   const maxH = Math.round(target * 1.5);
-  /* greedy row packing */
+  /* greedy row packing — when a tile would overshoot the row, it either
+     stays or opens the next row, whichever lands the row height closer
+     to the target. stops one wide frame from crushing a row into a
+     tiny strip, and keeps neighbouring rows at comparable sizes. */
   const rows = [];
   let row = [], arSum = 0;
   items.forEach(it => {
+    if (row.length && (arSum + it._ar) * target + gap * row.length >= W){
+      const hWith    = (W - gap * row.length)       / (arSum + it._ar);
+      const hWithout = (W - gap * (row.length - 1)) / arSum;
+      if (Math.abs(hWith - target) < Math.abs(hWithout - target)){
+        row.push(it);
+        rows.push(row); row = []; arSum = 0;
+        return;
+      }
+      rows.push(row); row = []; arSum = 0;
+    }
     row.push(it); arSum += it._ar;
     if (arSum * target + gap * (row.length - 1) >= W){ rows.push(row); row = []; arSum = 0; }
   });
   if (row.length) rows.push(row);
-  /* a sparse final row leaves a hole — fold it into the previous row
-     instead (that row just gets a little shorter) */
+  /* a sparse final row leaves a hole — fold it into the previous row,
+     but only if that row stays a reasonable size afterwards */
   if (rows.length > 1){
     const last = rows[rows.length - 1];
     const fill = last.reduce((s, it) => s + it._ar, 0) * target + gap * (last.length - 1);
-    if (fill < W * 0.55) rows[rows.length - 2].push(...rows.pop());
+    if (fill < W * 0.55){
+      const merged = [...rows[rows.length - 2], ...last];
+      const hMerged = (W - gap * (merged.length - 1)) / merged.reduce((s, it) => s + it._ar, 0);
+      if (hMerged >= target * 0.72) rows[rows.length - 2].push(...rows.pop());
+    }
   }
   mount.innerHTML = "";
   rows.forEach((r, idx) => {
@@ -415,8 +435,13 @@ function openLightbox(item){
     links.appendChild(a);
   });
   lb.classList.add("open");
+  document.body.classList.add("no-scroll");
 }
-function closeLightbox(){ lb.classList.remove("open"); $("#lbStack").innerHTML = ""; }
+function closeLightbox(){
+  lb.classList.remove("open");
+  $("#lbStack").innerHTML = "";
+  document.body.classList.remove("no-scroll");
+}
 function stepLightbox(dir){
   if (!lbList.length) return;
   lbIndex = (lbIndex + dir + lbList.length) % lbList.length;
@@ -426,7 +451,11 @@ if (lb){
   $("#lbClose").addEventListener("click", closeLightbox);
   $("#lbPrev").addEventListener("click", e => { e.stopPropagation(); stepLightbox(-1); });
   $("#lbNext").addEventListener("click", e => { e.stopPropagation(); stepLightbox(1); });
-  lb.addEventListener("click", e => { if (e.target === lb) closeLightbox(); });
+  /* the framed stack is the viewer — a click anywhere outside it
+     (backdrop, gaps around the frame) closes */
+  lb.addEventListener("click", e => {
+    if (!e.target.closest(".lb-stack, .lb-nav, .close, figcaption")) closeLightbox();
+  });
   window.addEventListener("keydown", e => {
     if (!lb.classList.contains("open")) return;
     if (e.key === "Escape") closeLightbox();
@@ -573,17 +602,31 @@ function fmtCompact(n){
   if (n >= 1e4) return Math.floor(n / 1e3) + "K";
   return n.toLocaleString();
 }
+/* the animation only runs once the number scrolls into view — data can
+   arrive long before the reader does, so each element waits its turn */
 function countUp(el, target, compact=false){
   if (!el) return;
   const fmt = compact ? fmtCompact : (v => v.toLocaleString());
-  if (reducedMotion){ el.textContent = fmt(target); return; }
-  const dur = 900, start = performance.now();
-  function step(t){
-    const p = Math.min((t - start) / dur, 1);
-    el.textContent = fmt(Math.floor(target * (1 - Math.pow(1 - p, 3))));
-    if (p < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
+  if (reducedMotion || !("IntersectionObserver" in window)){ el.textContent = fmt(target); return; }
+  countUp.jobs = countUp.jobs || new Map();
+  countUp.io = countUp.io || new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (!en.isIntersecting) return;
+      countUp.io.unobserve(en.target);
+      const run = countUp.jobs.get(en.target);
+      countUp.jobs.delete(en.target);
+      if (run) run();
+    });
+  }, { threshold: 0.5 });
+  countUp.jobs.set(el, () => {
+    const dur = 900, start = performance.now();
+    (function step(t){
+      const p = Math.min((t - start) / dur, 1);
+      el.textContent = fmt(Math.floor(target * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) requestAnimationFrame(step);
+    })(start);
+  });
+  countUp.io.observe(el);
 }
 function statFail(id, srcId, label="offline // no answer"){
   const el = $(id); if (el){ el.textContent = "░░░"; el.classList.add("live-err"); }
@@ -753,8 +796,11 @@ function fmtAge(s){
   $("#audioTitle").textContent = SITE.audio.title;
   const vol = $("#audioVol");
   if (vol){
+    /* --fill drives the coloured part of the slider track (css) */
+    const paint = () => vol.style.setProperty("--fill", vol.value + "%");
     vol.value = Math.round(player.volume * 100);
-    vol.addEventListener("input", () => { player.volume = vol.value / 100; });
+    paint();
+    vol.addEventListener("input", () => { player.volume = vol.value / 100; paint(); });
   }
   let broken = false;
   player.onerror = () => { broken = true; $("#audioTitle").textContent = "no_signal.mp3"; };

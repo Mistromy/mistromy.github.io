@@ -108,8 +108,8 @@ const ART = [
     note: "My lawyers say i can't sell this.", post: { artstation: "https://www.artstation.com/artwork/8BABGm" }, images: ["https://cdna.artstation.com/p/assets/images/images/098/446/088/large/mist-pillswireframe.webp?1777062954", "https://cdnb.artstation.com/p/assets/images/images/098/446/139/large/mist-zrzut-ekranu-2026-04-24-213724.webp?1777063052", "https://cdnb.artstation.com/p/assets/images/images/098/446/199/large/mist-zrzut-ekranu-2026-04-24-213823.webp?1777063122", "https://cdna.artstation.com/p/assets/images/images/098/446/228/large/mist-zrzut-ekranu-2026-04-24-213938.webp?1777063183"]
   },
   {
-    title: "180SX Wrap", year: "2026", medium: ["cgi", "2d"], img: "https://cdnb.artstation.com/p/assets/images/images/098/027/685/large/mist-180sx-blackandwhite.webp?1775906594", tags: "vehicle · livery",
-    note: "Full sticker-bomb livery study.", images: ["https://cdnb.artstation.com/p/assets/images/images/098/027/683/large/mist-180sxposter.webp?1775906831"],
+    title: "180SX Wrap", year: "2026", medium: ["cgi", "2d"], img: "https://cdnb.artstation.com/p/assets/images/images/098/027/683/large/mist-180sxposter.webp?1775906831", tags: "vehicle · livery",
+    note: "Full sticker-bomb livery study.", images: ["https://cdnb.artstation.com/p/assets/images/images/098/027/685/large/mist-180sx-blackandwhite.webp?1775906594"],
   },
   {
     title: "Gothic Bedroom", year: "2025", medium: "cgi", img: "https://cdna.artstation.com/p/assets/images/images/090/387/186/large/mist-darkacademiaroomresized.jpg?1753788209", tags: "environment · interior",
@@ -211,7 +211,7 @@ const PLANS = [
   },
   {
     title: "give up", status: "tomorrow",
-    note: "I keep procrastinating on this one. I'm tellin y'all, tomorrow is the day."
+    note: "Quitting is fully allowed — tomorrow. Today there's still stuff to finish. It's been 'tomorrow' for years now, and somehow everything keeps shipping."
   },
 ];
 

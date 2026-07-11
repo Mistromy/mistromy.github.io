@@ -5,7 +5,7 @@
 - [x] combine 2d and 3d pages — one /ART section with filter chips
 - [x] remove some cringe lines
 - [x] add cooler effects. but no scrolljacking, scroll effects, cursor effects can be added. but dont replace the actual cursor.
-- [ ] drop cgi renders into assets/art/ (tiles show stencil placeholders until then; any export ratio works — the gallery lays out native ratios)
+- [x] drop cgi renders into assets/art/ (tiles show stencil placeholders until then; any export ratio works — the gallery lays out native ratios)
 - [x] wire the stats gist — done, reads nirupama's stats.json gist live (api first, raw url fallback)
 - [ ] crank gist push interval to ~10 s (bot side) — site now reads the gist API (uncached), so 10 s updates will actually show
 - [x] split into taster homepage + art.html (full archive) + projects.html (flagship + project cards + repos)
@@ -30,3 +30,11 @@
 - [x] stats pipe merges every *.json file in the gist — one file per project, no override risk
 - [ ] google analytics: paste the G-… id into the commented snippet (all 3 heads) once the data stream exists
 - [ ] displaying GA visitor counts = go backend (GA4 Data API needs a service account)
+- [x] mobile menu: invisible scrim swallows the closing tap — nothing underneath gets clicked
+- [x] volume slider restyled — thin filled line + square thumb, no browser chrome
+- [x] random nav quote visible on mobile, ellipsized instead of wrapping at mid widths
+- [x] gallery packing balanced — no more tiny rows (cult area) or giant/midget neighbours
+- [x] lightbox: framed panel (click outside = close), page scroll locked, mobile layout unbroken
+- [x] stat numbers animate when scrolled into view, not on page load
+- [x] plans copy: "give up (tomorrow)" reframed as procrastination-as-motivation, evaporation puns dropped
+- [x] footer lines pull from the random quote pool
