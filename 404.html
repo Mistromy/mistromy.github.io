@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIST — signal lost</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Allerta+Stencil&family=Archivo:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-sector="404">
+
+  <div class="cursor-fx" id="cursorFx" aria-hidden="true"></div>
+
+  <!-- system bar -->
+  <header class="sysbar">
+    <div class="sys-left">
+      <span class="dot" id="sysDot"></span>
+      <span class="sys-name">MIST.SYS</span>
+      <span class="sys-item" id="sysStatus">signal lost</span>
+    </div>
+    <div class="sys-right">
+      <span class="sys-item" id="epoch">SYS_EPOCH // ——————————</span>
+    </div>
+  </header>
+
+  <!-- nav -->
+  <nav class="nav" aria-label="Primary">
+    <button class="nav-burger" id="navBurger" aria-expanded="false" aria-controls="navLinks">/// menu</button>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html#about">/ABOUT</a>
+      <a href="index.html#links">/LINKS</a>
+      <div class="nav-item">
+        <a href="index.html#art">/ART</a>
+        <div class="nav-drop"><a href="art.html">FULL ARCHIVE -&gt;</a></div>
+      </div>
+      <div class="nav-item">
+        <a href="index.html#sys">/SYS</a>
+        <div class="nav-drop"><a href="projects.html">ALL PROJECTS -&gt;</a></div>
+      </div>
+      <a href="index.html#log">/BIO</a>
+    </div>
+    <span class="nav-note" data-random-note>// stay condensed</span>
+  </nav>
+
+  <main>
+    <section id="lost">
+      <div class="hero">
+        <div class="bin bin-l" aria-hidden="true"></div>
+        <div class="bin bin-r" aria-hidden="true"></div>
+        <div class="wrap">
+          <p class="eyebrow">// err — sector not found. running diagnostic…</p>
+          <h1 class="glitch" id="glitchName" data-text="404">404</h1>
+          <p class="lede">
+            <b>Oopsie Daisy!</b><br>
+            // <span class="random-quote">—</span>
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-solid" href="index.html">back to base</a>
+            <a class="btn" id="lostBtn" href="art.html">take me somewhere -&gt;</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="marquee" aria-hidden="true">
+      <span class="marquee-track" id="marqueeTrack"></span>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap foot-grid">
+      <div>
+        <div class="sig">Mist</div>
+        <p>SYS_EPOCH // <span id="footEpoch">—</span> · <span class="random-quote">—</span></p>
+      </div>
+      <p>© <span id="year"></span> mist · <a href="index.html">home</a> · <span class="random-quote">—</span></p>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    /* "take me somewhere" → a random artwork, deep-linked */
+    (function () {
+      const btn = document.getElementById("lostBtn");
+      if (!btn || typeof ART === "undefined" || !ART.length) return;
+      const item = ART[Math.random() * ART.length | 0];
+      btn.href = "art.html#p/" + slugFor(item.title);
+    })();
+  </script>
+</body>
+
+</html>

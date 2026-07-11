@@ -146,6 +146,49 @@ becomes the button label.
 there's a slider in the widget for visitors). Set `audio: null` to
 remove the widget entirely.
 
+Playback state (position, volume, playing) survives page switches via
+sessionStorage. Browsers refuse silent autoplay on a fresh page load,
+so after navigating the track may wait for one click — it resumes from
+where it was, not from zero.
+
+## The stack strip + availability + pfp
+
+- `STACK` in data.js → the b&w icon strip in the about section.
+  Hover pops the icon to colour with the name (and optional `sub`
+  honesty tag: "rusty", "used once"…) as a label. `icon` is any image
+  URL — a dead one renders as a name-only chip, so local paths like
+  `assets/icons/affinity.png` are fine to reference before the file
+  exists. Benched tools (Maya, Houdini, AE, Illustrator) sit commented
+  at the bottom of the list.
+- The availability strip (commissions / collabs) is **plain HTML** in
+  the index hero — edit the words in place, case renders as typed.
+  Tones: `tone-go` (cyan pulse), `tone-off` (grey), `tone-warn` (red).
+- The **pfp slot** in the hero shows `assets/pfp.png` when the file
+  exists; until then it's a "pfp // pending" stencil. Drop any square
+  image there.
+
+## Deep links + per-frame tags
+
+- Every artwork is deep-linkable: opening the fullscreen view puts
+  `#p/slug-of-title` in the url; sharing that url opens the post
+  directly (works on both index and art.html). No extra links appear
+  anywhere on the page.
+- `images` entries can be plain urls **or** objects with a tag:
+  `{ src: "url", tag: "final" }` — the tag renders as a chip on that
+  frame in the fullscreen view ("final", "iteration", "wireframe"…).
+
+## The queue (ex-plans)
+
+`PLANS` in data.js still exists but renders as the compact "QUEUE //
+NO PROMISES" list beside the bio — one line per item, note on hover.
+Delete entries freely; nothing else depends on them.
+
+## Benched links
+
+Google.com and the random-redirect placeholder are commented out in
+`SOCIALS`, not deleted — uncomment whenever there's room for them
+again. The `random: [...]` machinery still works.
+
 ## Marquee lines + random quotes
 
 `js/data.js` → `MARQUEE`. Keep them short. Mist puns encouraged.

@@ -10,6 +10,7 @@
   <meta name="description"
     content="Mist (Mistromy) — student, CGI artist and developer. 3D environment renders and 2D poster art, plus software projects including the Nirupama Discord bot. Portfolio and links.">
   <meta property="og:title" content="MIST — art & code portfolio">
+  <meta property="og:image" content="https://mistromy.github.io/assets/og.png">
   <meta property="og:description"
     content="Mist (Mistromy) — student, CGI artist and developer. 3D renders, 2D posters, and software projects.">
   <link rel="canonical" href="https://mistromy.github.io/">
@@ -26,6 +27,8 @@
       "https://www.artstation.com/mistromy",
       "https://github.com/mistromy",
       "https://www.instagram.com/mi5tromy",
+      "https://www.youtube.com/@Mistromy",
+      "https://steamcommunity.com/id/mistromy/",
       "https://ko-fi.com/mist",
       "https://nirupama.mista.tech"
     ]
@@ -96,7 +99,6 @@
         <div class="nav-drop"><a href="projects.html">ALL PROJECTS -&gt;</a></div>
       </div>
       <a href="#log" data-nav="log">/BIO</a>
-      <a href="#plans" data-nav="plans">/PLANS</a>
     </div>
     <span class="nav-note" data-random-note>// stay condensed</span>
   </nav>
@@ -110,14 +112,24 @@
         <div class="bin bin-r" aria-hidden="true"></div>
         <div class="wrap">
           <p class="eyebrow">// transmission open — can you hear me?</p>
-          <h1 class="glitch" id="glitchName" data-text="MIST">MIST</h1>
+          <div class="hero-id">
+            <div class="pfp" id="pfpFrame">
+              <img id="pfpImg" src="https://avatars.githubusercontent.com/u/125371422?v=4" alt="Mist's avatar">
+            </div>
+            <h1 class="glitch" id="glitchName" data-text="MIST">MIST</h1>
+          </div>
           <p class="lede">
-            Posters that look like recovered evidence. Rooms that don't exist.<br>
-            The occasional thing that <b>runs</b>.
+            <b>Student</b>. <b>CGI artist</b>. I also write code - <b>some of it runs</b>, but most doesnt even walk.
           </p>
           <div class="hero-cta">
-            <a class="btn btn-solid" href="#art">the art</a>
-            <a class="btn" href="#links">everything else</a>
+            <a class="btn btn-solid" href="#art">my art</a>
+            <a class="btn" href="#sys">my projects</a>
+            <a class="btn" href="#links">my socials</a>
+          </div>
+          <!-- plain html — edit the words right here, case stays as typed -->
+          <div class="avail" aria-label="Availability">
+            <span class="avail-item tone-off">commissions <em>//</em> too much effort</span>
+            <span class="avail-item tone-go">collabs <em>//</em> YESPLEASE</span>
           </div>
         </div>
       </div>
@@ -130,8 +142,8 @@
             <p><b>Mist.</b> aka <b>sudomist</b> or <b>Mistromy</b> depending on what usernames were taken.
               I do CGI, coding, recently started 2D art, and generally anything that is involved with computers.</p>
             <p>I try to pretend I know what I'm doing, and apparently it's working?
-              the <a href="#sys">numbers further down</a> are fetched live and can speak for themselves.</p>
-            <p>How it got this bad — <a href="#log">the bio</a>, near the bottom.</p>
+              some of the <a href="#sys">numbers further down</a> are pretty big. </p>
+            <p>More about me — <a href="#log">down below</a>, for the passionates and stalkers.</p>
           </div>
           <!-- latest transmission — auto-filled from ART[0] in js/data.js -->
           <aside class="latest rv" aria-label="Latest artwork">
@@ -145,6 +157,12 @@
               <a href="#art" class="latest-more">full archive -&gt;</a>
             </div>
           </aside>
+        </div>
+
+        <!-- the stack — icons from STACK in js/data.js. b&w until hovered. -->
+        <div class="stack-block rv">
+          <p class="eyebrow">// the stack — hover for names</p>
+          <div class="stack-strip" id="stackGrid" aria-label="Tools and stack"></div>
         </div>
       </div>
     </section>
@@ -221,9 +239,10 @@
     <section id="log">
       <div class="wrap">
         <div class="section-head rv">
-          <p class="eyebrow">// bio — how it got this bad</p>
+          <p class="eyebrow">// bio — for the passionates and the stalkers</p>
           <h2 class="chroma scramble">Bio</h2>
-          <p>The long version, as written. One take, no hindsight.</p>
+          <p>The long version, as written. One take, no hindsight. The queue of
+            what's next sits beside it — no promises attached.</p>
         </div>
         <div class="log-grid">
           <!-- data-nosnippet: search engines / AI overviews must not quote
@@ -253,25 +272,19 @@
                 ignorance</b>: I think it looks good, so I'll do that for a while now, if I don't get
               bored. Because I'm having fun.</p>
           </div>
-          <aside class="log-side rv" aria-hidden="true">
-            <span>FILE // BIO.LOG</span>
-            <span>SPAN // 2018 → now</span>
-            <span>LOADING // 100%</span>
-            <span class="ok">STATUS // huh?</span>
+          <aside class="log-aside rv">
+            <div class="log-side" aria-hidden="true">
+              <span>FILE // BIO.LOG</span>
+              <span>SPAN // 2018 → now</span>
+              <span>LOADING // 100%</span>
+              <span class="ok">STATUS // huh?</span>
+            </div>
+            <!-- compact queue — rendered from PLANS in js/data.js -->
+            <div class="queue" id="queueList">
+              <span class="q-head">QUEUE // NO PROMISES</span>
+            </div>
           </aside>
         </div>
-      </div>
-    </section>
-
-    <!-- ==================== PLANS ==================== -->
-    <section id="plans">
-      <div class="wrap">
-        <div class="section-head rv">
-          <p class="eyebrow">// forecast — no promises</p>
-          <h2 class="chroma scramble">Plans</h2>
-          <p>What's queued, what's running, and the one thing I keep rescheduling on purpose.</p>
-        </div>
-        <div class="plans-grid" id="plansGrid"></div>
       </div>
     </section>
 

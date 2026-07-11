@@ -262,6 +262,87 @@ section{border-bottom:1px solid var(--line)}
 .btn-solid{background:var(--magenta);border-color:var(--magenta);color:var(--bone)}
 .btn-solid:hover{background:var(--panel-2);color:var(--bone);border-color:var(--magenta);box-shadow:3px 3px 0 rgba(194,42,108,.35)}
 
+/* ---------- availability strip (hero) — case renders as typed ---------- */
+.avail{display:flex;gap:22px;flex-wrap:wrap;margin-top:26px}
+.avail-item{
+  font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+  color:var(--concrete);
+}
+.avail-item em{font-style:normal;opacity:.5;margin:0 4px}
+.avail-item.tone-go{color:var(--cyan)}
+.avail-item.tone-go::before,.avail-item.tone-off::before,.avail-item.tone-warn::before{
+  content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:8px;
+  background:var(--concrete);opacity:.5;vertical-align:1px;
+}
+.avail-item.tone-go::before{background:var(--cyan);opacity:1;animation:pulse 2s infinite}
+.avail-item.tone-warn{color:var(--signal)}
+.avail-item.tone-warn::before{background:var(--signal);opacity:1}
+
+/* ---------- hero id — pfp + the name ---------- */
+.hero-id{display:flex;align-items:center;gap:32px;flex-wrap:wrap}
+.pfp{
+  width:104px;height:104px;flex:none;border:1px solid var(--line);
+  background:var(--panel);position:relative;overflow:hidden;
+  transition:border-color .15s,transform .15s;
+}
+.pfp:hover{border-color:var(--magenta);transform:translate(-2px,-2px);box-shadow:3px 3px 0 rgba(194,42,108,.3)}
+.pfp img{width:100%;height:100%;object-fit:cover;display:block}
+/* file not there yet — pending stencil instead of a broken image */
+.pfp.empty img{display:none}
+.pfp.empty::after{
+  content:"pfp //\a pending";white-space:pre;position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--concrete);opacity:.7;
+}
+
+/* ---------- subpage breadcrumb ---------- */
+.crumb{
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  margin-bottom:22px;color:var(--concrete);
+  display:flex;gap:14px;flex-wrap:wrap;
+}
+.crumb a{color:var(--concrete);border:1px solid var(--line);padding:5px 10px}
+.crumb a:hover{color:var(--cyan);border-color:var(--cyan);text-decoration:none}
+.crumb span{align-self:center;opacity:.6}
+
+/* ---------- the stack — b&w icon strip, hover pops + label ---------- */
+.stack-block{padding:0 0 80px}
+.stack-strip{display:flex;flex-wrap:wrap;gap:6px;padding-bottom:34px}
+.tool{
+  position:relative;width:52px;height:52px;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--line);background:var(--panel);
+  transition:transform .18s cubic-bezier(.2,1.4,.4,1),border-color .18s,background .18s;
+}
+.tool img{
+  width:26px;height:26px;object-fit:contain;
+  filter:grayscale(1) brightness(1.15);opacity:.65;
+  transition:filter .18s,opacity .18s,transform .18s cubic-bezier(.2,1.4,.4,1);
+}
+.tool:hover{
+  transform:translateY(-6px) scale(1.18);border-color:var(--magenta);
+  background:var(--panel-2);z-index:2;
+}
+.tool:hover img{filter:none;opacity:1;transform:scale(1.08)}
+.tool-label{
+  position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(-4px);
+  white-space:nowrap;pointer-events:none;opacity:0;
+  font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  background:var(--ink);border:1px solid var(--line);padding:4px 8px;color:var(--bone);
+  transition:opacity .15s,transform .15s;text-align:center;
+}
+.tool-label i{display:block;font-style:normal;color:var(--concrete);margin-top:2px}
+.tool:hover .tool-label{opacity:1;transform:translateX(-50%) translateY(0)}
+/* no icon (yet) — the chip carries the name itself */
+.tool.noicon{width:auto;padding:0 12px}
+.tool.noicon::before{
+  content:attr(aria-label);font-family:var(--mono);font-size:9px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--concrete);
+}
+.tool.noicon:hover::before{color:var(--bone)}
+.tool.noicon .tool-label{display:none}
+
 /* ---------- about ---------- */
 .about-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;padding:0 0 80px;align-items:start}
 .about-copy blockquote{
@@ -371,15 +452,19 @@ section{border-bottom:1px solid var(--line)}
 /* ---------- lightbox ---------- */
 .lightbox{
   position:fixed;inset:0;z-index:90;background:rgba(13,5,10,.94);
-  display:none;align-items:center;justify-content:center;padding:5vh 4vw;
+  display:none;align-items:center;justify-content:center;
+  /* top band belongs to the close button, bottom band to the caption —
+     the stack can never sit under either */
+  padding:calc(var(--sysbar-h) + 62px) 4vw 64px;
 }
 .lightbox.open{display:flex}
 /* the stack — cover on top, extra images scroll below it.
-   every frame sizes itself: max 78vh tall, max stack width — mixed
-   orientations coexist without zooming each other. the framed panel
-   is the viewer: anything clicked outside of it closes. */
+   every frame sizes itself; single images fit exactly (no leftover
+   panel below), mixed orientations coexist without zooming each other.
+   the framed panel is the viewer: anything clicked outside closes. */
 .lb-stack{
-  width:fit-content;max-width:min(92vw,980px);max-height:80vh;overflow-y:auto;
+  width:fit-content;max-width:min(92vw,980px);
+  max-height:calc(100vh - var(--sysbar-h) - 130px);overflow-y:auto;
   display:flex;flex-direction:column;align-items:center;gap:16px;
   padding:10px;background:var(--panel);border:1px solid var(--magenta);
   box-shadow:0 0 0 1px rgba(194,42,108,.15),0 24px 60px rgba(0,0,0,.55);
@@ -387,8 +472,16 @@ section{border-bottom:1px solid var(--line)}
 }
 .lb-item{position:relative;flex:none;max-width:100%;display:flex;justify-content:center}
 .lb-item img,.lb-item video{
-  max-width:100%;max-height:78vh;width:auto;height:auto;
-  object-fit:contain;border:1px solid var(--line);display:block;
+  /* stack max-height minus its padding+border, so one image = exact fit */
+  max-width:100%;max-height:calc(100vh - var(--sysbar-h) - 152px);
+  width:auto;height:auto;object-fit:contain;border:1px solid var(--line);display:block;
+}
+/* per-frame chip — "final", "wireframe", "iteration"… from data.js */
+.lb-tag{
+  position:absolute;top:10px;left:10px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;
+  background:rgba(21,10,17,.9);border:1px solid var(--magenta);
+  padding:4px 8px;color:var(--magenta);
 }
 .lb-raw{
   position:absolute;right:0;bottom:0;
@@ -403,8 +496,8 @@ section{border-bottom:1px solid var(--line)}
 }
 .lightbox figcaption .lb-links a{margin-left:16px;color:var(--cyan);text-transform:uppercase;font-size:11px;letter-spacing:.12em}
 .lightbox .close{
-  position:absolute;top:calc(var(--sysbar-h) + 14px);right:22px;background:none;border:1px solid var(--line);
-  color:var(--bone);font-family:var(--mono);font-size:12px;padding:8px 14px;cursor:pointer;
+  position:absolute;top:calc(var(--sysbar-h) + 14px);right:22px;background:var(--ink);border:1px solid var(--line);
+  color:var(--bone);font-family:var(--mono);font-size:12px;padding:8px 14px;cursor:pointer;z-index:2;
 }
 .lightbox .close:hover{border-color:var(--signal);color:var(--signal)}
 .lightbox .lb-nav{
@@ -476,29 +569,30 @@ section{border-bottom:1px solid var(--line)}
   padding:6px 12px 0 0;color:var(--bone);
   text-shadow:-2px 0 rgba(255,46,63,.5),2px 0 rgba(93,242,255,.5);
 }
-.log-side{
+.log-aside{
   position:sticky;top:calc(var(--sysbar-h) + var(--nav-h) + 24px);
+  display:flex;flex-direction:column;gap:32px;
+}
+.log-side{
   display:flex;flex-direction:column;gap:10px;
   border-left:1px solid var(--line);padding-left:20px;
   font-family:var(--mono);font-size:10px;letter-spacing:.15em;
   text-transform:uppercase;color:var(--concrete);white-space:nowrap;
 }
 .log-side .ok{color:var(--cyan)}
-
-/* ---------- plans ---------- */
-.plans-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;padding:8px 0 80px}
-.plan{border:1px solid var(--line);background:var(--panel);padding:24px 24px 20px;display:flex;flex-direction:column;gap:12px}
-.plan h3{font-family:var(--stencil);font-size:22px;text-transform:uppercase;line-height:1.05;font-weight:400}
-.plan p{font-size:13px;color:var(--concrete);flex:1}
-.plan-status{
-  align-self:flex-start;font-family:var(--mono);font-size:10px;letter-spacing:.15em;
-  text-transform:uppercase;border:1px solid var(--line);padding:4px 10px;color:var(--concrete);
+/* the queue — plans, compacted. hover an item for the note. */
+.queue{
+  display:flex;flex-direction:column;gap:9px;
+  border-left:1px solid var(--line);padding-left:20px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+  text-transform:lowercase;color:var(--concrete);white-space:nowrap;
 }
-.plan-status.st-planned{border-color:var(--line);color:var(--concrete)}
-.plan-status.st-in-progress{border-color:var(--cyan);color:var(--cyan)}
-.plan-status.st-ongoing{border-color:var(--magenta);color:var(--magenta)}
-.plan-status.st-done{border-color:var(--cyan);color:var(--cyan)}
-.plan-status.st-tomorrow{border-color:var(--signal);color:var(--signal)}
+.queue .q-head{text-transform:uppercase;color:var(--magenta);margin-bottom:2px;letter-spacing:.15em}
+.queue .q-item em{font-style:normal;opacity:.5;margin:0 2px}
+.queue .st-in-progress{color:var(--cyan)}
+.queue .st-ongoing{color:var(--bone)}
+.queue .st-done{color:var(--concrete);text-decoration:line-through;text-decoration-color:rgba(155,145,127,.5)}
+.queue .st-tomorrow{color:var(--signal)}
 
 /* ---------- marquee ---------- */
 .marquee{
@@ -521,7 +615,9 @@ footer{padding:44px 0 60px;color:var(--concrete)}
 /* ---------- responsive ---------- */
 @media (max-width:900px){
   .about-grid,.featured-proj,.log-grid{grid-template-columns:1fr}
-  .log-side{position:static;flex-direction:row;flex-wrap:wrap;gap:16px;border-left:none;padding-left:0}
+  .log-aside{position:static;gap:20px}
+  .log-side{flex-direction:row;flex-wrap:wrap;gap:16px;border-left:none;padding-left:0}
+  .queue{border-left:none;padding-left:0}
   .bin{display:none}
   .sys-item#visits{display:none}
   .audio-title{display:none}
@@ -540,16 +636,24 @@ footer{padding:44px 0 60px;color:var(--concrete)}
   .stat{padding:20px 16px}
   .featured-proj{padding:24px 18px;gap:24px}
   .proj{padding:22px 18px}
-  .plans-grid,.repo-grid,.projects-grid{grid-template-columns:1fr}
+  .repo-grid,.projects-grid{grid-template-columns:1fr}
+  .hero-id{gap:20px}
+  .pfp{width:72px;height:72px}
   .jrow{gap:10px;margin-bottom:10px}
   /* lightbox becomes a column: close row on top, framed stack in the
      middle, caption in the flow below — nothing overlaps anything */
   .lightbox{padding:0;align-items:stretch;justify-content:flex-start}
   .lightbox figure{
-    display:flex;flex-direction:column;gap:10px;
+    display:flex;flex-direction:column;gap:10px;justify-content:center;
     width:100%;height:100%;padding:52px 10px 10px;
   }
-  .lb-stack{width:100%;max-width:none;max-height:none;flex:1;min-height:0;padding:8px}
+  /* hug the content: a single short image gets no dead panel below it,
+     tall stacks shrink to the available space and scroll inside */
+  .lb-stack{
+    width:fit-content;max-width:100%;margin:0 auto;
+    flex:0 1 auto;min-height:0;max-height:none;padding:8px;
+  }
+  .lb-item img,.lb-item video{max-height:74vh}
   .lightbox figcaption{position:static;padding:0;font-size:10px}
   .lightbox figcaption .lb-links a{margin-left:10px;font-size:10px}
   .lightbox .close{top:10px;right:10px;padding:6px 10px;background:var(--ink);z-index:1}

@@ -38,7 +38,7 @@ function shuffle(arr){
   const bootLines = [
     "MIST.SYS v2.0",
     "> condensing…………………… ok",
-    "> mounting sectors… [/about] [/links] [/art] [/sys] [/plans]",
+    "> mounting sectors… [/about] [/links] [/art] [/sys] [/bio]",
     "> heartbeat…………………… found",
     "> can you hear me?",
   ];
@@ -392,38 +392,50 @@ function layoutJustified(mount, items, onTileClick){
   });
 })();
 
-/* ---------- lightbox — stacks all images of a post, links out ---------- */
+/* ---------- lightbox — stacks all frames of a post, links out.
+   the open post is reflected in the url (#p/slug) so every artwork
+   is deep-linkable without any extra links on the page. ---------- */
 const lb = $("#lightbox");
+const slugFor = t => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
 function openLightbox(item){
   if (!lb) return;
   const stack = $("#lbStack");
-  const srcs = [item.img, ...(item.images || [])];
+  /* images entries can be plain urls or { src, tag } — tag shows as a
+     little chip on the frame ("final", "wireframe", "iteration"…) */
+  const frames = [item.img, ...(item.images || [])]
+    .map(f => typeof f === "string" ? { src: f } : f);
   stack.innerHTML = "";
-  srcs.forEach((src, i) => {
-    /* each image sizes itself (max 78vh) — a vertical frame next to a
-       horizontal cover no longer explodes to the cover's width */
+  frames.forEach((f, i) => {
     const wrap = document.createElement("div");
     wrap.className = "lb-item";
     let media;
-    if (isVideo(src)){
+    if (isVideo(f.src)){
       media = document.createElement("video");
-      media.src = src; media.controls = true; media.loop = true;
+      media.src = f.src; media.controls = true; media.loop = true;
       media.muted = true; media.playsInline = true; media.autoplay = true;
     } else {
       media = document.createElement("img");
-      media.src = src;
+      media.src = f.src;
       media.alt = altFor(item) + (i ? " — image " + (i + 1) : "");
+    }
+    wrap.appendChild(media);
+    if (f.tag){
+      const chip = document.createElement("span");
+      chip.className = "lb-tag";
+      chip.textContent = f.tag;
+      wrap.appendChild(chip);
     }
     const raw = document.createElement("a");
     raw.className = "lb-raw";
-    raw.href = src; raw.target = "_blank"; raw.rel = "noopener";
+    raw.href = f.src; raw.target = "_blank"; raw.rel = "noopener";
     raw.textContent = "raw ↗";
     raw.title = "open the raw file in a new tab";
-    wrap.append(media, raw);
+    wrap.appendChild(raw);
     stack.appendChild(wrap);
   });
   stack.scrollTop = 0;
-  const extra = srcs.length - 1;
+  const extra = frames.length - 1;
   $("#lbCap").textContent = item.title + " · " + item.year + " — " + (item.note || item.tags) +
     (extra ? " · +" + extra + " more, scroll ↓" : "");
   const links = $("#lbLinks");
@@ -436,11 +448,14 @@ function openLightbox(item){
   });
   lb.classList.add("open");
   document.body.classList.add("no-scroll");
+  history.replaceState(null, "", "#p/" + slugFor(item.title));
 }
 function closeLightbox(){
   lb.classList.remove("open");
   $("#lbStack").innerHTML = "";
   document.body.classList.remove("no-scroll");
+  if (location.hash.startsWith("#p/"))
+    history.replaceState(null, "", location.pathname + location.search);
 }
 function stepLightbox(dir){
   if (!lbList.length) return;
@@ -475,6 +490,15 @@ if (lb){
     if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) stepLightbox(dx < 0 ? 1 : -1);
     sx = sy = null;
   }, { passive: true });
+  /* deep link: #p/slug in the url opens that post on arrival */
+  const deep = location.hash.match(/^#p\/(.+)/);
+  if (deep){
+    const item = ART.find(a => slugFor(a.title) === deep[1]);
+    if (item){
+      lbList = ART; lbIndex = ART.indexOf(item);
+      openLightbox(item);
+    }
+  }
 }
 
 /* ---------- latest transmission — ART[0], no hands ---------- */
@@ -550,20 +574,17 @@ function projectLinksHtml(links){
   if (grid) observeLate(grid);
 })();
 
-/* ---------- plans ---------- */
-(function buildPlans(){
-  const grid = $("#plansGrid");
-  if (!grid) return;
-  PLANS.forEach((p, i) => {
-    const el = document.createElement("div");
-    el.className = "plan rv";
-    el.style.transitionDelay = (i * 60) + "ms";
-    el.innerHTML =
-      '<span class="plan-status st-' + p.status.replace(/\s+/g,"-") + '">' + p.status + "</span>" +
-      "<h3>" + p.title + "</h3><p>" + p.note + "</p>";
-    grid.appendChild(el);
+/* ---------- the queue — PLANS, demoted to a compact side list ---------- */
+(function buildQueue(){
+  const list = $("#queueList");
+  if (!list) return;
+  PLANS.forEach(p => {
+    const el = document.createElement("span");
+    el.className = "q-item st-" + p.status.replace(/\s+/g,"-");
+    el.title = p.note || "";
+    el.innerHTML = p.title + " <em>//</em> " + p.status;
+    list.appendChild(el);
   });
-  observeLate(grid);
 })();
 
 /* ---------- marquee — shuffled every load, seamless loop ----------
@@ -785,32 +806,100 @@ function fmtAge(s){
   return Math.floor(s / 3600) + "h ago";
 }
 
-/* ---------- audio module — quiet by default, slider for the rest ---------- */
+/* ---------- audio module — quiet by default, slider for the rest.
+   state (volume, position, playing) survives page switches via
+   sessionStorage. browsers block autoplay without a fresh gesture on
+   the new page, so if resuming silently fails the button just waits —
+   one click picks the track up where it left off. ---------- */
 (function audio(){
   const wrap = $("#audio"), btn = $("#audioBtn");
   if (!wrap || !btn) return;
   if (!SITE.audio || !SITE.audio.src){ wrap.remove(); return; }
+  const KEY = "mist_audio";
+  let saved = {};
+  try { saved = JSON.parse(sessionStorage.getItem(KEY) || "{}"); } catch {}
   const player = new Audio(SITE.audio.src);
   player.loop = true;
-  player.volume = SITE.audio.volume ?? 0.12;
+  player.volume = saved.volume ?? SITE.audio.volume ?? 0.12;
+  player.addEventListener("loadedmetadata", () => {
+    if (saved.time) try { player.currentTime = saved.time; } catch {}
+  });
   $("#audioTitle").textContent = SITE.audio.title;
+
+  const save = () => {
+    try {
+      sessionStorage.setItem(KEY, JSON.stringify({
+        volume: player.volume,
+        time: player.currentTime || 0,
+        playing: !player.paused,
+      }));
+    } catch {}
+  };
+  window.addEventListener("pagehide", save);
+  setInterval(() => { if (!player.paused) save(); }, 3000);
+
   const vol = $("#audioVol");
   if (vol){
     /* --fill drives the coloured part of the slider track (css) */
     const paint = () => vol.style.setProperty("--fill", vol.value + "%");
     vol.value = Math.round(player.volume * 100);
     paint();
-    vol.addEventListener("input", () => { player.volume = vol.value / 100; paint(); });
+    vol.addEventListener("input", () => { player.volume = vol.value / 100; paint(); save(); });
   }
+  const setUi = playing => {
+    wrap.classList.toggle("playing", playing);
+    btn.textContent = playing ? "❚❚" : "►";
+  };
   let broken = false;
   player.onerror = () => { broken = true; $("#audioTitle").textContent = "no_signal.mp3"; };
   btn.addEventListener("click", async () => {
     if (broken){ $("#audioTitle").textContent = "add assets/track.mp3"; return; }
     if (player.paused){
-      try { await player.play(); wrap.classList.add("playing"); btn.textContent = "❚❚"; }
+      try { await player.play(); setUi(true); save(); }
       catch { $("#audioTitle").textContent = "blocked by browser"; }
     } else {
-      player.pause(); wrap.classList.remove("playing"); btn.textContent = "►";
+      player.pause(); setUi(false); save();
     }
   });
+  /* was playing on the previous page — try to keep going */
+  if (saved.playing && !broken){
+    player.play().then(() => setUi(true)).catch(() => setUi(false));
+  }
+})();
+
+/* ---------- the stack — b&w icon strip, hover pops + labels ---------- */
+(function buildStack(){
+  const strip = $("#stackGrid");
+  if (!strip || typeof STACK === "undefined") return;
+  STACK.forEach(t => {
+    const el = document.createElement("div");
+    el.className = "tool";
+    el.setAttribute("aria-label", t.name + (t.sub ? " — " + t.sub : ""));
+    if (t.icon){
+      const img = document.createElement("img");
+      img.src = t.icon;
+      img.alt = "";
+      img.loading = "lazy";
+      /* dead url → text chip with the name instead of a hole */
+      img.onerror = () => { img.remove(); el.classList.add("noicon"); };
+      el.appendChild(img);
+    } else {
+      el.classList.add("noicon");
+    }
+    const label = document.createElement("span");
+    label.className = "tool-label";
+    label.innerHTML = t.name + (t.sub ? '<i>' + t.sub + "</i>" : "");
+    el.appendChild(label);
+    strip.appendChild(el);
+  });
+})();
+
+/* ---------- pfp slot — pending stencil until the file exists ---------- */
+(function pfp(){
+  const img = $("#pfpImg");
+  if (!img) return;
+  const mark = () => img.closest(".pfp").classList.add("empty");
+  /* the 404 may have fired before this script ran */
+  if (img.complete && !img.naturalWidth) mark();
+  img.onerror = mark;
 })();
