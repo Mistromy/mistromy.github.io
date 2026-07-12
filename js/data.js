@@ -150,16 +150,28 @@ const STACK = [
                            either key alone is fine. */
 const ART = [
   {
+    title: "NO ENTRY", year: "2026", medium: ["2d", "photo"], img: "https://cdna.artstation.com/p/assets/images/images/100/731/278/large/mist-no-entry2.jpg?1783884100", tags: "brutalist, color, print",
+    note: "really enjoying making this. photo taken in pozań",
+    images: ["https://cdna.artstation.com/p/assets/images/images/100/723/294/large/mist-whatsapp-image-2026-07-07-at-22-19-58.jpg?1783861718"],
+    post: { artstation: "https://www.artstation.com/artwork/kw4Oa6" }
+  },
+  {
     title: "DON'T LOOK DOWN", year: "2026", medium: ["2d", "photo"], img: "assets/dontlook_down.png", tags: "stencil · schematic · collage",
-    note: "MORE OF MY OWN PHOTOGRAPHY"
+    note: "MORE OF MY OWN PHOTOGRAPHY",
+    images: ["https://cdnb.artstation.com/p/assets/images/images/100/723/301/large/mist-whatsapp-image-2026-07-06-at-15-47-50.jpg?1783861746"],
+    post: { artstation: "https://www.artstation.com/artwork/G1Xdz3" }
   },
   {
     title: "OPEN YOUR EYES", year: "2026", medium: ["2d", "photo"], img: "assets/eyes.png", tags: "photo · binary · type",
-    note: "More of my own photography."
+    note: "More of my own photography.",
+    images: ["https://cdnb.artstation.com/p/assets/images/images/100/723/323/large/mist-img-20260704-214932.jpg?1783861815"],
+    post: { artstation: "https://www.artstation.com/artwork/41bln4" }
   },
   {
     title: "DON'T STOP", year: "2026", medium: ["2d", "photo"], img: "assets/lights.png", tags: "glitch · datamosh · signal",
-    note: "My third ever poster. Based on my own photography."
+    note: "My third ever poster. Based on my own photography.",
+    images: ["https://cdnb.artstation.com/p/assets/images/images/100/723/347/large/mist-original.jpg?1783861935"],
+    post: { artstation: "https://www.artstation.com/artwork/8vWQ3x" }
   },
   {
     title: "Pills", year: "2026", medium: "cgi", img: "https://instagram.fktw4-1.fna.fbcdn.net/v/t51.82787-15/715850301_18038126087800016_2928106902373231951_n.webp?_nc_cat=111&ig_cache_key=MzkxMjM2NTM0NjQ4MzgzNDc1Mw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTQzOC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=7kbbboM28coQ7kNvwGlVpaZ&_nc_oc=AdrzRHva6md5I7xwvYTFdpSwAQrsxEXbOxGtObHH0h7iGi54MJea-DZUUDdcJSIHZkk&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=instagram.fktw4-1.fna&_nc_gid=iOYaYumk2hsEmaViSdXwaA&_nc_ss=7a22e&oh=00_AQAy1bDi2VilWBR-g7kU_jjKAMoe63d21qRphCeSL7XwMg&oe=6A5893DA",
