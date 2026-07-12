@@ -160,40 +160,56 @@ function scramble(el){
 })();
 
 /* ---------- discord presence via lanyard ----------
-   surfaces the live activity — custom rich presences included (vsc,
-   blender…) — as a sysbar item. lanyard only serves ids registered by
-   joining their discord server; until then this stays silent. */
+   fills the little discord bio card next to the bio: avatar, real
+   discord status colours, and the current activity — custom rich
+   presences included (vsc, blender…). the sysbar stays out of it. */
 (function presence(){
-  const left = $(".sys-left");
-  if (!left || !SITE.discordId) return;
-  let el = null;
-  const trim = (s, n=42) => s.length > n ? s.slice(0, n - 1) + "…" : s;
+  const card = $(".dcard");
+  if (!card || !SITE.discordId) return;
+  const COLORS = { online: "#23a55a", idle: "#f0b232", dnd: "#f23f43", offline: "#80848e" };
+  const LABELS = { online: "online", idle: "idle", dnd: "do not disturb", offline: "offline" };
+  const trim = (s, n=52) => s.length > n ? s.slice(0, n - 1) + "…" : s;
   async function tick(){
     try {
       const res = await fetch("https://api.lanyard.rest/v1/users/" + SITE.discordId);
-      if (!res.ok) return;
+      if (!res.ok) throw new Error(res.status);
       const j = await res.json();
-      if (!j.success) return;              // not registered with lanyard yet
+      if (!j.success) throw new Error("not registered");
       const d = j.data;
+      const status = d.discord_status || "offline";
+      const av = $("#dcAvatar");
+      if (av && !av.src && d.discord_user && d.discord_user.avatar){
+        av.src = "https://cdn.discordapp.com/avatars/" + SITE.discordId + "/" + d.discord_user.avatar + ".png?size=96";
+      }
+      $("#dcDot").style.background = COLORS[status] || COLORS.offline;
+      const st = $("#dcStatus");
+      st.textContent = LABELS[status] || status;
+      st.style.color = COLORS[status] || "";
       /* type 0 = playing/rich presence (vsc, blender, games), 2 = spotify */
       const act = (d.activities || []).find(a => a.type === 0 || a.type === 2);
-      let txt = "operator // " + d.discord_status;
-      if (act){
-        txt = "operator // " + act.name.toLowerCase();
-        if (act.details) txt += " · " + act.details.toLowerCase();
-      }
-      if (!el){
-        el = document.createElement("span");
-        el.className = "sys-item";
-        el.id = "presence";
-        left.appendChild(el);
-      }
-      el.textContent = trim(txt);
-      el.style.color = d.discord_status === "offline" ? "" : "var(--cyan)";
-    } catch { /* lanyard down — nothing to show, nothing to break */ }
+      $("#dcAct").textContent = act
+        ? trim(act.name.toLowerCase() + (act.details ? " · " + act.details.toLowerCase() : ""))
+        : "";
+    } catch {
+      const st = $("#dcStatus");
+      if (st){ st.textContent = "no signal"; st.style.color = ""; }
+    }
   }
   tick();
   setInterval(tick, 60000);
+})();
+
+/* ---------- url hygiene — section hashes vanish after the jump.
+   #p/… (artwork deep links) are the one hash that stays. ---------- */
+(function hashHygiene(){
+  const clean = () => {
+    if (location.hash && !location.hash.startsWith("#p/"))
+      history.replaceState(null, "", location.pathname + location.search);
+  };
+  window.addEventListener("hashchange", () => setTimeout(clean, 60));
+  /* arriving from a subpage link like ./#about — let the browser jump
+     to the anchor first, then tidy the address bar */
+  window.addEventListener("load", () => setTimeout(clean, 300));
 })();
 
 /* ---------- 88x31 badges — footer row, only if BADGES has entries ---------- */
@@ -232,7 +248,7 @@ function scramble(el){
 (function scrollspy(){
   const fixed = document.body.dataset.sector;
   if (fixed){
-    const st = $("#sysStatus"); if (st) st.textContent = "sector:/" + fixed + " · online";
+    const st = $("#sysStatus"); if (st) st.textContent = "sector:/" + fixed;
     return;
   }
   const sections = $$("main section[id]");
@@ -243,7 +259,7 @@ function scramble(el){
       if (!en.isIntersecting) return;
       const id = en.target.id;
       links.forEach(a => a.classList.toggle("active", a.dataset.nav === id));
-      const st = $("#sysStatus"); if (st) st.textContent = "sector:/" + id + " · online";
+      const st = $("#sysStatus"); if (st) st.textContent = "sector:/" + id;
     });
   }, { rootMargin: "-40% 0px -55% 0px" });
   sections.forEach(s => io.observe(s));
@@ -505,8 +521,10 @@ function openLightbox(item){
   });
   stack.scrollTop = 0;
   const extra = frames.length - 1;
-  $("#lbCap").textContent = item.title + " · " + item.year + " — " + (item.note || item.tags) +
-    (extra ? " · +" + extra + " more, scroll ↓" : "");
+  $("#lbTitle").textContent = item.title;
+  $("#lbMeta").textContent = "// " + mediums(item).join("·") + " // " + item.year +
+    (extra ? " // " + frames.length + " frames — scroll ↓" : "");
+  $("#lbNote").textContent = item.note || item.tags || "";
   const links = $("#lbLinks");
   links.innerHTML = "";
   Object.entries(item.post || {}).forEach(([site, url]) => {
@@ -515,6 +533,19 @@ function openLightbox(item){
     a.textContent = site + " ->";
     links.appendChild(a);
   });
+  /* share — copies the /p/ stub url, which embeds the artwork on
+     discord etc. (stubs are generated by scripts/gen-embeds.mjs) */
+  const share = document.createElement("a");
+  share.href = "p/" + slugFor(item.title);
+  share.textContent = "share ->";
+  share.addEventListener("click", e => {
+    e.preventDefault();
+    const url = new URL(share.getAttribute("href"), location.href).href;
+    if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+    share.textContent = "copied!";
+    setTimeout(() => { share.textContent = "share ->"; }, 1200);
+  });
+  links.appendChild(share);
   lb.classList.add("open");
   document.body.classList.add("no-scroll");
   history.replaceState(null, "", "#p/" + slugFor(item.title));
@@ -538,7 +569,7 @@ if (lb){
   /* the framed stack is the viewer — a click anywhere outside it
      (backdrop, gaps around the frame) closes */
   lb.addEventListener("click", e => {
-    if (!e.target.closest(".lb-stack, .lb-nav, .close, figcaption")) closeLightbox();
+    if (!e.target.closest(".lb-stack, .lb-nav, .close, .lb-head")) closeLightbox();
   });
   window.addEventListener("keydown", e => {
     if (!lb.classList.contains("open")) return;
@@ -643,18 +674,6 @@ function projectLinksHtml(links){
   if (grid) observeLate(grid);
 })();
 
-/* ---------- the queue — PLANS, demoted to a compact side list ---------- */
-(function buildQueue(){
-  const list = $("#queueList");
-  if (!list) return;
-  PLANS.forEach(p => {
-    const el = document.createElement("span");
-    el.className = "q-item st-" + p.status.replace(/\s+/g,"-");
-    el.title = p.note || "";
-    el.innerHTML = p.title + " <em>//</em> " + p.status;
-    list.appendChild(el);
-  });
-})();
 
 /* ---------- marquee — shuffled every load, seamless loop ----------
    the track holds the line exactly twice and animates to -50%, so the
@@ -887,11 +906,12 @@ countUp($("#stArtworks"), ART.length);
   /* online = the gist was touched recently. shows its age, honestly. */
   const age = d.last_updated ? Math.floor(Date.now() / 1000) - d.last_updated : null;
   const stale = age == null || age > SITE.staleAfter;
+  /* this is the BOT's heartbeat — it stays inside the project box.
+     the sysbar dot belongs to the operator's presence (lanyard). */
   statusEls.forEach(el => {
     el.textContent = stale ? "offline?" : "online · " + fmtAge(age);
     el.style.color = stale ? "var(--signal)" : "var(--cyan)";
   });
-  if (!stale) $("#sysDot")?.classList.add("ok");
 })();
 
 function fmtAge(s){
@@ -918,7 +938,17 @@ function fmtAge(s){
   player.addEventListener("loadedmetadata", () => {
     if (saved.time) try { player.currentTime = saved.time; } catch {}
   });
-  $("#audioTitle").textContent = SITE.audio.title;
+  /* long titles auto-scroll back and forth inside the box */
+  const titleBox = $("#audioTitle");
+  titleBox.innerHTML = "<span>" + SITE.audio.title + "</span>";
+  requestAnimationFrame(() => {
+    const span = titleBox.firstChild;
+    const over = span.scrollWidth - titleBox.clientWidth;
+    if (over > 6){
+      titleBox.classList.add("scrolling");
+      titleBox.style.setProperty("--shift", "-" + over + "px");
+    }
+  });
 
   const save = () => {
     try {

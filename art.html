@@ -59,17 +59,17 @@
   <nav class="nav" aria-label="Primary">
     <button class="nav-burger" id="navBurger" aria-expanded="false" aria-controls="navLinks">/// menu</button>
     <div class="nav-links" id="navLinks">
-      <a href="index.html#about">/ABOUT</a>
-      <a href="index.html#links">/LINKS</a>
+      <a href="./#about">/ABOUT</a>
+      <a href="./#links">/LINKS</a>
       <div class="nav-item">
-        <a href="index.html#art" class="active">/ART</a>
+        <a href="./#art" class="active">/ART</a>
         <div class="nav-drop"><a href="art.html">FULL ARCHIVE -&gt;</a></div>
       </div>
       <div class="nav-item">
-        <a href="index.html#sys">/SYS</a>
+        <a href="./#sys">/SYS</a>
         <div class="nav-drop"><a href="projects.html">ALL PROJECTS -&gt;</a></div>
       </div>
-      <a href="index.html#log">/BIO</a>
+      <a href="./#log">/BIO</a>
     </div>
     <span class="nav-note" data-random-note>// stay condensed</span>
   </nav>
@@ -79,7 +79,7 @@
     <section id="archive">
       <div class="wrap">
         <div class="section-head rv">
-          <p class="crumb"><a href="index.html">&lt;- back to base</a><span>// you are in: /archive</span></p>
+          <p class="crumb"><a href="./">&lt;- back to base</a><span>// you are in: /archive</span></p>
           <p class="eyebrow">// the archive — running diagnostic… all loud</p>
           <h2 class="chroma scramble">Art</h2>
           <p>Everything. 2D and CGI in one pile — posters, environments, light studies,
@@ -114,8 +114,15 @@
     <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous artwork">&lt;</button>
     <button class="lb-nav lb-next" id="lbNext" aria-label="Next artwork">&gt;</button>
     <figure>
+      <header class="lb-head">
+        <p class="lb-meta" id="lbMeta">—</p>
+        <div class="lb-top">
+          <h3 id="lbTitle">—</h3>
+          <span class="lb-links" id="lbLinks"></span>
+        </div>
+        <p class="lb-note" id="lbNote"></p>
+      </header>
       <div class="lb-stack" id="lbStack"></div>
-      <figcaption><span id="lbCap"></span><span class="lb-links" id="lbLinks"></span></figcaption>
     </figure>
   </div>
 

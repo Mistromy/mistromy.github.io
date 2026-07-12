@@ -108,59 +108,64 @@
   <main>
 
     <!-- ==================== ABOUT ==================== -->
-    <section id="about">
-      <div class="hero">
-        <div class="bin bin-l" aria-hidden="true"></div>
-        <div class="bin bin-r" aria-hidden="true"></div>
-        <div class="wrap">
-          <p class="eyebrow">// transmission open — can you hear me?</p>
-          <div class="hero-id">
-            <div class="pfp" id="pfpFrame">
-              <img id="pfpImg" src="https://avatars.githubusercontent.com/u/125371422?v=4" alt="Mist's avatar">
-            </div>
-            <h1 class="glitch" id="glitchName" data-text="MIST">MIST</h1>
-          </div>
-          <p class="lede">
-            <b>Student</b>. <b>CGI artist</b>. I also write code - <b>some of it runs</b>, but most doesnt even walk.
-          </p>
-          <div class="hero-cta">
-            <a class="btn btn-solid" href="#art">my art</a>
-            <a class="btn" href="#sys">my projects</a>
-            <a class="btn" href="#links">my socials</a>
-          </div>
-          <!-- plain html — edit the words right here, case stays as typed -->
-          <div class="avail" aria-label="Availability">
-            <span class="avail-item tone-off">commissions <em>//</em> too much effort</span>
-            <span class="avail-item tone-go">collabs <em>//</em> YESPLEASE</span>
-          </div>
-        </div>
-      </div>
-
+    <section id="about" class="about-section">
+      <div class="bin bin-l" aria-hidden="true"></div>
+      <div class="bin bin-r" aria-hidden="true"></div>
       <div class="wrap">
-        <div class="about-grid">
-          <div class="about-copy rv">
-            <!-- filled with a random MARQUEE line on every load -->
-            <blockquote><span>// stdout</span><span class="random-quote">—</span></blockquote>
-            <p><b>Mist.</b> aka <b>sudomist</b> or <b>Mistromy</b> depending on what usernames were taken.
-              I do CGI, coding, recently started 2D art, and generally anything that is involved with computers.</p>
-            <p>I try to pretend I know what I'm doing, and apparently it's working?
-              some of the <a href="#sys">numbers further down</a> are pretty big. </p>
-            <p>More about me — <a href="#log">down below</a>, for the passionates and stalkers.</p>
+        <!-- one grid from the very top: everything left, the latest
+             transmission right — so the panel can ride the whole way -->
+        <div class="about-layout">
+          <div class="about-main">
+            <div class="hero-block">
+              <p class="eyebrow">// transmission open — can you hear me?</p>
+              <div class="hero-id">
+                <div class="pfp" id="pfpFrame">
+                  <img id="pfpImg" src="https://avatars.githubusercontent.com/u/125371422?v=4" alt="Mist's avatar">
+                </div>
+                <h1 class="glitch" id="glitchName" data-text="MIST">MIST</h1>
+              </div>
+              <p class="lede">
+                <b>Student</b>. <b>CGI artist</b>. I also write code - <b>some of it runs</b>, but most doesnt even
+                walk.
+              </p>
+              <div class="hero-cta">
+                <a class="btn btn-solid" href="#art">my art</a>
+                <a class="btn" href="#sys">my projects</a>
+                <a class="btn" href="#links">my socials</a>
+              </div>
+              <!-- plain html — edit the words right here, case stays as typed -->
+              <div class="avail" aria-label="Availability">
+                <span class="avail-item tone-off">commissions <em>//</em> too much effort</span>
+                <span class="avail-item tone-go">collabs <em>//</em> YESPLEASE</span>
+              </div>
+            </div>
+
+            <div class="about-copy rv">
+              <!-- filled with a random MARQUEE line on every load -->
+              <blockquote><span>// stdout</span><span class="random-quote">—</span></blockquote>
+              <p><b>Mist.</b> aka <b>sudomist</b> or <b>Mistromy</b> depending on what usernames were taken.
+                I do CGI, coding, recently started 2D art, and generally anything that is involved with computers.</p>
+              <p>I try to pretend I know what I'm doing, and apparently it's working?
+                some of the <a href="#sys">numbers further down</a> are pretty big. </p>
+              <p>More about me — <a href="#log">down below</a>, for the passionates and stalkers.</p>
+            </div>
           </div>
-          <!-- latest transmission — auto-filled from ART[0] in js/data.js -->
-          <aside class="latest rv" aria-label="Latest artwork">
-            <div class="latest-head"><span>LATEST // TRANSMISSION</span><b id="latestStamp">—</b></div>
-            <button class="latest-frame" id="latestFrame" type="button" aria-label="View latest artwork full size">
-              <img id="latestImg" src="" alt="">
-            </button>
-            <div class="latest-meta">
-              <h3 id="latestTitle">—</h3>
-              <p id="latestNote"></p>
-              <a href="#art" class="latest-more">full archive -&gt;</a>
+
+          <aside class="about-side">
+            <!-- latest transmission — auto-filled from ART[0] in js/data.js -->
+            <div class="latest rv" aria-label="Latest artwork">
+              <div class="latest-head"><span>LATEST // TRANSMISSION</span><b id="latestStamp">—</b></div>
+              <button class="latest-frame" id="latestFrame" type="button" aria-label="View latest artwork full size">
+                <img id="latestImg" src="" alt="">
+              </button>
+              <div class="latest-meta">
+                <h3 id="latestTitle">—</h3>
+                <p id="latestNote"></p>
+                <a href="#art" class="latest-more">full archive -&gt;</a>
+              </div>
             </div>
           </aside>
         </div>
-
       </div>
     </section>
 
@@ -290,15 +295,19 @@
               bored. Because I'm having fun.</p>
           </div>
           <aside class="log-aside rv">
-            <div class="log-side" aria-hidden="true">
-              <span>FILE // BIO.LOG</span>
-              <span>SPAN // 2018 → now</span>
-              <span>LOADING // 100%</span>
-              <span class="ok">STATUS // huh?</span>
-            </div>
-            <!-- compact queue — rendered from PLANS in js/data.js -->
-            <div class="queue" id="queueList">
-              <span class="q-head">QUEUE // NO PROMISES</span>
+            <p class="eyebrow">// my current status</p>
+            <!-- a little discord bio — live via lanyard. avatar and
+                 status fill themselves; the names are just text. -->
+            <div class="dcard" aria-label="Discord status">
+              <div class="dcard-id">
+                <span class="dcard-pfp">
+                  <img id="dcAvatar" src="" alt="">
+                  <i class="dcard-dot" id="dcDot"></i>
+                </span>
+                <span class="dcard-names"><b>Mist</b><span>sudomist</span></span>
+              </div>
+              <p class="dcard-status" id="dcStatus">checking…</p>
+              <p class="dcard-act" id="dcAct"></p>
             </div>
           </aside>
         </div>
@@ -313,8 +322,15 @@
     <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous artwork">&lt;</button>
     <button class="lb-nav lb-next" id="lbNext" aria-label="Next artwork">&gt;</button>
     <figure>
+      <header class="lb-head">
+        <p class="lb-meta" id="lbMeta">—</p>
+        <div class="lb-top">
+          <h3 id="lbTitle">—</h3>
+          <span class="lb-links" id="lbLinks"></span>
+        </div>
+        <p class="lb-note" id="lbNote"></p>
+      </header>
       <div class="lb-stack" id="lbStack"></div>
-      <figcaption><span id="lbCap"></span><span class="lb-links" id="lbLinks"></span></figcaption>
     </figure>
   </div>
 

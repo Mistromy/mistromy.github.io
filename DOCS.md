@@ -179,12 +179,39 @@ where it was, not from zero.
 
 ## Live presence (lanyard)
 
-The sysbar shows "operator // <activity>" pulled from
-`api.lanyard.rest/v1/users/<SITE.discordId>` — the whole activities
-array, so custom rich presences (VSC, Blender) show, not just Spotify.
-**It stays invisible until you join the Lanyard Discord server**
-(discord.gg/lanyard) — that's what registers the ID with their API.
-Refreshes every 60 s; hidden on narrow screens.
+Pulled from `api.lanyard.rest/v1/users/<SITE.discordId>` (registered
+by being in the Lanyard Discord server) and shown in exactly one
+place: the **discord bio card** beside the bio — avatar (fetched from
+the API), real discord status colours on the dot (green/yellow/red/
+grey), status text, and the current activity. Custom rich presences
+(VSC, Blender…) show, not just Spotify. The whole thing is deliberately
+below the fold — the sysbar dot is pure decoration and means nothing.
+
+Refreshes every 60 s. Fails silent ("no signal").
+
+## Discord embeds for artworks (/p/ stubs)
+
+A `#hash` never reaches the server and unfurlers don't run JS, so
+`/#p/…` links can't embed per-artwork. Instead, `scripts/gen_embeds.py`
+writes one tiny static page per artwork into `p/` — real og:image tags
+plus an instant redirect to the live lightbox. Share
+`https://mistromy.github.io/p/smart-juice` and Discord attaches the
+render.
+
+- **Automatic**: `.github/workflows/gen-embeds.yml` reruns the script
+  on every push that touches `js/data.js` and commits the stubs itself
+  (pull after pushing art, or the bot's commit sits above yours).
+  Manual fallback: `python scripts/gen_embeds.py`.
+- The **share ->** button in the fullscreen viewer copies these urls.
+- Extensionless urls are a GitHub Pages feature — locally
+  (`python -m http.server`) you'd need the `.html` suffix.
+
+## URL hygiene
+
+Section hashes (`#about`, `#art`…) are stripped from the address bar
+right after the jump — on click and on arrival from subpages (whose
+links use `./#about` so no `index.html` lingers either). The only hash
+that persists is `#p/…`, because that one *is* the share state.
 
 ## Sparklines (graphs from the gist)
 
@@ -214,11 +241,6 @@ bordered like the old web intended. `url` optional.
 commits, magenta ramp, no auth needed). The frame hides itself if the
 service dies. Change the hex in the url to recolor.
 
-## The queue (ex-plans)
-
-`PLANS` in data.js still exists but renders as the compact "QUEUE //
-NO PROMISES" list beside the bio — one line per item, note on hover.
-Delete entries freely; nothing else depends on them.
 
 ## Benched links
 

@@ -261,31 +261,6 @@ const PROJECTS = [
 
 /* the log prose lives in index.html (#log) — it's writing, not data */
 
-/* ---------- forecast — subject to evaporation.
-   status: "planned" | "in progress" | "ongoing" | "done" | "tomorrow" */
-const PLANS = [
-  {
-    title: "stats pipe", status: "done",
-    note: "Nirupama pushes stats.json to a gist every few minutes; this page reads it live. Next: cranking the interval down to ~10 s for actually-realtime numbers."
-  },
-  {
-    title: "go backend", status: "planned",
-    note: "A small service, hosted separately, for the numbers no public API will hand over — visits, private stats, whatever the frontend can't scrape."
-  },
-  {
-    title: "more 2d", status: "ongoing",
-    note: "First pieces in years shipped. The signal series isn't done transmitting."
-  },
-  {
-    title: "nirupama", status: "ongoing",
-    note: "Started as a level bot storing JSON. Never stopped evolving. No reason to start stopping."
-  },
-  {
-    title: "give up", status: "tomorrow",
-    note: "Quitting is fully allowed — tomorrow. Today there's still stuff to finish. It's been 'tomorrow' for years now, and somehow everything keeps shipping."
-  },
-];
-
 /* ---------- the marquee ---------- */
 const MARQUEE = [
   "please, wake up", '"I guess, I\'m afraid..."', "#299.9KG CLUB", "I'll give up tomorrow",
