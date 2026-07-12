@@ -183,6 +183,10 @@ const ART = [
     note: "Full sticker-bomb livery study.", images: ["https://cdnb.artstation.com/p/assets/images/images/098/027/685/large/mist-180sx-blackandwhite.webp?1775906594"],
   },
   {
+    title: "RampageRally stuntman", year: "2026", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/092/611/929/large/mist-rampagerallies43.webp?1760125297", tags: "Rampage Rally · Animation",
+    note: "Couldn't finish this one due to technical issues and time, but it was a huge learning experience."
+  },
+  {
     title: "Gothic Bedroom", year: "2025", medium: "cgi", img: "https://cdna.artstation.com/p/assets/images/images/090/387/186/large/mist-darkacademiaroomresized.jpg?1753788209", tags: "environment · interior",
     note: "Green walls, old money, heavy air."
   },
