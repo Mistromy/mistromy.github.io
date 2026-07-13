@@ -211,10 +211,14 @@ render.
      `git rm -r --cached p/ && git commit -m "stop tracking generated stubs"`.
   Do step 1 before pushing step 2, or the live `/p/` links 404 in
   between.
-- **WhatsApp**: only shows large previews for jpeg/png under ~300 KB,
-  so the generator writes small JPG thumbnails into `p/t/` and points
-  `og:image` there (with explicit width/height). Pillow does this —
-  installed in CI; a local run without it falls back to original urls.
+- **Two thumbnail tiers**, both deploy-only (never committed):
+  - `p/t/<slug>.jpg` — the embed image, ≤1600 px and ≤290 KB
+    (whatsapp's large-preview ceiling; clicking the preview shows this).
+  - `p/t/<slug>.s.jpg` — ≤900 px, what the **gallery grid actually
+    loads** instead of multi-MB originals (the lighthouse performance
+    fix). The site probes for it at runtime and falls back to the
+    original when it doesn't exist (e.g. running locally without a
+    generator run). The fullscreen viewer always shows originals.
 - **Ways to trigger a rebuild/redeploy** (no PRs involved — plain
   pushes to main already do it):
   1. `git push` to main — any change at all.
@@ -429,6 +433,25 @@ When pointing a domain (e.g. `mista.tech` / a subdomain) at this:
 1. Add a `CNAME` file to the repo root containing just the domain.
 2. DNS: `CNAME` record → `mistromy.github.io`.
 3. Update `og:` meta tags in `index.html` if you care about embeds.
+
+## Colors, cookies, robots (lighthouse round)
+
+- Small magenta TEXT uses `--magenta-t` (#e0568f, 4.5:1 on ink); the
+  original `--magenta` stays for borders/fills; solid buttons use
+  `--magenta-d` so bone text passes contrast. Secondary text
+  (`--concrete`) was lifted to #a89f8d.
+- **Cookies**: the one third-party cookie is ArtStation's Cloudflare
+  `__cf_bm` (bot protection — strictly-necessary category, no banner
+  required, and mostly gone now that the grid loads local thumbs).
+  GA runs in **cookieless consent mode** (`analytics_storage: denied`)
+  on every page — anonymous pings, no `_ga` cookie, no banner.
+- **robots.txt** must stay allow-everything: `Disallow: /` blocked the
+  homepage url `/` itself, all css/js (google couldn't render), and
+  the /p/ stubs for robots-respecting unfurlers. Stub de-indexing is
+  handled by their own noindex meta.
+- `sitemap.xml` lists the three real pages.
+- **Don't hotlink instagram cdn urls** (`*.fbcdn.net`) in ART — they
+  are signed and expire after days. ArtStation urls are stable.
 
 ## Local preview
 

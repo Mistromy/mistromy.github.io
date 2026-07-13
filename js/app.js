@@ -305,9 +305,17 @@ const PLACEHOLDER_AR = 3 / 4;
 
 const mediums = item => [].concat(item.medium);
 const isVideo = src => /\.(mp4|webm)([?#]|$)/i.test(src);
+const slugFor = t => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 /* literal description for screen readers + SEO. item.alt overrides. */
 const altFor  = item => item.alt ||
   (item.title + " — " + mediums(item).join(" and ") + " artwork by Mist" + (item.tags ? " (" + item.tags + ")" : ""));
+
+/* the grid loads deploy-generated tile thumbnails (p/t/<slug>.s.jpg,
+   ~100 KB) instead of the multi-MB originals — the single biggest
+   lighthouse win. locally (or if generation failed) the thumb 404s
+   and the original steps in. the fullscreen viewer always gets the
+   original. */
+const tileSrcFor = item => "p/t/" + slugFor(item.title) + ".s.jpg";
 
 function measureArt(items){
   return Promise.all(items.map(it => new Promise(res => {
@@ -318,12 +326,19 @@ function measureArt(items){
       v.onloadedmetadata = () => { it._ar = (v.videoWidth / v.videoHeight) || PLACEHOLDER_AR; it._ok = true; res(); };
       v.onerror = () => { it._ar = PLACEHOLDER_AR; it._ok = false; res(); };
       v.src = it.img;
-    } else {
+      return;
+    }
+    const done = (src, im) => { it._src = src; it._ar = im.naturalWidth / im.naturalHeight; it._ok = true; res(); };
+    const thumb = tileSrcFor(it);
+    const t = new Image();
+    t.onload = () => done(thumb, t);
+    t.onerror = () => {
       const im = new Image();
-      im.onload  = () => { it._ar = im.naturalWidth / im.naturalHeight; it._ok = true; res(); };
+      im.onload  = () => done(it.img, im);
       im.onerror = () => { it._ar = PLACEHOLDER_AR; it._ok = false; res(); };
       im.src = it.img;
-    }
+    };
+    t.src = thumb;
   })));
 }
 
@@ -337,20 +352,27 @@ function makeTile(item, w, h){
   tile.dataset.src = item.img;
   const tag = mediums(item).join("·") + " // " + item.year;
   const extra = (item.images || []).length;
+  /* a dead cover with live extra frames still opens (stencil tile) */
+  if (extra) tile.classList.add("openable");
   if (item._ok){
     const media = isVideo(item.img)
       ? '<video src="' + item.img + '" muted loop autoplay playsinline aria-label="' + altFor(item).replace(/"/g,"&quot;") + '"></video>'
-      : '<img src="' + item.img + '" alt="' + altFor(item).replace(/"/g,"&quot;") + '">';
+      : '<img src="' + (item._src || item.img) + '" alt="' + altFor(item).replace(/"/g,"&quot;") + '" loading="lazy" decoding="async">';
     tile.innerHTML =
       '<span class="tile-tag">' + tag + "</span>" +
       (extra ? '<span class="tile-count">+' + extra + "</span>" : "") +
       media +
       '<span class="tile-title">' + item.title + "</span>";
   } else {
-    tile.innerHTML = '<span class="tile-tag">' + tag + "</span>";
+    tile.innerHTML =
+      '<span class="tile-tag">' + tag + "</span>" +
+      (extra ? '<span class="tile-count">+' + extra + "</span>" : "");
   }
   return tile;
 }
+
+/* an item is worth opening if its cover works OR it has extra frames */
+const openable = a => a._ok !== false || (a.images || []).length > 0;
 
 /* suggest (optional): soft item count for the homepage taster — the
    layout completes whole rows only (max 3), never ends ragged */
@@ -464,9 +486,9 @@ function layoutJustified(mount, items, onTileClick, suggest){
     if (!lastW) return; // not laid out yet (hidden tab etc.) — observer below retries
     const list = current();
     layoutJustified(mount, list, item => {
-      if (!item._ok) return;
+      if (!openable(item)) return;
       /* from the taster, prev/next browses the whole archive */
-      lbList = (suggest ? ART : list).filter(a => a._ok !== false);
+      lbList = (suggest ? ART : list).filter(openable);
       lbIndex = lbList.indexOf(item);
       openLightbox(item);
     }, suggest);
@@ -503,15 +525,17 @@ function layoutJustified(mount, items, onTileClick, suggest){
    the open post is reflected in the url (#p/slug) so every artwork
    is deep-linkable without any extra links on the page. ---------- */
 const lb = $("#lightbox");
-const slugFor = t => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 function openLightbox(item){
   if (!lb) return;
   const stack = $("#lbStack");
   /* images entries can be plain urls or { src, tag } — tag shows as a
-     little chip on the frame ("final", "wireframe", "iteration"…) */
-  const frames = [item.img, ...(item.images || [])]
+     little chip on the frame ("final", "wireframe", "iteration"…).
+     a cover that failed to load is skipped so the rest still shows. */
+  const covers = item._ok === false ? [] : [item.img];
+  const frames = [...covers, ...(item.images || [])]
     .map(f => typeof f === "string" ? { src: f } : f);
+  if (!frames.length) return;
   stack.innerHTML = "";
   frames.forEach((f, i) => {
     const wrap = document.createElement("div");
@@ -634,12 +658,18 @@ if (lb){
   $("#latestStamp").textContent = mediums(item).join("·") + " // " + item.year;
   $("#latestTitle").textContent = item.title;
   $("#latestNote").textContent = item.note || item.tags;
+  /* this is usually the LCP element — load the deploy-time thumbnail
+     at high priority, fall back to the original, hide if both die */
   const img = $("#latestImg");
   img.alt = item.title + " — " + item.tags;
-  img.onerror = () => { aside.style.display = "none"; };
-  img.src = item.img;
+  img.fetchPriority = "high";
+  img.onerror = () => {
+    if (img.src.indexOf(item.img) === -1){ img.src = item.img; return; }
+    aside.style.display = "none";
+  };
+  img.src = isVideo(item.img) ? item.img : tileSrcFor(item);
   $("#latestFrame").addEventListener("click", () => {
-    lbList = ART.filter(a => a._ok !== false); lbIndex = 0;
+    lbList = ART.filter(openable); lbIndex = 0;
     openLightbox(item);
   });
 })();

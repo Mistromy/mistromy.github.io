@@ -7,6 +7,9 @@
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
+        // cookieless mode: no _ga cookies, no consent banner needed.
+    // analytics still arrive as anonymous pings (slightly less precise).
+    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
     gtag('js', new Date());
 
     gtag('config', 'G-1TMG615E9J');
@@ -20,7 +23,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Allerta+Stencil&family=Archivo:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 
 <body data-sector="404">
@@ -43,17 +46,17 @@
   <nav class="nav" aria-label="Primary">
     <button class="nav-burger" id="navBurger" aria-expanded="false" aria-controls="navLinks">/// menu</button>
     <div class="nav-links" id="navLinks">
-      <a href="./#about">/ABOUT</a>
-      <a href="./#links">/LINKS</a>
+      <a href="/#about">/ABOUT</a>
+      <a href="/#links">/LINKS</a>
       <div class="nav-item">
-        <a href="./#art">/ART</a>
-        <div class="nav-drop"><a href="art.html">FULL ARCHIVE -&gt;</a></div>
+        <a href="/#art">/ART</a>
+        <div class="nav-drop"><a href="/art.html">FULL ARCHIVE -&gt;</a></div>
       </div>
       <div class="nav-item">
-        <a href="./#sys">/SYS</a>
-        <div class="nav-drop"><a href="projects.html">ALL PROJECTS -&gt;</a></div>
+        <a href="/#sys">/SYS</a>
+        <div class="nav-drop"><a href="/projects.html">ALL PROJECTS -&gt;</a></div>
       </div>
-      <a href="./#log">/BIO</a>
+      <a href="/#log">/BIO</a>
     </div>
     <span class="nav-note" data-random-note>// stay condensed</span>
   </nav>
@@ -71,8 +74,8 @@
             // <span class="random-quote">—</span>
           </p>
           <div class="hero-cta">
-            <a class="btn btn-solid" href="./">back to base</a>
-            <a class="btn" id="lostBtn" href="art.html">take me somewhere -&gt;</a>
+            <a class="btn btn-solid" href="/">back to base</a>
+            <a class="btn" id="lostBtn" href="/art.html">take me somewhere -&gt;</a>
           </div>
         </div>
       </div>
@@ -89,19 +92,19 @@
         <div class="sig">Mist</div>
         <p>SYS_EPOCH // <span id="footEpoch">—</span> · <span class="random-quote">—</span></p>
       </div>
-      <p>© <span id="year"></span> mist · <a href="./">home</a> · <span class="random-quote">—</span></p>
+      <p>© <span id="year"></span> mist · <a href="/">home</a> · <span class="random-quote">—</span></p>
     </div>
   </footer>
 
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+  <script src="/js/data.js"></script>
+  <script src="/js/app.js"></script>
   <script>
     /* "take me somewhere" → a random artwork, deep-linked */
     (function () {
       const btn = document.getElementById("lostBtn");
       if (!btn || typeof ART === "undefined" || !ART.length) return;
       const item = ART[Math.random() * ART.length | 0];
-      btn.href = "art.html#p/" + slugFor(item.title);
+      btn.href = "/art.html#p/" + slugFor(item.title);
     })();
   </script>
 </body>

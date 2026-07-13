@@ -7,6 +7,9 @@
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
+        // cookieless mode: no _ga cookies, no consent banner needed.
+    // analytics still arrive as anonymous pings (slightly less precise).
+    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
     gtag('js', new Date());
 
     gtag('config', 'G-1TMG615E9J');

@@ -31,8 +31,14 @@ import urllib.request
 from pathlib import Path
 
 BASE = "https://mistromy.github.io/"
-THUMB_MAX = 1080        # px, longest edge
-THUMB_QUALITY = 82      # jpeg quality — lands well under whatsapp's ~300 KB cap
+# embed image: as large as whatsapp's large-preview rules allow
+# (jpeg/png, < ~300 KB) — clicking the preview should feel full-size
+EMBED_MAX = 1600
+EMBED_CAP = 290_000
+# tile image: what the gallery grid actually loads (rows are ~300 px
+# tall, so 900 px covers 2x screens) — this is the lighthouse fix
+TILE_MAX = 900
+TILE_CAP = 160_000
 UA = {"User-Agent": "Mozilla/5.0 (compatible; mist-embed-gen/1.0)"}
 
 try:
@@ -72,17 +78,32 @@ if HAVE_PIL:
     tdir.mkdir(exist_ok=True)
 
 
-def make_thumb(url: str, dest: Path):
-    """fetch the artwork, write a whatsapp-safe jpg. returns (w, h) or None."""
+def save_capped(im, dest: Path, max_px: int, cap: int):
+    """resize + walk quality down until the jpg fits the byte cap."""
+    im2 = im.copy()
+    im2.thumbnail((max_px, max_px))
+    buf = io.BytesIO()
+    for q in (85, 78, 70, 62, 55):
+        buf = io.BytesIO()
+        im2.save(buf, "JPEG", quality=q, optimize=True, progressive=True)
+        if buf.tell() <= cap:
+            break
+    dest.write_bytes(buf.getvalue())
+    return im2.size
+
+
+def make_thumbs(url: str, slug_: str):
+    """fetch once, write the embed jpg and the tile jpg. (w,h) of the
+    embed image, or None if the source is unreachable."""
     try:
         with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=60) as r:
             raw = r.read()
         im = Image.open(io.BytesIO(raw)).convert("RGB")
-        im.thumbnail((THUMB_MAX, THUMB_MAX))
-        im.save(dest, "JPEG", quality=THUMB_QUALITY, optimize=True, progressive=True)
-        return im.size
+        dims = save_capped(im, tdir / f"{slug_}.jpg", EMBED_MAX, EMBED_CAP)
+        save_capped(im, tdir / f"{slug_}.s.jpg", TILE_MAX, TILE_CAP)
+        return dims
     except Exception as e:  # a dead image shouldn't sink the run
-        print(f"  thumb failed for {url}: {e}")
+        print(f"  thumbs failed for {url}: {e}")
         return None
 
 
@@ -103,7 +124,7 @@ for i, (pos, title) in enumerate(titles):
 
     og_image, size_tags = img, ""
     if HAVE_PIL:
-        dims = make_thumb(img, tdir / f"{s}.jpg")
+        dims = make_thumbs(img, s)
         if dims:
             og_image = f"{BASE}p/t/{s}.jpg"
             size_tags = (f'<meta property="og:image:width" content="{dims[0]}">\n'

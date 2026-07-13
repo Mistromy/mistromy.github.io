@@ -1,5 +1,9 @@
+# allow everything — "Disallow: /" also blocked the homepage (the url
+# "/" wasn't in the allow list), every css/js/asset (google couldn't
+# render the page), and the /p/ stubs for robots-respecting unfurlers
+# (twitter, slack). the stubs carry their own noindex meta, which
+# crawlers can only see if they're allowed to fetch them.
 User-agent: *
-Disallow: /
-Allow: /index.html
-Allow: /projects.html
-Allow: /art.html
+Allow: /
+
+Sitemap: https://mistromy.github.io/sitemap.xml

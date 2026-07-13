@@ -45,6 +45,9 @@
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
+        // cookieless mode: no _ga cookies, no consent banner needed.
+    // analytics still arrive as anonymous pings (slightly less precise).
+    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
     gtag('js', new Date());
 
     gtag('config', 'G-1TMG615E9J');
@@ -162,7 +165,7 @@
                 <img id="latestImg" src="" alt="">
               </button>
               <div class="latest-meta">
-                <h3 id="latestTitle">—</h3>
+                <p class="latest-title" id="latestTitle">—</p>
                 <p id="latestNote"></p>
                 <a href="#art" class="latest-more">full archive -&gt;</a>
               </div>
