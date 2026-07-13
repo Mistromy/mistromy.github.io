@@ -365,7 +365,9 @@ section{border-bottom:1px solid var(--line)}
 .about-section{position:relative}
 .about-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;padding-bottom:80px}
 .hero-block{padding:12vh 0 8vh}
-.about-side{min-width:0}
+/* padding matches .hero-block so the panel top-aligns with the
+   eyebrow text instead of floating above it */
+.about-side{min-width:0;padding-top:12vh}
 .about-copy blockquote{
   font-family:var(--mono);font-size:14px;color:var(--bone);
   border-left:2px solid var(--magenta);padding:6px 0 6px 18px;margin:0 0 26px;
@@ -435,7 +437,10 @@ section{border-bottom:1px solid var(--line)}
 /* justified gallery — rows packed to full width, native aspect ratios,
    no crops, no bars, no holes. tile sizes are set inline by app.js. */
 .jgrid{padding:32px 0 40px;min-height:120px}
-.jrow{display:flex;gap:14px;margin-bottom:14px}
+/* desktop rows carry no fixed gap — space-evenly distributes ALL the
+   leftover width, so edge padding == inner padding (mobile's justified
+   layout re-adds its gap in the media query) */
+.jrow{display:flex;margin-bottom:14px}
 .tile{
   position:relative;flex:none;padding:0;overflow:hidden;cursor:pointer;
   border:1px solid var(--line);background:var(--panel-2);
@@ -461,14 +466,6 @@ section{border-bottom:1px solid var(--line)}
   color:var(--bone);opacity:0;transition:opacity .2s;
 }
 .tile:hover .tile-title{opacity:1}
-/* fullscreen hint — appears on hover, always faintly there on touch */
-.tile:not(.noimg)::after{
-  content:"⛶";position:absolute;right:10px;bottom:8px;z-index:2;
-  font-size:15px;line-height:1;color:var(--bone);opacity:0;transition:opacity .15s;
-  text-shadow:0 0 6px rgba(13,5,10,.9);
-}
-.tile:hover::after{opacity:.9}
-@media (hover:none){.tile:not(.noimg)::after{opacity:.6}}
 /* stencil placeholder while the image file doesn't exist yet */
 .tile.noimg{display:flex;align-items:center;justify-content:center;padding:16px;cursor:default}
 .tile.noimg::after{
@@ -485,46 +482,57 @@ section{border-bottom:1px solid var(--line)}
 .lightbox{
   position:fixed;inset:0;z-index:90;
   background:rgba(13,5,10,.72);backdrop-filter:blur(10px);
-  display:none;align-items:center;justify-content:center;
-  padding:calc(var(--sysbar-h) + 54px) 4vw 40px;
+  display:none;align-items:stretch;justify-content:center;
+  padding:calc(var(--sysbar-h) + 12px) 2.5vw 18px;
 }
 .lightbox.open{display:flex}
 .lightbox figure{
-  width:min(92vw,980px);max-height:100%;min-height:0;
-  display:flex;flex-direction:column;align-items:center;gap:16px;
+  width:min(96vw,1400px);min-height:0;
+  display:flex;flex-direction:column;gap:12px;
 }
-/* the header — title, meta, note and the links, above the frames */
-.lb-head{width:100%;text-align:left;display:flex;flex-direction:column;gap:6px}
-.lb-head .lb-meta{
-  font-family:var(--mono);font-size:10px;letter-spacing:.15em;
-  text-transform:uppercase;color:var(--magenta);
+/* the header — meta/title/note stacked left, links right, starting on
+   the same line as the close button. inset toward the center so it
+   reads as part of the viewer, not screen furniture. */
+.lb-head{
+  flex:none;width:100%;text-align:left;
+  padding:0 clamp(140px,13vw,220px) 0 clamp(48px,9vw,160px);
+  display:flex;justify-content:space-between;align-items:center;gap:12px 28px;
 }
-.lb-head .lb-top{display:flex;justify-content:space-between;align-items:baseline;gap:24px;flex-wrap:wrap}
+.lb-head .lb-info{min-width:0}
 .lb-head h3{
-  font-family:var(--stencil);font-size:clamp(22px,3.2vw,36px);
+  font-family:var(--stencil);font-size:clamp(20px,2.4vw,30px);
   text-transform:uppercase;line-height:1;font-weight:400;
 }
-.lb-head .lb-note{font-size:13px;color:var(--concrete);max-width:640px}
-.lb-links{display:flex;gap:18px;flex-wrap:wrap}
+.lb-head .lb-meta{
+  font-family:var(--mono);font-size:10px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--magenta);margin-bottom:5px;white-space:nowrap;
+}
+.lb-head .lb-note{
+  font-size:12px;color:var(--concrete);margin-top:5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.lb-links{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none}
 .lb-links a{
   font-family:var(--mono);font-size:11px;letter-spacing:.12em;
   text-transform:uppercase;color:var(--cyan);white-space:nowrap;
 }
-/* the stack — cover on top, extra frames scroll below it. every frame
-   sizes itself; single images fit without leftover panel. the framed
-   panel is the viewer: anything clicked outside closes. */
+/* the stack — as big as the screen allows. cover on top, extra frames
+   scroll below it. margin:auto centers a short single image in the
+   leftover space instead of stretching the panel around it. */
 .lb-stack{
-  width:fit-content;max-width:100%;flex:0 1 auto;min-height:0;overflow-y:auto;
-  display:flex;flex-direction:column;align-items:center;gap:16px;
-  padding:10px;background:rgba(32,16,27,.72);backdrop-filter:blur(4px);
+  width:fit-content;max-width:100%;min-height:0;overflow-y:auto;
+  margin:auto;
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+  padding:20px;background:rgba(32,16,27,.72);backdrop-filter:blur(4px);
   border:1px solid var(--magenta);
   box-shadow:0 0 0 1px rgba(194,42,108,.15),0 24px 60px rgba(0,0,0,.45);
   scrollbar-width:thin;scrollbar-color:var(--magenta) var(--panel);
 }
 .lb-item{position:relative;flex:none;max-width:100%;display:flex;justify-content:center}
 .lb-item img,.lb-item video{
-  /* viewport minus sysbar, paddings, header and stack chrome */
-  max-width:100%;max-height:calc(100vh - var(--sysbar-h) - 240px);
+  /* viewport minus sysbar, the header row and the chrome — the image
+     is the point, give it the room */
+  max-width:100%;max-height:calc(100vh - var(--sysbar-h) - 130px);
   width:auto;height:auto;object-fit:contain;border:1px solid var(--line);display:block;
 }
 /* per-frame chip — "final", "wireframe", "iteration"… from data.js */
@@ -542,8 +550,8 @@ section{border-bottom:1px solid var(--line)}
 }
 .lb-raw:hover{color:var(--cyan);border-color:var(--cyan);text-decoration:none}
 .lightbox .close{
-  position:absolute;top:calc(var(--sysbar-h) + 14px);right:22px;background:var(--ink);border:1px solid var(--line);
-  color:var(--bone);font-family:var(--mono);font-size:12px;padding:8px 14px;cursor:pointer;z-index:2;
+  position:absolute;top:calc(var(--sysbar-h) + 10px);right:2.5vw;background:var(--ink);border:1px solid var(--line);
+  color:var(--bone);font-family:var(--mono);font-size:12px;padding:7px 13px;cursor:pointer;z-index:2;
 }
 .lightbox .close:hover{border-color:var(--signal);color:var(--signal)}
 .lightbox .lb-nav{
@@ -679,6 +687,7 @@ footer{padding:44px 0 60px;color:var(--concrete)}
 /* ---------- responsive ---------- */
 @media (max-width:900px){
   .about-layout,.featured-proj,.log-grid,.bio-now{grid-template-columns:1fr}
+  .about-side{padding-top:0}
   .about-side .latest{position:static}
   .bio-now{gap:32px}
   .log-aside{position:static;gap:12px}
@@ -709,19 +718,17 @@ footer{padding:44px 0 60px;color:var(--concrete)}
      middle, caption in the flow below — nothing overlaps anything */
   .lightbox{padding:0;align-items:stretch;justify-content:flex-start}
   .lightbox figure{
-    gap:10px;justify-content:center;
-    width:100%;height:100%;padding:52px 12px 12px;
+    gap:10px;
+    width:100%;height:100%;padding:48px 12px 12px;
   }
-  .lb-head{gap:4px}
-  .lb-head h3{font-size:20px}
-  .lb-head .lb-note{font-size:11px}
-  .lb-links{gap:12px}
+  .lb-head{flex-direction:column;align-items:flex-start;gap:8px;padding:0 70px 0 4px}
+  .lb-head h3{font-size:19px}
+  .lb-head .lb-note{font-size:11px;white-space:normal}
+  .lb-links{flex-direction:row;align-items:flex-start;gap:12px}
   .lb-links a{font-size:10px}
-  /* hug the content: a single short image gets no dead panel below it,
-     tall stacks shrink to the available space and scroll inside */
-  .lb-stack{margin:0 auto;padding:8px}
-  .lb-item img,.lb-item video{max-height:64vh}
-  .lightbox .close{top:10px;right:10px;padding:6px 10px;background:var(--ink);z-index:2}
+  .lb-stack{padding:10px;gap:12px}
+  .lb-item img,.lb-item video{max-height:70vh}
+  .lightbox .close{top:8px;right:10px;padding:6px 10px;background:var(--ink);z-index:2}
 }
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion:reduce){

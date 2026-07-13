@@ -31,10 +31,11 @@ Open `js/data.js`, add an entry to the **top** of `ART` (newest first):
 
 - Drop the image into `assets/art/` (2d, cgi, doesn't matter — one
   pile). Export web-res — ~2000–2500 px on the long edge, jpg/webp.
-- **Shapes:** the gallery is justified rows — every image keeps its
-  own native aspect ratio and rows pack themselves to full width.
-  There is nothing to configure; whatever ratio the file has is the
-  shape it gets. No crops, no bars, no holes.
+- **Shapes:** every row is the same height; tiles keep their native
+  ratio (extremes clamped to ~0.62–1.95, cropping a sliver) and rows
+  pack at natural size — leftover width becomes spacing between tiles
+  (1 tile = centered, 2 = far left + right, 3+ = evenly spread).
+  Entry order controls which pieces share a row.
 - If the file isn't there yet, a 3:4 stencil placeholder holds the
   spot instead of breaking the layout.
 - `medium` takes a string or an **array** — `["cgi","2d"]` puts a piece
@@ -198,10 +199,60 @@ plus an instant redirect to the live lightbox. Share
 `https://mistromy.github.io/p/smart-juice` and Discord attaches the
 render.
 
-- **Automatic**: `.github/workflows/gen-embeds.yml` reruns the script
-  on every push that touches `js/data.js` and commits the stubs itself
-  (pull after pushing art, or the bot's commit sits above yours).
-  Manual fallback: `python scripts/gen_embeds.py`.
+- **Built at deploy time, never committed.** `p/` is gitignored;
+  `.github/workflows/deploy.yml` runs the generator during the Pages
+  build, so the stubs and thumbnails exist only on the deployed site —
+  no artstation copies in the repo, no bot commits, no `git pull`
+  needed, and generation always finishes before deployment.
+- **ONE-TIME SETUP (you, in the browser):**
+  1. Repo Settings → Pages → Build and deployment → Source →
+     **GitHub Actions** (instead of "Deploy from a branch").
+  2. Then untrack the already-committed stubs:
+     `git rm -r --cached p/ && git commit -m "stop tracking generated stubs"`.
+  Do step 1 before pushing step 2, or the live `/p/` links 404 in
+  between.
+- **WhatsApp**: only shows large previews for jpeg/png under ~300 KB,
+  so the generator writes small JPG thumbnails into `p/t/` and points
+  `og:image` there (with explicit width/height). Pillow does this —
+  installed in CI; a local run without it falls back to original urls.
+- **Ways to trigger a rebuild/redeploy** (no PRs involved — plain
+  pushes to main already do it):
+  1. `git push` to main — any change at all.
+  2. The **"Run workflow"** button: Actions tab → deploy → Run workflow.
+  3. The API, from any script (the future gist-push helper), with a
+     fine-grained PAT that has Actions write on this repo:
+     ```
+     curl -X POST \
+       -H "Authorization: Bearer $PAT" \
+       -H "Accept: application/vnd.github+json" \
+       https://api.github.com/repos/Mistromy/mistromy.github.io/actions/workflows/deploy.yml/dispatches \
+       -d '{"ref":"main"}'
+     ```
+  4. (If ever wanted again: a `schedule:` cron block — public repos
+     have unlimited free Actions minutes, so it costs nothing.)
+- **When data.js moves to a gist**: set the repo variable
+  `DATA_JS_URL` (Settings → Secrets and variables → Actions →
+  Variables) to the gist's hashless raw url, and fire trigger #3 after
+  each gist edit. Gists can't fire repo webhooks themselves.
+
+## Caching (why new art takes a minute to show up)
+
+GitHub Pages serves everything with `Cache-Control: max-age=600` —
+browsers may reuse any file for up to **10 minutes**, and there's no
+way to change that on Pages. Two mitigations are in place:
+
+- The deploy workflow stamps `js/data.js`, `js/app.js` and
+  `css/style.css` references with the commit sha (`?v=abc12345`), so
+  the moment a browser gets the new HTML it also fetches the new data —
+  no more double-refresh where stale data.js rides a fresh page.
+- What remains is the HTML's own ≤10-minute window (plus a few minutes
+  of Pages CDN propagation after deploy). That's the "it took a while
+  to appear" you saw — normal, bounded, not fixable on Pages. The go
+  backend could serve fresher headers someday if it ever matters.
+
+The pfp on a first visit from a new device is a cold fetch from
+GitHub's avatar CDN — it now loads with `fetchpriority="high"` and
+reserved dimensions, so it pops in sooner and nothing shifts.
 - The **share ->** button in the fullscreen viewer copies these urls.
 - Extensionless urls are a GitHub Pages feature — locally
   (`python -m http.server`) you'd need the `.html` suffix.

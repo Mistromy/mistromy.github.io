@@ -150,7 +150,7 @@ const STACK = [
                            either key alone is fine. */
 const ART = [
   {
-    title: "NO ENTRY", year: "2026", medium: ["2d", "photo"], img: "https://cdna.artstation.com/p/assets/images/images/100/731/278/large/mist-no-entry2.jpg?1783884100", tags: "brutalist, color, print",
+    title: "NO ENTRY", year: "2026", medium: ["2d", "photo"], img: "https://cdnb.artstation.com/p/assets/images/images/100/731/981/large/mist-no-entry2.jpg?1783886414", tags: "brutalist, color, print",
     note: "really enjoying making this. photo taken in pozań",
     images: ["https://cdna.artstation.com/p/assets/images/images/100/723/294/large/mist-whatsapp-image-2026-07-07-at-22-19-58.jpg?1783861718"],
     post: { artstation: "https://www.artstation.com/artwork/kw4Oa6" }

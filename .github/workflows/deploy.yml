@@ -1,0 +1,68 @@
+# builds and deploys the site to github pages.
+#
+# ONE-TIME SETUP: repo Settings → Pages → Source → "GitHub Actions".
+# until that's flipped, the old branch deployment keeps running and
+# this workflow deploys nothing visible.
+#
+# what this buys over the default branch deploy:
+#   - the /p/ embed stubs + whatsapp thumbnails are generated HERE,
+#     during the build — nothing gets committed back, p/ stays
+#     gitignored, artstation images stay out of the repo, no pulls.
+#   - generation always runs BEFORE deployment, in the same run.
+#   - asset urls get stamped with the commit sha, so browsers pick up
+#     new data.js/app.js/css immediately instead of after their cache
+#     heuristics feel like it.
+#
+# triggers: any push to main; the "Run workflow" button; and (for the
+# data.js-in-a-gist future) the workflow_dispatch API — recipe in
+# DOCS.md. gists can't fire repo webhooks, so whatever edits the gist
+# has to poke this.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - run: pip install pillow
+
+      - name: generate embed stubs + thumbnails
+        run: python scripts/gen_embeds.py
+        env:
+          DATA_JS_URL: ${{ vars.DATA_JS_URL }}
+
+      - name: stamp asset urls for cache busting
+        run: |
+          v=${GITHUB_SHA::8}
+          sed -i "s|js/data.js\"|js/data.js?v=$v\"|g; s|js/app.js\"|js/app.js?v=$v\"|g; s|css/style.css\"|css/style.css?v=$v\"|g" *.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -8,21 +8,49 @@ carry per-artwork og:image tags. These stubs can: /p/smart-juice serves
 real og tags (the artwork as the embed image) and instantly redirects
 humans to the live lightbox at art.html#p/smart-juice.
 
-Run from the repo root every time ART changes:
-    python scripts/gen_embeds.py
-Commit the p/ folder. That's it. The "share ->" button in the
-fullscreen viewer copies these urls.
+WhatsApp only shows LARGE previews for jpeg/png images under ~300 KB,
+which ArtStation's /large/ webps are not. So when Pillow is available
+(it is in CI), each artwork also gets a small JPG thumbnail in p/t/
+and the og:image points there — big embeds everywhere. Without Pillow
+the stub falls back to the original image URL (Discord still works).
+
+Data source:
+  - default: local js/data.js
+  - env DATA_JS_URL=<raw gist url> — for when data.js moves off-repo.
+
+Runs automatically via .github/workflows/gen-embeds.yml (on push +
+cron + manual). Manual: python scripts/gen_embeds.py
 """
 
+import os
 import re
 import sys
 import html
+import io
+import urllib.request
 from pathlib import Path
 
 BASE = "https://mistromy.github.io/"
+THUMB_MAX = 1080        # px, longest edge
+THUMB_QUALITY = 82      # jpeg quality — lands well under whatsapp's ~300 KB cap
+UA = {"User-Agent": "Mozilla/5.0 (compatible; mist-embed-gen/1.0)"}
+
+try:
+    from PIL import Image
+    HAVE_PIL = True
+except ImportError:
+    HAVE_PIL = False
+    print("note: Pillow not installed — using original image urls (whatsapp previews stay small)")
 
 root = Path(__file__).resolve().parent.parent
-src = (root / "js" / "data.js").read_text(encoding="utf-8")
+
+data_url = os.environ.get("DATA_JS_URL", "").strip()
+if data_url:
+    print(f"reading data.js from {data_url}")
+    with urllib.request.urlopen(urllib.request.Request(data_url, headers=UA), timeout=30) as r:
+        src = r.read().decode("utf-8")
+else:
+    src = (root / "js" / "data.js").read_text(encoding="utf-8")
 
 m = re.search(r"const ART = \[(.*?)\n\];", src, re.S)
 if not m:
@@ -38,9 +66,27 @@ if not titles:
     sys.exit("no artworks found in ART")
 
 out = root / "p"
+tdir = out / "t"
 out.mkdir(exist_ok=True)
-made = []
+if HAVE_PIL:
+    tdir.mkdir(exist_ok=True)
 
+
+def make_thumb(url: str, dest: Path):
+    """fetch the artwork, write a whatsapp-safe jpg. returns (w, h) or None."""
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=60) as r:
+            raw = r.read()
+        im = Image.open(io.BytesIO(raw)).convert("RGB")
+        im.thumbnail((THUMB_MAX, THUMB_MAX))
+        im.save(dest, "JPEG", quality=THUMB_QUALITY, optimize=True, progressive=True)
+        return im.size
+    except Exception as e:  # a dead image shouldn't sink the run
+        print(f"  thumb failed for {url}: {e}")
+        return None
+
+
+made = []
 for i, (pos, title) in enumerate(titles):
     end = titles[i + 1][0] if i + 1 < len(titles) else len(block)
     seg = block[pos:end]
@@ -54,8 +100,17 @@ for i, (pos, title) in enumerate(titles):
     note = unesc(note_m.group(1)) if note_m else ""
     s = slug(title)
     target = f"{BASE}art.html#p/{s}"
-    t, n, im = html.escape(title, quote=True), html.escape(note, quote=True), html.escape(img, quote=True)
 
+    og_image, size_tags = img, ""
+    if HAVE_PIL:
+        dims = make_thumb(img, tdir / f"{s}.jpg")
+        if dims:
+            og_image = f"{BASE}p/t/{s}.jpg"
+            size_tags = (f'<meta property="og:image:width" content="{dims[0]}">\n'
+                         f'<meta property="og:image:height" content="{dims[1]}">\n'
+                         f'<meta property="og:image:type" content="image/jpeg">\n')
+
+    t, n, im_ = html.escape(title, quote=True), html.escape(note, quote=True), html.escape(og_image, quote=True)
     (out / f"{s}.html").write_text(f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -65,8 +120,8 @@ for i, (pos, title) in enumerate(titles):
 <meta property="og:type" content="website">
 <meta property="og:title" content="{t} — art by Mist">
 <meta property="og:description" content="{n}">
-<meta property="og:image" content="{im}">
-<meta name="twitter:card" content="summary_large_image">
+<meta property="og:image" content="{im_}">
+{size_tags}<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#c22a6c">
 <meta http-equiv="refresh" content="0;url={target}">
 <script>location.replace({target!r});</script>
@@ -78,6 +133,6 @@ redirecting to the archive… <a style="color:#5df2ff" href="{target}">click if 
 """, encoding="utf-8")
     made.append(s)
 
-print(f"wrote {len(made)} stubs to p/:")
+print(f"wrote {len(made)} stubs to p/" + (" (with thumbnails in p/t/)" if HAVE_PIL else ""))
 for s in made:
     print(f"  {BASE}p/{s}")

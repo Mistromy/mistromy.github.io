@@ -13,6 +13,8 @@
   <meta property="og:image" content="https://mistromy.github.io/assets/og.png">
   <meta property="og:description"
     content="Mist (Mistromy) — student, CGI artist and developer. 3D renders, 2D posters, and software projects.">
+  <!-- discord shows the image big only when this is present -->
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://mistromy.github.io/">
   <script type="application/ld+json">
   {
@@ -120,7 +122,8 @@
               <p class="eyebrow">// transmission open — can you hear me?</p>
               <div class="hero-id">
                 <div class="pfp" id="pfpFrame">
-                  <img id="pfpImg" src="https://avatars.githubusercontent.com/u/125371422?v=4" alt="Mist's avatar">
+                  <img id="pfpImg" src="https://avatars.githubusercontent.com/u/125371422?v=4" alt="Mist's avatar"
+                fetchpriority="high" width="104" height="104">
                 </div>
                 <h1 class="glitch" id="glitchName" data-text="MIST">MIST</h1>
               </div>
@@ -189,6 +192,8 @@
           <p>2D and CGI in one pile — posters, environments, light studies, type
             experiments. The newest few live here; the rest are in the archive.</p>
         </div>
+        <!-- data-limit is a soft suggestion: the taster shows whole
+             rows (2-3) around that count, never a ragged edge -->
         <div class="jgrid" id="artGrid" data-limit="6"></div>
         <div class="hero-cta rv" style="padding-bottom:80px">
           <a class="btn btn-solid" href="art.html">full archive -&gt;</a>
@@ -323,12 +328,12 @@
     <button class="lb-nav lb-next" id="lbNext" aria-label="Next artwork">&gt;</button>
     <figure>
       <header class="lb-head">
-        <p class="lb-meta" id="lbMeta">—</p>
-        <div class="lb-top">
+        <div class="lb-info">
+          <p class="lb-meta" id="lbMeta">—</p>
           <h3 id="lbTitle">—</h3>
-          <span class="lb-links" id="lbLinks"></span>
+          <p class="lb-note" id="lbNote"></p>
         </div>
-        <p class="lb-note" id="lbNote"></p>
+        <span class="lb-links" id="lbLinks"></span>
       </header>
       <div class="lb-stack" id="lbStack"></div>
     </figure>

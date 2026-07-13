@@ -352,70 +352,91 @@ function makeTile(item, w, h){
   return tile;
 }
 
-function layoutJustified(mount, items, onTileClick){
+/* suggest (optional): soft item count for the homepage taster — the
+   layout completes whole rows only (max 3), never ends ragged */
+function layoutJustified(mount, items, onTileClick, suggest){
   const W = mount.clientWidth;
   if (!W) return;
-  /* clientWidth, not innerWidth — it tracks the css media queries even
-     when the visual viewport is pinch-zoomed */
-  const mobile = document.documentElement.clientWidth <= 600;
-  const gap = mobile ? 10 : 14;
-  const target = mobile ? 200 : 300;        // ideal row height
-  const maxH = Math.round(target * 1.5);
-  /* greedy row packing — when a tile would overshoot the row, it either
-     stays or opens the next row, whichever lands the row height closer
-     to the target. stops one wide frame from crushing a row into a
-     tiny strip, and keeps neighbouring rows at comparable sizes. */
-  const rows = [];
-  let row = [], arSum = 0;
-  items.forEach(it => {
-    if (row.length && (arSum + it._ar) * target + gap * row.length >= W){
-      const hWith    = (W - gap * row.length)       / (arSum + it._ar);
-      const hWithout = (W - gap * (row.length - 1)) / arSum;
-      if (Math.abs(hWith - target) < Math.abs(hWithout - target)){
-        row.push(it);
-        rows.push(row); row = []; arSum = 0;
-        return;
-      }
-      rows.push(row); row = []; arSum = 0;
-    }
-    row.push(it); arSum += it._ar;
-    if (arSum * target + gap * (row.length - 1) >= W){ rows.push(row); row = []; arSum = 0; }
-  });
-  if (row.length) rows.push(row);
-  /* a sparse final row leaves a hole — fold it into the previous row,
-     but only if that row stays a reasonable size afterwards */
-  if (rows.length > 1){
-    const last = rows[rows.length - 1];
-    const fill = last.reduce((s, it) => s + it._ar, 0) * target + gap * (last.length - 1);
-    if (fill < W * 0.55){
-      const merged = [...rows[rows.length - 2], ...last];
-      const hMerged = (W - gap * (merged.length - 1)) / merged.reduce((s, it) => s + it._ar, 0);
-      if (hMerged >= target * 0.72) rows[rows.length - 2].push(...rows.pop());
-    }
-  }
-  mount.innerHTML = "";
-  rows.forEach((r, idx) => {
-    const arTotal = r.reduce((s, it) => s + it._ar, 0);
-    let h = (W - gap * (r.length - 1)) / arTotal;
-    /* last row that still can't fill the width: cap the height so the
-       leftover gap stays small instead of tile-sized */
-    if (idx === rows.length - 1 && h > maxH) h = maxH;
-    h = Math.round(h);
+  const addRow = (r, sizeOf, justify) => {
     const rowEl = document.createElement("div");
     rowEl.className = "jrow";
+    if (justify) rowEl.style.justifyContent = justify;
     r.forEach(it => {
-      const tile = makeTile(it, Math.round(it._ar * h), h);
+      const [w, h] = sizeOf(it);
+      const tile = makeTile(it, w, h);
       tile.addEventListener("click", () => onTileClick(it));
       rowEl.appendChild(tile);
     });
     mount.appendChild(rowEl);
-  });
+  };
+  /* clientWidth, not innerWidth — it tracks the css media queries even
+     when the visual viewport is pinch-zoomed */
+  const mobile = document.documentElement.clientWidth <= 600;
+
+  /* mobile: space efficiency wins — classic justified rows, scaled to
+     fill the full width, no decorative gaps */
+  if (mobile){
+    const gap = 10, target = 210, maxH = 320;
+    const rows = [];
+    let row = [], arSum = 0;
+    for (const it of items){
+      row.push(it); arSum += it._ar;
+      if (arSum * target + gap * (row.length - 1) >= W){
+        rows.push(row); row = []; arSum = 0;
+        if (suggest && (rows.reduce((s, r) => s + r.length, 0) >= suggest || rows.length >= 3)) break;
+      }
+    }
+    if (row.length && (!suggest || rows.length < 2)) rows.push(row);
+    mount.innerHTML = "";
+    rows.forEach((r, idx) => {
+      const ar = r.reduce((s, it) => s + it._ar, 0);
+      let h = (W - gap * (r.length - 1)) / ar;
+      if (idx === rows.length - 1 && h > maxH) h = maxH;
+      h = Math.round(h);
+      addRow(r, it => [Math.round(it._ar * h), h], null);
+    });
+    return;
+  }
+
+  /* desktop: one uniform row height, tiles at natural size. a row of
+     k tiles reserves k+1 gap slots — between tiles AND at both edges
+     of the gallery box — and space-evenly spreads the leftover across
+     all of them equally: identical padding inside and out, relative
+     to the gallery box (1 tile = centered, 2 = symmetric, …).
+     radically tall or wide frames get their display ratio clamped
+     (a sliver of crop via object-fit:cover) so nothing hogs or
+     vanishes from a row. */
+  const minGap = 14, H = 300;
+  const AR_MIN = 0.62, AR_MAX = 1.95;
+  const wOf = it => Math.min(W - 2 * minGap, Math.round(Math.min(AR_MAX, Math.max(AR_MIN, it._ar)) * H));
+  const rows = [];
+  let row = [], sumW = 0;
+  const placed = () => rows.reduce((s, r) => s + r.length, 0);
+  for (const it of items){
+    const w = wOf(it);
+    if (row.length && sumW + w + minGap * (row.length + 2) > W){
+      rows.push(row); row = []; sumW = 0;
+      /* the taster stops at whole rows: once the suggested count is
+         reached (or 3 rows exist), no more rows get started */
+      if (suggest && (placed() >= suggest || rows.length >= 3)) break;
+    }
+    row.push(it); sumW += w;
+  }
+  /* a trailing partial row is kept normally; the taster drops it
+     unless there'd be almost nothing on screen otherwise */
+  if (row.length && (!suggest || rows.length < 2)) rows.push(row);
+  mount.innerHTML = "";
+  rows.forEach(r => addRow(r, it => [wOf(it), H], "space-evenly"));
 }
 
 (async function buildGallery(){
   const mount = $("#artGrid");
   if (!mount) return;
-  const limit = parseInt(mount.dataset.limit || "0", 10);
+  /* data-limit is a soft suggestion, not a hard cut — the layout shows
+     whole rows (2–3 of them) around that count, whatever fits */
+  const suggest = parseInt(mount.dataset.limit || "0", 10);
+  /* measure a little beyond the suggestion so a row can complete */
+  const poolN = suggest ? Math.min(ART.length, suggest * 2) : ART.length;
   let filter = "all", query = "";
 
   /* chips generate themselves from whatever mediums exist in ART —
@@ -435,7 +456,7 @@ function layoutJustified(mount, items, onTileClick){
         (a.title + " " + (a.tags || "") + " " + (a.note || "") + " " + mediums(a).join(" "))
           .toLowerCase().includes(query));
     }
-    return limit ? list.slice(0, limit) : list;
+    return suggest ? list.slice(0, poolN) : list;
   };
   let lastW = 0;
   const render = () => {
@@ -444,12 +465,13 @@ function layoutJustified(mount, items, onTileClick){
     const list = current();
     layoutJustified(mount, list, item => {
       if (!item._ok) return;
-      lbList = list.filter(a => a._ok);
+      /* from the taster, prev/next browses the whole archive */
+      lbList = (suggest ? ART : list).filter(a => a._ok !== false);
       lbIndex = lbList.indexOf(item);
       openLightbox(item);
-    });
+    }, suggest);
   };
-  await measureArt(limit ? ART.slice(0, limit) : ART);
+  await measureArt(ART.slice(0, poolN));
   render();
   /* re-layout whenever the mount's width actually changes — covers
      window resizes, scrollbar appearance, and background tabs that
@@ -527,23 +549,26 @@ function openLightbox(item){
   $("#lbNote").textContent = item.note || item.tags || "";
   const links = $("#lbLinks");
   links.innerHTML = "";
+  /* ↗ = leaves the site (the post on artstation/instagram),
+     ⧉ = copies a link to right here */
   Object.entries(item.post || {}).forEach(([site, url]) => {
     const a = document.createElement("a");
     a.href = url; a.target = "_blank"; a.rel = "noopener";
-    a.textContent = site + " ->";
+    a.textContent = site + " ↗";
     links.appendChild(a);
   });
   /* share — copies the /p/ stub url, which embeds the artwork on
-     discord etc. (stubs are generated by scripts/gen-embeds.mjs) */
+     discord etc. (stubs are generated by scripts/gen_embeds.py) */
   const share = document.createElement("a");
   share.href = "p/" + slugFor(item.title);
-  share.textContent = "share ->";
+  share.textContent = "share ⧉";
+  share.title = "copy a link to this artwork";
   share.addEventListener("click", e => {
     e.preventDefault();
     const url = new URL(share.getAttribute("href"), location.href).href;
     if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
     share.textContent = "copied!";
-    setTimeout(() => { share.textContent = "share ->"; }, 1200);
+    setTimeout(() => { share.textContent = "share ⧉"; }, 1200);
   });
   links.appendChild(share);
   lb.classList.add("open");
