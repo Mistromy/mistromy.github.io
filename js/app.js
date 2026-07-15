@@ -6,13 +6,13 @@
    index.html, art.html and projects.html.
    ============================================================ */
 
-const $  = (s, r=document) => r.querySelector(s);
-const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function shuffle(arr){
+function shuffle(arr) {
   const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--){
+  for (let i = a.length - 1; i > 0; i--) {
     const j = Math.random() * (i + 1) | 0;
     [a[i], a[j]] = [a[j], a[i]];
   }
@@ -22,7 +22,7 @@ function shuffle(arr){
 /* ---------- random transmissions — quotes pulled from MARQUEE ----------
    .random-quote gets a bare line, [data-random-note] gets a "// " one.
    fresh picks every load, no repeats within a page. */
-(function randomBits(){
+(function randomBits() {
   const pool = shuffle(MARQUEE);
   const next = () => pool.length ? pool.pop() : MARQUEE[Math.random() * MARQUEE.length | 0];
   $$(".random-quote").forEach(el => el.textContent = next());
@@ -30,10 +30,10 @@ function shuffle(arr){
 })();
 
 /* ---------- boot sequence — once per session ---------- */
-(function runBoot(){
+(function runBoot() {
   const boot = $("#boot");
   if (!boot) return;
-  if (reducedMotion || sessionStorage.getItem("booted")){ boot.remove(); return; }
+  if (reducedMotion || sessionStorage.getItem("booted")) { boot.remove(); return; }
   sessionStorage.setItem("booted", "1");
   const bootLines = [
     "MIST.SYS v2.0",
@@ -45,15 +45,15 @@ function shuffle(arr){
   const log = $("#bootLog");
   let i = 0;
   const timer = setInterval(() => {
-    if (i >= bootLines.length){ clearInterval(timer); endBoot(); return; }
+    if (i >= bootLines.length) { clearInterval(timer); endBoot(); return; }
     const line = document.createElement("div");
-    if (i === bootLines.length - 1){ line.innerHTML = "<b>" + bootLines[i] + "</b>"; }
+    if (i === bootLines.length - 1) { line.innerHTML = "<b>" + bootLines[i] + "</b>"; }
     else { line.textContent = bootLines[i]; }
     log.appendChild(line);
     i++;
   }, 260);
   boot.addEventListener("click", () => { clearInterval(timer); endBoot(); }, { once: true });
-  function endBoot(){
+  function endBoot() {
     setTimeout(() => {
       boot.classList.add("done");
       glitchOnce();
@@ -63,7 +63,7 @@ function shuffle(arr){
 })();
 
 /* ---------- epoch ticker + year ---------- */
-function tickEpoch(){
+function tickEpoch() {
   const now = Math.floor(Date.now() / 1000);
   const ep = $("#epoch"); if (ep) ep.textContent = "SYS_EPOCH // " + now;
   const fe = $("#footEpoch"); if (fe) fe.textContent = now;
@@ -72,7 +72,7 @@ setInterval(tickEpoch, 1000); tickEpoch();
 const yr = $("#year"); if (yr) yr.textContent = new Date().getFullYear();
 
 /* ---------- binary side columns ---------- */
-(function fillBinary(){
+(function fillBinary() {
   const word = "mist";
   const bin = [...word].map(c => c.charCodeAt(0).toString(2).padStart(8, "0")).join(" ");
   $$(".bin").forEach(el => { el.textContent = (bin + "  ").repeat(10); });
@@ -80,7 +80,7 @@ const yr = $("#year"); if (yr) yr.textContent = new Date().getFullYear();
 
 /* ---------- hero glitch pulse ---------- */
 const glitchEl = $("#glitchName");
-function glitchOnce(){
+function glitchOnce() {
   if (reducedMotion || !glitchEl) return;
   glitchEl.classList.add("on");
   setTimeout(() => glitchEl.classList.remove("on"), 380);
@@ -88,15 +88,15 @@ function glitchOnce(){
 if (!reducedMotion && glitchEl) setInterval(glitchOnce, 6500);
 
 /* ---------- cursor fringe ---------- */
-(function cursorFx(){
+(function cursorFx() {
   const fx = $("#cursorFx");
   if (reducedMotion || !fx || !window.matchMedia("(hover:hover)").matches) return;
   let tx = -500, ty = -500, x = tx, y = ty, live = false;
   window.addEventListener("pointermove", e => {
     tx = e.clientX; ty = e.clientY;
-    if (!live){ x = tx; y = ty; live = true; fx.classList.add("live"); }
+    if (!live) { x = tx; y = ty; live = true; fx.classList.add("live"); }
   }, { passive: true });
-  (function loop(){
+  (function loop() {
     x += (tx - x) * 0.12; y += (ty - y) * 0.12;
     fx.style.transform = `translate(${x - 170}px, ${y - 170}px)`;
     requestAnimationFrame(loop);
@@ -104,9 +104,9 @@ if (!reducedMotion && glitchEl) setInterval(glitchOnce, 6500);
 })();
 
 /* ---------- scroll reveal + heading scramble ---------- */
-(function reveals(){
+(function reveals() {
   const els = $$(".rv");
-  if (reducedMotion || !("IntersectionObserver" in window)){
+  if (reducedMotion || !("IntersectionObserver" in window)) {
     els.forEach(el => el.classList.add("in"));
     $$(".scramble").forEach(h => h.dataset.done = "1");
     return;
@@ -123,13 +123,13 @@ if (!reducedMotion && glitchEl) setInterval(glitchOnce, 6500);
   els.forEach(el => io.observe(el));
 })();
 
-function scramble(el){
+function scramble(el) {
   if (el.dataset.done) return;
   el.dataset.done = "1";
   const final = el.textContent;
   const glyphs = "▓▒░<>/\\#01_";
   const dur = 550, start = performance.now();
-  (function step(t){
+  (function step(t) {
     const p = Math.min((t - start) / dur, 1);
     const settled = Math.floor(final.length * p);
     el.textContent = final.slice(0, settled) +
@@ -142,7 +142,7 @@ function scramble(el){
 /* ---------- mobile menu — burger opens, tapping anywhere else closes.
    an invisible scrim sits under the open panel and swallows the
    closing tap, so it can't also click whatever was underneath. */
-(function mobileMenu(){
+(function mobileMenu() {
   const nav = $(".nav"), burger = $("#navBurger");
   if (!nav || !burger) return;
   const scrim = document.createElement("div");
@@ -163,13 +163,13 @@ function scramble(el){
    fills the little discord bio card next to the bio: avatar, real
    discord status colours, and the current activity — custom rich
    presences included (vsc, blender…). the sysbar stays out of it. */
-(function presence(){
+(function presence() {
   const card = $(".dcard");
   if (!card || !SITE.discordId) return;
   const COLORS = { online: "#23a55a", idle: "#f0b232", dnd: "#f23f43", offline: "#80848e" };
   const LABELS = { online: "online", idle: "idle", dnd: "do not disturb", offline: "offline" };
-  const trim = (s, n=52) => s.length > n ? s.slice(0, n - 1) + "…" : s;
-  async function tick(){
+  const trim = (s, n = 52) => s.length > n ? s.slice(0, n - 1) + "…" : s;
+  async function tick() {
     try {
       const res = await fetch("https://api.lanyard.rest/v1/users/" + SITE.discordId);
       if (!res.ok) throw new Error(res.status);
@@ -178,7 +178,7 @@ function scramble(el){
       const d = j.data;
       const status = d.discord_status || "offline";
       const av = $("#dcAvatar");
-      if (av && !av.src && d.discord_user && d.discord_user.avatar){
+      if (av && !av.src && d.discord_user && d.discord_user.avatar) {
         av.src = "https://cdn.discordapp.com/avatars/" + SITE.discordId + "/" + d.discord_user.avatar + ".png?size=96";
       }
       $("#dcDot").style.background = COLORS[status] || COLORS.offline;
@@ -192,7 +192,7 @@ function scramble(el){
         : "";
     } catch {
       const st = $("#dcStatus");
-      if (st){ st.textContent = "no signal"; st.style.color = ""; }
+      if (st) { st.textContent = "no signal"; st.style.color = ""; }
     }
   }
   tick();
@@ -201,7 +201,7 @@ function scramble(el){
 
 /* ---------- url hygiene — section hashes vanish after the jump.
    #p/… (artwork deep links) are the one hash that stays. ---------- */
-(function hashHygiene(){
+(function hashHygiene() {
   const clean = () => {
     if (location.hash && !location.hash.startsWith("#p/"))
       history.replaceState(null, "", location.pathname + location.search);
@@ -213,7 +213,7 @@ function scramble(el){
 })();
 
 /* ---------- 88x31 badges — footer row, only if BADGES has entries ---------- */
-(function buildBadges(){
+(function buildBadges() {
   const foot = $("footer .wrap");
   if (!foot || typeof BADGES === "undefined" || !BADGES.length) return;
   const row = document.createElement("div");
@@ -225,7 +225,7 @@ function scramble(el){
     img.loading = "lazy";
     img.width = 88; img.height = 31;
     img.onerror = () => (b.url ? img.parentElement : img).remove();
-    if (b.url){
+    if (b.url) {
       const a = document.createElement("a");
       a.href = b.url; a.target = "_blank"; a.rel = "noopener";
       a.appendChild(img);
@@ -236,7 +236,7 @@ function scramble(el){
 })();
 
 /* ---------- github heatmap — hide the frame if the image dies ---------- */
-(function heatmap(){
+(function heatmap() {
   const img = $("#ghHeat");
   if (!img) return;
   const kill = () => { const box = img.closest(".heatmap"); if (box) box.style.display = "none"; };
@@ -245,9 +245,9 @@ function scramble(el){
 })();
 
 /* ---------- nav scrollspy (index) / static sector (subpages) ---------- */
-(function scrollspy(){
+(function scrollspy() {
   const fixed = document.body.dataset.sector;
-  if (fixed){
+  if (fixed) {
     const st = $("#sysStatus"); if (st) st.textContent = "sector:/" + fixed;
     return;
   }
@@ -266,14 +266,14 @@ function scramble(el){
 })();
 
 /* ---------- links ---------- */
-(function buildLinks(){
+(function buildLinks() {
   const grid = $("#linksGrid");
   if (!grid) return;
   SOCIALS.forEach((s, i) => {
     const a = document.createElement("a");
     a.className = "social rv";
     a.style.transitionDelay = (i * 60) + "ms";
-    if (s.random){
+    if (s.random) {
       /* mystery link — every click rolls the dice again */
       a.href = s.random[0];
       a.target = "_blank"; a.rel = "noopener";
@@ -283,7 +283,7 @@ function scramble(el){
       });
     } else {
       a.href = s.url;
-      if (!s.url.startsWith("mailto:")){ a.target = "_blank"; a.rel = "noopener"; }
+      if (!s.url.startsWith("mailto:")) { a.target = "_blank"; a.rel = "noopener"; }
     }
     a.innerHTML =
       '<span><span class="social-name">' + s.name + '</span><br>' +
@@ -307,7 +307,7 @@ const mediums = item => [].concat(item.medium);
 const isVideo = src => /\.(mp4|webm)([?#]|$)/i.test(src);
 const slugFor = t => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 /* literal description for screen readers + SEO. item.alt overrides. */
-const altFor  = item => item.alt ||
+const altFor = item => item.alt ||
   (item.title + " — " + mediums(item).join(" and ") + " artwork by Mist" + (item.tags ? " (" + item.tags + ")" : ""));
 
 /* the grid loads deploy-generated tile thumbnails (p/t/<slug>.s.jpg,
@@ -315,12 +315,12 @@ const altFor  = item => item.alt ||
    lighthouse win. locally (or if generation failed) the thumb 404s
    and the original steps in. the fullscreen viewer always gets the
    original. */
-const tileSrcFor = item => "p/t/" + slugFor(item.title) + ".s.jpg";
+const tileSrcFor = item => "p/t/" + slugFor(item.title) + ".s.avif";
 
-function measureArt(items){
+function measureArt(items) {
   return Promise.all(items.map(it => new Promise(res => {
     if (it._ar != null) return res();
-    if (isVideo(it.img)){
+    if (isVideo(it.img)) {
       const v = document.createElement("video");
       v.preload = "metadata";
       v.onloadedmetadata = () => { it._ar = (v.videoWidth / v.videoHeight) || PLACEHOLDER_AR; it._ok = true; res(); };
@@ -334,7 +334,7 @@ function measureArt(items){
     t.onload = () => done(thumb, t);
     t.onerror = () => {
       const im = new Image();
-      im.onload  = () => done(it.img, im);
+      im.onload = () => done(it.img, im);
       im.onerror = () => { it._ar = PLACEHOLDER_AR; it._ok = false; res(); };
       im.src = it.img;
     };
@@ -342,7 +342,7 @@ function measureArt(items){
   })));
 }
 
-function makeTile(item, w, h){
+function makeTile(item, w, h) {
   const tile = document.createElement("button");
   tile.type = "button";
   tile.className = "tile" + (item._ok ? "" : " noimg");
@@ -354,10 +354,10 @@ function makeTile(item, w, h){
   const extra = (item.images || []).length;
   /* a dead cover with live extra frames still opens (stencil tile) */
   if (extra) tile.classList.add("openable");
-  if (item._ok){
+  if (item._ok) {
     const media = isVideo(item.img)
-      ? '<video src="' + item.img + '" muted loop autoplay playsinline aria-label="' + altFor(item).replace(/"/g,"&quot;") + '"></video>'
-      : '<img src="' + (item._src || item.img) + '" alt="' + altFor(item).replace(/"/g,"&quot;") + '" loading="lazy" decoding="async">';
+      ? '<video src="' + item.img + '" muted loop autoplay playsinline aria-label="' + altFor(item).replace(/"/g, "&quot;") + '"></video>'
+      : '<img src="' + (item._src || item.img) + '" alt="' + altFor(item).replace(/"/g, "&quot;") + '" loading="lazy" decoding="async">';
     tile.innerHTML =
       '<span class="tile-tag">' + tag + "</span>" +
       (extra ? '<span class="tile-count">+' + extra + "</span>" : "") +
@@ -376,7 +376,7 @@ const openable = a => a._ok !== false || (a.images || []).length > 0;
 
 /* suggest (optional): soft item count for the homepage taster — the
    layout completes whole rows only (max 3), never ends ragged */
-function layoutJustified(mount, items, onTileClick, suggest){
+function layoutJustified(mount, items, onTileClick, suggest) {
   const W = mount.clientWidth;
   if (!W) return;
   const addRow = (r, sizeOf, justify) => {
@@ -397,13 +397,13 @@ function layoutJustified(mount, items, onTileClick, suggest){
 
   /* mobile: space efficiency wins — classic justified rows, scaled to
      fill the full width, no decorative gaps */
-  if (mobile){
+  if (mobile) {
     const gap = 10, target = 210, maxH = 320;
     const rows = [];
     let row = [], arSum = 0;
-    for (const it of items){
+    for (const it of items) {
       row.push(it); arSum += it._ar;
-      if (arSum * target + gap * (row.length - 1) >= W){
+      if (arSum * target + gap * (row.length - 1) >= W) {
         rows.push(row); row = []; arSum = 0;
         if (suggest && (rows.reduce((s, r) => s + r.length, 0) >= suggest || rows.length >= 3)) break;
       }
@@ -434,9 +434,9 @@ function layoutJustified(mount, items, onTileClick, suggest){
   const rows = [];
   let row = [], sumW = 0;
   const placed = () => rows.reduce((s, r) => s + r.length, 0);
-  for (const it of items){
+  for (const it of items) {
     const w = wOf(it);
-    if (row.length && sumW + w + minGap * (row.length + 2) > W){
+    if (row.length && sumW + w + minGap * (row.length + 2) > W) {
       rows.push(row); row = []; sumW = 0;
       /* the taster stops at whole rows: once the suggested count is
          reached (or 3 rows exist), no more rows get started */
@@ -451,7 +451,7 @@ function layoutJustified(mount, items, onTileClick, suggest){
   rows.forEach(r => addRow(r, it => [wOf(it), H], "space-evenly"));
 }
 
-(async function buildGallery(){
+(async function buildGallery() {
   const mount = $("#artGrid");
   if (!mount) return;
   /* data-limit is a soft suggestion, not a hard cut — the layout shows
@@ -464,7 +464,7 @@ function layoutJustified(mount, items, onTileClick, suggest){
   /* chips generate themselves from whatever mediums exist in ART —
      a new medium word in data.js is automatically a new filter */
   const chipsBox = $("#artChips");
-  if (chipsBox){
+  if (chipsBox) {
     const all = [...new Set(ART.flatMap(mediums))];
     chipsBox.innerHTML =
       '<button class="chip active" data-filter="all">all</button>' +
@@ -473,7 +473,7 @@ function layoutJustified(mount, items, onTileClick, suggest){
 
   const current = () => {
     let list = ART.filter(a => filter === "all" || mediums(a).includes(filter));
-    if (query){
+    if (query) {
       list = list.filter(a =>
         (a.title + " " + (a.tags || "") + " " + (a.note || "") + " " + mediums(a).join(" "))
           .toLowerCase().includes(query));
@@ -526,7 +526,7 @@ function layoutJustified(mount, items, onTileClick, suggest){
    is deep-linkable without any extra links on the page. ---------- */
 const lb = $("#lightbox");
 
-function openLightbox(item){
+function openLightbox(item) {
   if (!lb) return;
   const stack = $("#lbStack");
   /* images entries can be plain urls or { src, tag } — tag shows as a
@@ -541,7 +541,7 @@ function openLightbox(item){
     const wrap = document.createElement("div");
     wrap.className = "lb-item";
     let media;
-    if (isVideo(f.src)){
+    if (isVideo(f.src)) {
       media = document.createElement("video");
       media.src = f.src; media.controls = true; media.loop = true;
       media.muted = true; media.playsInline = true; media.autoplay = true;
@@ -551,7 +551,7 @@ function openLightbox(item){
       media.alt = altFor(item) + (i ? " — image " + (i + 1) : "");
     }
     wrap.appendChild(media);
-    if (f.tag){
+    if (f.tag) {
       const chip = document.createElement("span");
       chip.className = "lb-tag";
       chip.textContent = f.tag;
@@ -590,7 +590,7 @@ function openLightbox(item){
   share.addEventListener("click", e => {
     e.preventDefault();
     const url = new URL(share.getAttribute("href"), location.href).href;
-    if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+    if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => { });
     share.textContent = "copied!";
     setTimeout(() => { share.textContent = "share ⧉"; }, 1200);
   });
@@ -599,19 +599,19 @@ function openLightbox(item){
   document.body.classList.add("no-scroll");
   history.replaceState(null, "", "#p/" + slugFor(item.title));
 }
-function closeLightbox(){
+function closeLightbox() {
   lb.classList.remove("open");
   $("#lbStack").innerHTML = "";
   document.body.classList.remove("no-scroll");
   if (location.hash.startsWith("#p/"))
     history.replaceState(null, "", location.pathname + location.search);
 }
-function stepLightbox(dir){
+function stepLightbox(dir) {
   if (!lbList.length) return;
   lbIndex = (lbIndex + dir + lbList.length) % lbList.length;
   openLightbox(lbList[lbIndex]);
 }
-if (lb){
+if (lb) {
   $("#lbClose").addEventListener("click", closeLightbox);
   $("#lbPrev").addEventListener("click", e => { e.stopPropagation(); stepLightbox(-1); });
   $("#lbNext").addEventListener("click", e => { e.stopPropagation(); stepLightbox(1); });
@@ -641,9 +641,9 @@ if (lb){
   }, { passive: true });
   /* deep link: #p/slug in the url opens that post on arrival */
   const deep = location.hash.match(/^#p\/(.+)/);
-  if (deep){
+  if (deep) {
     const item = ART.find(a => slugFor(a.title) === deep[1]);
-    if (item){
+    if (item) {
       lbList = ART; lbIndex = ART.indexOf(item);
       openLightbox(item);
     }
@@ -651,7 +651,7 @@ if (lb){
 }
 
 /* ---------- latest transmission — ART[0], no hands ---------- */
-(function buildLatest(){
+(function buildLatest() {
   const aside = $(".latest");
   const item = ART[0];
   if (!aside || !item) return;
@@ -664,7 +664,7 @@ if (lb){
   img.alt = item.title + " — " + item.tags;
   img.fetchPriority = "high";
   img.onerror = () => {
-    if (img.src.indexOf(item.img) === -1){ img.src = item.img; return; }
+    if (img.src.indexOf(item.img) === -1) { img.src = item.img; return; }
     aside.style.display = "none";
   };
   img.src = isVideo(item.img) ? item.img : tileSrcFor(item);
@@ -675,9 +675,9 @@ if (lb){
 })();
 
 /* ---------- projects — flagship box + cards, all from data.js ---------- */
-function projectStatsHtml(stats){
+function projectStatsHtml(stats) {
   return (stats || []).map(s => {
-    if (s.key != null){
+    if (s.key != null) {
       return '<div class="mini-stat"><span>' + s.label + '</span>' +
         '<b data-stat-key="' + s.key + '"' +
         (s.compact ? " data-compact" : "") +
@@ -687,34 +687,34 @@ function projectStatsHtml(stats){
       (typeof s.value === "number" ? s.value.toLocaleString() : s.value) + "</b></div>";
   }).join("");
 }
-function projectLinksHtml(links){
+function projectLinksHtml(links) {
   return (links || []).map(l =>
     '<a class="btn' + (l.solid ? " btn-solid" : "") + '" href="' + l.url +
     '" target="_blank" rel="noopener">' + l.label + "</a>").join("");
 }
-(function buildProjects(){
+(function buildProjects() {
   const flagMount = $("#flagshipMount");
   const grid = $("#projectsGrid");
   if (!flagMount && !grid) return;
   PROJECTS.forEach(p => {
-    if (p.flagship && flagMount){
+    if (p.flagship && flagMount) {
       const el = document.createElement("div");
       el.className = "featured-proj rv";
       el.innerHTML =
         "<div>" +
-          '<p class="eyebrow">// flagship — long-running playground</p>' +
-          '<h3 class="chroma">' + p.name + "</h3>" +
-          '<p class="desc">' + p.desc + "</p>" +
-          '<div class="pills">' + p.pills.map((x, i) => '<span class="pill' + (i === 0 ? " hot" : "") + '">' + x + "</span>").join("") + "</div>" +
-          '<div class="hero-cta">' + projectLinksHtml(p.links) + "</div>" +
+        '<p class="eyebrow">// flagship — long-running playground</p>' +
+        '<h3 class="chroma">' + p.name + "</h3>" +
+        '<p class="desc">' + p.desc + "</p>" +
+        '<div class="pills">' + p.pills.map((x, i) => '<span class="pill' + (i === 0 ? " hot" : "") + '">' + x + "</span>").join("") + "</div>" +
+        '<div class="hero-cta">' + projectLinksHtml(p.links) + "</div>" +
         "</div>" +
         '<div class="mini-stats">' +
-          projectStatsHtml(p.stats) +
-          '<div class="mini-stat"><span>status</span><b data-stat="status" style="font-size:14px;font-family:var(--mono)">checking…</b></div>' +
+        projectStatsHtml(p.stats) +
+        '<div class="mini-stat"><span>status</span><b data-stat="status" style="font-size:14px;font-family:var(--mono)">checking…</b></div>' +
         "</div>";
       flagMount.appendChild(el);
       observeLate(flagMount);
-    } else if (!p.flagship && grid){
+    } else if (!p.flagship && grid) {
       const el = document.createElement("div");
       el.className = "proj rv";
       el.innerHTML =
@@ -734,7 +734,7 @@ function projectLinksHtml(links){
    the track holds the line exactly twice and animates to -50%, so the
    moment the first copy scrolls out the second is already in place —
    no off-screen dead time. duration scales with content length. */
-(function buildMarquee(){
+(function buildMarquee() {
   const track = $("#marqueeTrack");
   if (!track) return;
   const items = shuffle(MARQUEE);
@@ -744,9 +744,9 @@ function projectLinksHtml(links){
 })();
 
 /* observe .rv elements created after the initial reveal pass */
-function observeLate(root){
+function observeLate(root) {
   const els = $$(".rv:not(.in)", root);
-  if (reducedMotion || !("IntersectionObserver" in window)){
+  if (reducedMotion || !("IntersectionObserver" in window)) {
     els.forEach(el => el.classList.add("in"));
     return;
   }
@@ -761,17 +761,17 @@ function observeLate(root){
 }
 
 /* ---------- number formatting + animation ---------- */
-function fmtCompact(n){
+function fmtCompact(n) {
   if (n >= 1e6) return (Math.floor(n / 1e5) / 10).toLocaleString() + "M";
   if (n >= 1e4) return Math.floor(n / 1e3) + "K";
   return n.toLocaleString();
 }
 /* the animation only runs once the number scrolls into view — data can
    arrive long before the reader does, so each element waits its turn */
-function countUp(el, target, compact=false){
+function countUp(el, target, compact = false) {
   if (!el) return;
   const fmt = compact ? fmtCompact : (v => v.toLocaleString());
-  if (reducedMotion || !("IntersectionObserver" in window)){ el.textContent = fmt(target); return; }
+  if (reducedMotion || !("IntersectionObserver" in window)) { el.textContent = fmt(target); return; }
   countUp.jobs = countUp.jobs || new Map();
   countUp.io = countUp.io || new IntersectionObserver(entries => {
     entries.forEach(en => {
@@ -784,7 +784,7 @@ function countUp(el, target, compact=false){
   }, { threshold: 0.5 });
   countUp.jobs.set(el, () => {
     const dur = 900, start = performance.now();
-    (function step(t){
+    (function step(t) {
       const p = Math.min((t - start) / dur, 1);
       el.textContent = fmt(Math.floor(target * (1 - Math.pow(1 - p, 3))));
       if (p < 1) requestAnimationFrame(step);
@@ -795,9 +795,9 @@ function countUp(el, target, compact=false){
 /* ---------- sparkline — an array in the stats gist becomes a graph.
    single series on the site surface: one hue (cyan), 2px line, end dot,
    last value as text beside it. min/max/last live in the tooltip. ---------- */
-function sparkline(el, arr, compact=false){
+function sparkline(el, arr, compact = false) {
   const data = arr.filter(v => typeof v === "number");
-  if (data.length < 2){ el.textContent = "░░░"; el.classList.add("live-err"); return; }
+  if (data.length < 2) { el.textContent = "░░░"; el.classList.add("live-err"); return; }
   const fmt = compact ? fmtCompact : (v => v.toLocaleString());
   const w = 96, h = 26, pad = 3;
   const min = Math.min(...data), max = Math.max(...data), span = (max - min) || 1;
@@ -807,25 +807,25 @@ function sparkline(el, arr, compact=false){
   const last = data[data.length - 1];
   el.innerHTML =
     '<svg class="spark" viewBox="0 0 ' + w + " " + h + '" width="' + w + '" height="' + h + '" role="img" ' +
-      'aria-label="trend, latest ' + fmt(last) + '">' +
-      '<polyline points="' + pts + '" fill="none" stroke="var(--cyan)" stroke-width="2" ' +
-        'stroke-linejoin="round" stroke-linecap="round"/>' +
-      '<circle cx="' + x(data.length - 1).toFixed(1) + '" cy="' + y(last).toFixed(1) + '" r="2.5" fill="var(--cyan)"/>' +
+    'aria-label="trend, latest ' + fmt(last) + '">' +
+    '<polyline points="' + pts + '" fill="none" stroke="var(--cyan)" stroke-width="2" ' +
+    'stroke-linejoin="round" stroke-linecap="round"/>' +
+    '<circle cx="' + x(data.length - 1).toFixed(1) + '" cy="' + y(last).toFixed(1) + '" r="2.5" fill="var(--cyan)"/>' +
     "</svg><span>" + fmt(last) + "</span>";
   el.title = "latest " + last.toLocaleString() + " · min " + min.toLocaleString() + " · max " + max.toLocaleString();
 }
 
-function statFail(id, srcId, label="offline // no answer"){
-  const el = $(id); if (el){ el.textContent = "░░░"; el.classList.add("live-err"); }
-  const src = $(srcId); if (src){ src.textContent = label; src.classList.add("off"); }
+function statFail(id, srcId, label = "offline // no answer") {
+  const el = $(id); if (el) { el.textContent = "░░░"; el.classList.add("live-err"); }
+  const src = $(srcId); if (src) { src.textContent = label; src.classList.add("off"); }
 }
 
 /* ---------- counted by the site, not by hand ---------- */
 countUp($("#stArtworks"), ART.length);
 
 /* ---------- live data: GitHub ---------- */
-(async function github(){
-  if ($("#stRepos")){
+(async function github() {
+  if ($("#stRepos")) {
     try {
       const res = await fetch("https://api.github.com/users/" + SITE.githubUser);
       if (!res.ok) throw new Error(res.status);
@@ -841,7 +841,7 @@ countUp($("#stArtworks"), ART.length);
   /* commit count on the flagship repo — the Link header on a
      per_page=1 commits request carries the total as the last page.
      if the api rate-limits, fall back to the shields.io badge json. */
-  if ($("#stCommits")){
+  if ($("#stCommits")) {
     try {
       const res = await fetch("https://api.github.com/repos/" + SITE.flagshipRepo + "/commits?per_page=1");
       if (!res.ok) throw new Error(res.status);
@@ -861,13 +861,13 @@ countUp($("#stArtworks"), ART.length);
       } catch {
         $("#stCommits").textContent = MANUAL.commitsFallback;
         const src = $("#stCommitsSrc");
-        if (src){ src.textContent = "counted by hand // cached"; src.classList.add("off"); }
+        if (src) { src.textContent = "counted by hand // cached"; src.classList.add("off"); }
       }
     }
   }
 
   const grid = $("#repoGrid");
-  if (grid){
+  if (grid) {
     try {
       const res = await fetch("https://api.github.com/users/" + SITE.githubUser + "/repos?sort=updated&per_page=6");
       if (!res.ok) throw new Error(res.status);
@@ -876,7 +876,7 @@ countUp($("#stArtworks"), ART.length);
       renderRepos([{ name: "Nirupama", description: "Discord bot with AI features — Python, Go, Postgres.", language: "Python", stargazers_count: 2, html_url: "https://github.com/Mistromy/Nirupama" }], true);
     }
   }
-  function renderRepos(repos, cached=false){
+  function renderRepos(repos, cached = false) {
     grid.innerHTML = "";
     repos.forEach(r => {
       const a = document.createElement("a");
@@ -897,7 +897,7 @@ countUp($("#stArtworks"), ART.length);
    survives a 10 s push interval. the raw url sits behind github's
    CDN (~5 min cache), so it's only the fallback. every element with
    data-stat-key gets filled, wherever it lives. */
-(async function statsPipe(){
+(async function statsPipe() {
   const slots = $$("[data-stat-key]");
   const statusEls = $$('[data-stat="status"]');
   const fail = () => {
@@ -910,7 +910,7 @@ countUp($("#stArtworks"), ART.length);
      object — each project can own its file (no override risk between
      writers), the site reads them all in a single request. keep keys
      unique across files (prefix by project when in doubt). */
-  async function fetchStats(){
+  async function fetchStats() {
     try {
       const res = await fetch(SITE.statsGistApi);
       if (!res.ok) throw new Error(res.status);
@@ -928,29 +928,29 @@ countUp($("#stArtworks"), ART.length);
       return res.json();
     }
   }
-  if (!SITE.statsUrl && !SITE.statsGistApi){ fail(); return; }
+  if (!SITE.statsUrl && !SITE.statsGistApi) { fail(); return; }
   let d;
   try { d = await fetchStats(); } catch { fail(); return; }
 
   slots.forEach(el => {
     const v = d[el.dataset.statKey];
-    if (v == null){ el.textContent = "░░░"; el.classList.add("live-err"); return; }
+    if (v == null) { el.textContent = "░░░"; el.classList.add("live-err"); return; }
     /* an array value renders as a sparkline instead of a number */
-    if (Array.isArray(v)){ sparkline(el, v, el.dataset.compact != null); return; }
-    if (el.dataset.fmt === "percent"){ el.textContent = (Math.round(v * 100) / 100) + "%"; return; }
+    if (Array.isArray(v)) { sparkline(el, v, el.dataset.compact != null); return; }
+    if (el.dataset.fmt === "percent") { el.textContent = (Math.round(v * 100) / 100) + "%"; return; }
     const compact = el.dataset.compact != null;
     countUp(el, v, compact);
     /* compact values keep the full number readable in the label */
-    if (compact && v >= 1e4){
+    if (compact && v >= 1e4) {
       const label = el.closest(".mini-stat, .stat")?.querySelector("span");
-      if (label && !label.dataset.full){
+      if (label && !label.dataset.full) {
         label.dataset.full = "1";
         label.textContent += " · " + v.toLocaleString();
       }
     }
   });
 
-  if (d.visits != null){
+  if (d.visits != null) {
     countUp($("#stVisits"), d.visits);
     const vs = $("#visits"); if (vs) vs.textContent = "VISITS // " + Number(d.visits).toLocaleString();
     const src = $("#stVisitsSrc"); if (src) src.textContent = "stats pipe // live";
@@ -969,7 +969,7 @@ countUp($("#stArtworks"), ART.length);
   });
 })();
 
-function fmtAge(s){
+function fmtAge(s) {
   if (s < 60) return s + "s ago";
   if (s < 3600) return Math.floor(s / 60) + "m ago";
   return Math.floor(s / 3600) + "h ago";
@@ -980,18 +980,18 @@ function fmtAge(s){
    sessionStorage. browsers block autoplay without a fresh gesture on
    the new page, so if resuming silently fails the button just waits —
    one click picks the track up where it left off. ---------- */
-(function audio(){
+(function audio() {
   const wrap = $("#audio"), btn = $("#audioBtn");
   if (!wrap || !btn) return;
-  if (!SITE.audio || !SITE.audio.src){ wrap.remove(); return; }
+  if (!SITE.audio || !SITE.audio.src) { wrap.remove(); return; }
   const KEY = "mist_audio";
   let saved = {};
-  try { saved = JSON.parse(sessionStorage.getItem(KEY) || "{}"); } catch {}
+  try { saved = JSON.parse(sessionStorage.getItem(KEY) || "{}"); } catch { }
   const player = new Audio(SITE.audio.src);
   player.loop = true;
   player.volume = saved.volume ?? SITE.audio.volume ?? 0.12;
   player.addEventListener("loadedmetadata", () => {
-    if (saved.time) try { player.currentTime = saved.time; } catch {}
+    if (saved.time) try { player.currentTime = saved.time; } catch { }
   });
   /* long titles auto-scroll back and forth inside the box */
   const titleBox = $("#audioTitle");
@@ -999,7 +999,7 @@ function fmtAge(s){
   requestAnimationFrame(() => {
     const span = titleBox.firstChild;
     const over = span.scrollWidth - titleBox.clientWidth;
-    if (over > 6){
+    if (over > 6) {
       titleBox.classList.add("scrolling");
       titleBox.style.setProperty("--shift", "-" + over + "px");
     }
@@ -1012,13 +1012,13 @@ function fmtAge(s){
         time: player.currentTime || 0,
         playing: !player.paused,
       }));
-    } catch {}
+    } catch { }
   };
   window.addEventListener("pagehide", save);
   setInterval(() => { if (!player.paused) save(); }, 3000);
 
   const vol = $("#audioVol");
-  if (vol){
+  if (vol) {
     /* --fill drives the coloured part of the slider track (css) */
     const paint = () => vol.style.setProperty("--fill", vol.value + "%");
     vol.value = Math.round(player.volume * 100);
@@ -1032,8 +1032,8 @@ function fmtAge(s){
   let broken = false;
   player.onerror = () => { broken = true; $("#audioTitle").textContent = "no_signal.mp3"; };
   btn.addEventListener("click", async () => {
-    if (broken){ $("#audioTitle").textContent = "add assets/track.mp3"; return; }
-    if (player.paused){
+    if (broken) { $("#audioTitle").textContent = "add assets/track.mp3"; return; }
+    if (player.paused) {
       try { await player.play(); setUi(true); save(); }
       catch { $("#audioTitle").textContent = "blocked by browser"; }
     } else {
@@ -1041,20 +1041,20 @@ function fmtAge(s){
     }
   });
   /* was playing on the previous page — try to keep going */
-  if (saved.playing && !broken){
+  if (saved.playing && !broken) {
     player.play().then(() => setUi(true)).catch(() => setUi(false));
   }
 })();
 
 /* ---------- the stack — b&w icon strip, hover pops + labels ---------- */
-(function buildStack(){
+(function buildStack() {
   const strip = $("#stackGrid");
   if (!strip || typeof STACK === "undefined") return;
   STACK.forEach(t => {
     const el = document.createElement("div");
     el.className = "tool";
     el.setAttribute("aria-label", t.name + (t.sub ? " — " + t.sub : ""));
-    if (t.icon){
+    if (t.icon) {
       const img = document.createElement("img");
       img.src = t.icon;
       img.alt = "";
@@ -1074,7 +1074,7 @@ function fmtAge(s){
 })();
 
 /* ---------- pfp slot — pending stencil until the file exists ---------- */
-(function pfp(){
+(function pfp() {
   const img = $("#pfpImg");
   if (!img) return;
   const mark = () => img.closest(".pfp").classList.add("empty");

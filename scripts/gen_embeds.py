@@ -85,7 +85,7 @@ def save_capped(im, dest: Path, max_px: int, cap: int):
     buf = io.BytesIO()
     for q in (85, 78, 70, 62, 55):
         buf = io.BytesIO()
-        im2.save(buf, "JPEG", quality=q, optimize=True, progressive=True)
+        im2.save(buf, "AVIF", quality=q, optimize=True, progressive=True)
         if buf.tell() <= cap:
             break
     dest.write_bytes(buf.getvalue())
@@ -99,8 +99,8 @@ def make_thumbs(url: str, slug_: str):
         with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=60) as r:
             raw = r.read()
         im = Image.open(io.BytesIO(raw)).convert("RGB")
-        dims = save_capped(im, tdir / f"{slug_}.jpg", EMBED_MAX, EMBED_CAP)
-        save_capped(im, tdir / f"{slug_}.s.jpg", TILE_MAX, TILE_CAP)
+        dims = save_capped(im, tdir / f"{slug_}.avif", EMBED_MAX, EMBED_CAP)
+        save_capped(im, tdir / f"{slug_}.s.avif", TILE_MAX, TILE_CAP)
         return dims
     except Exception as e:  # a dead image shouldn't sink the run
         print(f"  thumbs failed for {url}: {e}")
@@ -126,10 +126,10 @@ for i, (pos, title) in enumerate(titles):
     if HAVE_PIL:
         dims = make_thumbs(img, s)
         if dims:
-            og_image = f"{BASE}p/t/{s}.jpg"
+            og_image = f"{BASE}p/t/{s}.avif"
             size_tags = (f'<meta property="og:image:width" content="{dims[0]}">\n'
                          f'<meta property="og:image:height" content="{dims[1]}">\n'
-                         f'<meta property="og:image:type" content="image/jpeg">\n')
+                         f'<meta property="og:image:type" content="image/avif">\n')
 
     t, n, im_ = html.escape(title, quote=True), html.escape(note, quote=True), html.escape(og_image, quote=True)
     (out / f"{s}.html").write_text(f"""<!DOCTYPE html>

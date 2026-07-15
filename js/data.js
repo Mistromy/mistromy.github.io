@@ -55,7 +55,7 @@ const SITE = {
 const SOCIALS = [
   { name: "ArtStation", sub: "Some of my pictures", url: "https://www.artstation.com/mistromy" },
   { name: "GitHub", sub: "omg He has a github", url: "https://github.com/mistromy" },
-  { name: "Discord dm", sub: "@sudomist — fastest way to reach me", url: "https://discord.com/users/859371145076932619" },
+  { name: "Discord dm", sub: "@mistjjeff — fastest way to reach me", url: "https://discord.com/users/859371145076932619" },
   { name: "Discord Server", sub: "Nobody is here", url: "https://discord.gg/kGtPvNgXVu" },
   { name: "Nirupama", sub: "the bot, the site, the playground", url: "https://nirupama.mista.tech" },
   { name: "Ko-fi", sub: "I need money to sink into Nirupama", url: "https://ko-fi.com/mist" },
@@ -294,5 +294,5 @@ const MARQUEE = [
   "patio is closed because it's not open", "Veni, vidi, abii",
   "I came, i saw, i conquered", "i saw, i conquered, i came", "i'd betray my country for confetti",
   "we win these", "not even close", "technoblade never dies", "fist me", "MIST from DOWNTOWN",
-  "that's a lot of science", "funny quote"
+  "that's a lot of science", "funny quote", "+REP"
 ]
