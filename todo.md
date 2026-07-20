@@ -38,3 +38,7 @@
 - [x] stat numbers animate when scrolled into view, not on page load
 - [x] plans copy: "give up (tomorrow)" reframed as procrastination-as-motivation, evaporation puns dropped
 - [x] footer lines pull from the random quote pool
+
+lazy loding of thumbnails on the home page (load only the visible thumbnails)
+go backend for scraping artstation and substituting links in the thing
+zoom option in the images, and fix laggingess
