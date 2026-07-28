@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"runtime"
+	"time"
+
+	"github.com/shirou/gopsutil/v3/cpu"
 )
 
 type Msg struct {
@@ -14,10 +16,15 @@ type Msg struct {
 }
 
 func main() {
+	cpupercent, _ := cpu.Percent(time.Second, false)
+	var currentCpu int
+	if len(cpupercent) > 0 {
+		currentCpu = int(cpupercent[0])
+	}
 	msg := Msg{
 		Server: "testServer",
 		Status: "success",
-		Cpu:    runtime.NumCPU(),
+		Cpu:    currentCpu,
 	}
 	jsonData, err := json.Marshal(msg)
 	if err != nil {
