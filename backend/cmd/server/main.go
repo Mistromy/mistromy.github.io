@@ -7,15 +7,21 @@ import (
 )
 
 type Msg struct {
-	Branch string `json:"branch"`
+	Server string `json:"server"`
 	Status string `json:"status"`
+	Cpu    int    `json:"cpu"`
 }
 
 func main() {
 	http.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		var p Msg
-		json.NewDecoder(r.Body).Decode(&p)
-		fmt.Println("Branch:", p.Branch, "Status:", p.Status)
+		err := json.NewDecoder(r.Body).Decode(&p)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		fmt.Println("Server:", p.Server, "| Status:", p.Status, "| CPU:", p.Cpu)
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
 	http.ListenAndServe(":6767", nil)
