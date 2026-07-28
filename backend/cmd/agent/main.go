@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"net/http"
+	"context"
 	"time"
 
+	"github.com/coder/websocket"
+	"github.com/coder/websocket/wsjson"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/host"
 )
@@ -17,37 +17,51 @@ type Msg struct {
 	Uptime uint64 `json:"stats"`
 }
 
+type CPUAverager struct {
+	window []float64
+	size   int
+}
+
+func (a *CPUAverager) Add(v float64) float64 {
+	a.window = append(a.window, v)
+	if len(a.window) > a.size {
+		a.window = a.window[1:]
+	}
+	sum := 0.0
+	for _, x := range a.window {
+		sum += x
+	}
+	return sum / float64(len(a.window))
+}
+
 func main() {
-	cpupercent, _ := cpu.Percent(time.Second, false)
-	var currentCpu int
-	if len(cpupercent) > 0 {
-		currentCpu = int(cpupercent[0])
-	}
-
-	info, err := host.Info()
+	ctx := context.Background()
+	conn, _, err := websocket.Dial(ctx, "ws://localhost:6767/nirupama/live", nil)
 	if err != nil {
 		panic(err)
 	}
+	defer conn.CloseNow()
+	avg := &CPUAverager{size: 10}
+	for {
+		cpupercent, _ := cpu.Percent(0, false)
+		var currentCpu int
+		if len(cpupercent) > 0 {
+			currentCpu = int(cpupercent[0])
+		}
+		smoothedCpu := int(avg.Add(float64(currentCpu)))
 
-	msg := Msg{
-		Server: "testServer",
-		Status: "success",
-		Cpu:    currentCpu,
-		Uptime: info.Uptime,
-	}
+		info, err := host.Info()
+		if err != nil {
+			panic(err)
+		}
 
-	jsonData, err := json.Marshal(msg)
-	if err != nil {
-		panic(err)
-	}
-	resp, err := http.Post("http://localhost:6767/test", "application/json",
-		bytes.NewReader(jsonData))
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		panic("Request failed with status: " + resp.Status)
+		msg := Msg{
+			Server: "testServer",
+			Status: "success",
+			Cpu:    smoothedCpu,
+			Uptime: info.Uptime,
+		}
+		wsjson.Write(ctx, conn, msg)
+		time.Sleep(time.Second / 10)
 	}
 }
