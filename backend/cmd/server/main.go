@@ -10,6 +10,7 @@ type Msg struct {
 	Server string `json:"server"`
 	Status string `json:"status"`
 	Cpu    int    `json:"cpu"`
+	Uptime uint64 `json:"stats"`
 }
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		fmt.Println("Server:", p.Server, "| Status:", p.Status, "| CPU:", p.Cpu)
+		fmt.Println("Server:", p.Server, "| Status:", p.Status, "| CPU:", p.Cpu, "| Uptime:", p.Uptime)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})

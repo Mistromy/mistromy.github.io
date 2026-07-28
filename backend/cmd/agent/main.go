@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/host"
 )
 
 type Msg struct {
 	Server string `json:"server"`
 	Status string `json:"status"`
 	Cpu    int    `json:"cpu"`
+	Uptime uint64 `json:"stats"`
 }
 
 func main() {
@@ -21,11 +23,19 @@ func main() {
 	if len(cpupercent) > 0 {
 		currentCpu = int(cpupercent[0])
 	}
+
+	info, err := host.Info()
+	if err != nil {
+		panic(err)
+	}
+
 	msg := Msg{
 		Server: "testServer",
 		Status: "success",
 		Cpu:    currentCpu,
+		Uptime: info.Uptime,
 	}
+
 	jsonData, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
