@@ -27,7 +27,8 @@ type NirupamaMsg struct {
 	HeartbeatMS int64   `json:"heartbeat_epoch_ms"` // periodic "phone home" — drives online/offline
 }
 
-const port = ":6767"
+const publicport = ":6767"
+const privateport = ":6769"
 
 var (
 	mu     sync.Mutex
@@ -73,11 +74,11 @@ func withCORS(h http.HandlerFunc) http.HandlerFunc {
 }
 
 func main() {
-	fmt.Println("Server is running on port " + port + "...")
-
 	hub := newHub()
+	publicMux := http.NewServeMux()
+	privateMux := http.NewServeMux()
 
-	http.HandleFunc("/api/nirupama", withCORS(func(w http.ResponseWriter, r *http.Request) {
+	publicMux.HandleFunc("/nirupama", withCORS(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		mu.Lock()
 		snapshot := latest
@@ -85,7 +86,7 @@ func main() {
 		json.NewEncoder(w).Encode(snapshot)
 	}))
 
-	http.HandleFunc("/api/nirupama/live", withCORS(func(w http.ResponseWriter, r *http.Request) {
+	publicMux.HandleFunc("/nirupama/live", withCORS(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 			InsecureSkipVerify: true,
 		})
@@ -109,7 +110,7 @@ func main() {
 		}
 	}))
 
-	http.HandleFunc("/nirupama/live", func(w http.ResponseWriter, r *http.Request) {
+	privateMux.HandleFunc("/nirupama/live", func(w http.ResponseWriter, r *http.Request) {
 		conn, err := websocket.Accept(w, r, nil)
 		if err != nil {
 			return
@@ -145,5 +146,14 @@ func main() {
 			hub.broadcast(snapshot) // send the full snapshot to every connected client
 		}
 	})
-	http.ListenAndServe(port, nil)
+	go func() {
+		fmt.Println("Public API on", publicport)
+		if err := http.ListenAndServe(publicport, publicMux); err != nil {
+			fmt.Println("Error starting public API:", err)
+		}
+	}()
+	fmt.Println("Private API on", privateport, " via tailscale. /nirupama/live")
+	if err := http.ListenAndServe(privateport, privateMux); err != nil {
+		fmt.Println("Error starting private API:", err)
+	}
 }
