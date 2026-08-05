@@ -120,9 +120,17 @@ func pollUptime(hub *Hub) {
 	}
 }
 
+var allowedOrigins = map[string]bool{
+	"https://mista.tech":          true,
+	"https://nirupama.mista.tech": true,
+}
+
 func withCORS(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "https://mista.tech")
+		if o := r.Header.Get("Origin"); allowedOrigins[o] {
+			w.Header().Set("Access-Control-Allow-Origin", o)
+			w.Header().Add("Vary", "Origin")
+		}
 		h(w, r)
 	}
 }
