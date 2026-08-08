@@ -7,7 +7,10 @@
 - [x] add cooler effects. but no scrolljacking, scroll effects, cursor effects can be added. but dont replace the actual cursor.
 - [x] drop cgi renders into assets/art/ (tiles show stencil placeholders until then; any export ratio works — the gallery lays out native ratios)
 - [x] wire the stats gist — done, reads nirupama's stats.json gist live (api first, raw url fallback)
-- [ ] crank gist push interval to ~10 s (bot side) — site now reads the gist API (uncached), so 10 s updates will actually show
+- [x] stats read from named SOURCES in data.js — api.mista.tech/nirupama first (30 s poll, 120 s stale window), gist kept as the fallback for keys the api doesn't serve
+- [ ] serve `visits` from the api — last key still saying "wire me"
+- [ ] teach the site wss://api.mista.tech/nirupama/live — polling covers it for now, socket would just cut the latency
+- [ ] add https://mistromy.github.io + a localhost origin to the api's CORS allowlist, or live numbers only work on mista.tech
 - [x] split into taster homepage + art.html (full archive) + projects.html (flagship + project cards + repos)
 - [x] artworks counter = ART.length, no redeploy for count changes
 - [x] messages tracked → nirupama box, 713K big + full number in the label

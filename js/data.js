@@ -17,26 +17,11 @@ const SITE = {
      joining the lanyard discord server: https://discord.gg/lanyard */
   discordId: "859371145076932619",
 
-  /* the stats pipe — Nirupama pushes stats.json to this gist.
-     expected JSON shape (every key optional):
-     {
-       "guild_count": 12,
-       "user_count": 492,
-       "uptime": 100.0,              // number, percent
-       "last_updated": 1783687032,   // unix epoch — drives online/offline
-       "messages_tracked": 713545,
-       "visits": 1234                // not pushed yet — go backend, someday
-     }
-     the site tries the gist API first (fresh, no CDN cache — survives
-     a 10 s push interval), then falls back to the raw url (CDN-cached
-     ~5 min). swap statsUrl for the go backend later — same keys. */
-  statsGistApi: "https://api.github.com/gists/cdb82a1247ae6095f5d43098eb074dba",
-  statsFile: "stats.json",
-  statsUrl: "https://gist.githubusercontent.com/Mistromy/cdb82a1247ae6095f5d43098eb074dba/raw/stats.json",
+  /* every live number the site shows comes from SOURCES, right below.
+     add an endpoint there, reference its keys from PROJECTS. */
 
-  /* if last_updated is older than this (seconds), the bot counts as
-     offline. gist pushes are ~5 min apart (soon 10 s) and github's
-     raw CDN caches ~5 min, so leave headroom. */
+  /* default for a source without its own staleAfter (seconds): how old
+     a heartbeat can get before the thing counts as offline. */
   staleAfter: 1200,
 
   /* shields.io badge JSON — commit-count fallback when the github
@@ -48,6 +33,64 @@ const SITE = {
     src: "assets/track.mp3",   // drop an mp3 into assets/ and rename
     title: "tamagotchi-taconafide.mp3",
     volume: 0.12,              // really quiet on purpose — slider in the widget
+  },
+};
+
+/* ---------- where the live numbers come from ----------
+   one entry per api. all of them are fetched in parallel on load and
+   merged into a single lookup, so anywhere the site wants a number it
+   just names the key:   { label: "servers", key: "guild_count" }
+
+   sources are tried top to bottom and the FIRST one that has a key
+   wins — put the most trustworthy api first. when two of them publish
+   the same name, pin one with a prefix:  key: "gist.uptime"
+
+   per source, everything except url is optional:
+     url         endpoint returning a JSON object. it must send CORS
+                 headers for this site's origin (https://mista.tech) or
+                 the browser drops the response and the numbers go dark.
+     fallback    second url, tried only when the first one fails.
+     format      "gist" → parse every *.json file in the gist response
+                 and merge them. omitted → the body IS the object.
+     heartbeat   key holding the last-write epoch, seconds or ms (both
+                 understood) → drives the online/offline readout.
+     staleAfter  seconds before that heartbeat reads as offline.
+                 falls back to SITE.staleAfter.
+     refresh     seconds between re-fetches. omit = fetch once on load.
+     map         { "their_name": "our_name" } rename table, for apis
+                 that don't use the site's key names.
+     label       shown in the "// live" source line under a stat.
+
+   a websocket feed (wss://api.mista.tech/nirupama/live) exists but the
+   site doesn't speak it yet — polling with `refresh` is close enough. */
+const SOURCES = {
+  /* the selfhosted go api — no CDN in front of it, so these numbers
+     are actually current. source: github.com/Mistromy/MistAPI */
+  nirupama: {
+    label: "mist api",
+    url: "https://api.mista.tech/nirupama",
+    /* heartbeat_epoch_ms is the BOT's last push (~5 min apart), not the
+       api's freshness — epoch_ms is that, and it'd read "online" even
+       with the bot face down. so staleAfter has to cover the push
+       interval with room to spare; drop it to ~60 the day the bot
+       pushes every 10 s and the readout gets sharp for free. */
+    heartbeat: "heartbeat_epoch_ms",
+    staleAfter: 1200,
+    /* nothing here moves faster than the bot pushes — polling harder
+       just burns requests on numbers that haven't changed */
+    refresh: 60,
+  },
+
+  /* the old gist pipe — kept as the home for anything the api doesn't
+     serve yet (visits), and as a second opinion when it's down. one
+     *.json file per project, so no writer can clobber another. */
+  gist: {
+    label: "stats pipe",
+    url: "https://api.github.com/gists/cdb82a1247ae6095f5d43098eb074dba",
+    format: "gist",
+    fallback: "https://gist.githubusercontent.com/Mistromy/cdb82a1247ae6095f5d43098eb074dba/raw/stats.json",
+    heartbeat: "last_updated",
+    staleAfter: 1200,
   },
 };
 
@@ -238,12 +281,16 @@ const MANUAL = {
 };
 
 /* ---------- projects — flagship gets the big box, the rest get cards.
-   stats entries: { label, key }        → live value from the stats gist
+   stats entries: { label, key }        → live value, from SOURCES
                   { label, value }      → static, written by hand
+                  { label, status }     → heartbeat of a source id,
+                                          e.g. status: "nirupama"
    optional per stat: compact: true     → 713545 shows as 713K
                       fmt: "percent"    → 99.98 shows as 99.98%
-   add a project = add an object. wiring live data for it = push the
-   key into the gist and reference it here. that's the whole flow. */
+   `key` names a key any source publishes; prefix it with a source id
+   ("gist.visits") to pin it to one. add a project = add an object.
+   wiring live data for it = publish the key from an endpoint in
+   SOURCES and reference it here. that's the whole flow. */
 const PROJECTS = [
   {
     name: "Nirupama",
@@ -258,8 +305,20 @@ const PROJECTS = [
       { label: "servers", key: "guild_count" },
       { label: "members reached", key: "user_count" },
       { label: "messages tracked", key: "messages_tracked", compact: true },
-      { label: "uptime, 30d", key: "uptime", fmt: "percent" },
+      { label: "uptime, 90d", key: "nirupama.uptime", fmt: "percent" },
+      { label: "status", status: "nirupama" },
     ],
+  },
+  {
+    name: "Mist API",
+    desc: "A unified go https and websocket API for all my projects.",
+    pills: ["go", "tailscale"],
+    links: [
+      { label: "Read the source", url: "https://github.com/Mistromy/MistAPI" }
+    ],
+    stats: [
+      { label: "uptime, 90d", value: "soon", fmt: "percent" }
+    ]
   },
   /* template for the next one:
   {
@@ -268,8 +327,9 @@ const PROJECTS = [
     pills: ["stack", "goes", "here"],
     links: [{ label: "source", url: "https://github.com/..." }],
     stats: [
-      { label: "some number", value: 42 },          // by hand
-      { label: "live number", key: "my_gist_key" }, // from the gist
+      { label: "some number", value: 42 },        // by hand
+      { label: "live number", key: "my_key" },    // from any source
+      { label: "status", status: "nirupama" },    // a source's heartbeat
     ],
   },
   */

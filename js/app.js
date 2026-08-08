@@ -677,6 +677,12 @@ if (lb){
 /* ---------- projects — flagship box + cards, all from data.js ---------- */
 function projectStatsHtml(stats){
   return (stats || []).map(s => {
+    /* { label, status: "<source id>" } → that source's heartbeat */
+    if (s.status != null){
+      return '<div class="mini-stat"><span>' + s.label + '</span>' +
+        '<b data-stat="status" data-stat-source="' + s.status + '"' +
+        ' style="font-size:14px;font-family:var(--mono)">checking…</b></div>';
+    }
     if (s.key != null){
       return '<div class="mini-stat"><span>' + s.label + '</span>' +
         '<b data-stat-key="' + s.key + '"' +
@@ -708,10 +714,7 @@ function projectLinksHtml(links){
           '<div class="pills">' + p.pills.map((x, i) => '<span class="pill' + (i === 0 ? " hot" : "") + '">' + x + "</span>").join("") + "</div>" +
           '<div class="hero-cta">' + projectLinksHtml(p.links) + "</div>" +
         "</div>" +
-        '<div class="mini-stats">' +
-          projectStatsHtml(p.stats) +
-          '<div class="mini-stat"><span>status</span><b data-stat="status" style="font-size:14px;font-family:var(--mono)">checking…</b></div>' +
-        "</div>";
+        '<div class="mini-stats">' + projectStatsHtml(p.stats) + "</div>";
       flagMount.appendChild(el);
       observeLate(flagMount);
     } else if (!p.flagship && grid){
@@ -766,12 +769,22 @@ function fmtCompact(n){
   if (n >= 1e4) return Math.floor(n / 1e3) + "K";
   return n.toLocaleString();
 }
+/* how a counting number is written on its way up. `format` lets a
+   caller animate something that isn't a plain integer — a percent keeps
+   its decimals instead of being floored into 99 → 100. */
+function fmtFor(compact, format){
+  if (format) return format;
+  if (compact) return v => fmtCompact(Math.floor(v));
+  return v => Math.floor(v).toLocaleString();
+}
 /* the animation only runs once the number scrolls into view — data can
    arrive long before the reader does, so each element waits its turn */
-function countUp(el, target, compact=false){
+function countUp(el, target, compact=false, format=null){
   if (!el) return;
-  const fmt = compact ? fmtCompact : (v => v.toLocaleString());
-  if (reducedMotion || !("IntersectionObserver" in window)){ el.textContent = fmt(target); return; }
+  const fmt = fmtFor(compact, format);
+  /* data-counted marks "this one has already played" — a refreshed value
+     replaces a still-pending job, but never re-animates a finished one */
+  if (reducedMotion || !("IntersectionObserver" in window)){ el.textContent = fmt(target); el.dataset.counted = "1"; return; }
   countUp.jobs = countUp.jobs || new Map();
   countUp.io = countUp.io || new IntersectionObserver(entries => {
     entries.forEach(en => {
@@ -783,12 +796,18 @@ function countUp(el, target, compact=false){
     });
   }, { threshold: 0.5 });
   countUp.jobs.set(el, () => {
+    el.dataset.counted = "1";
     const dur = 900, start = performance.now();
+    let done = false;
     (function step(t){
       const p = Math.min((t - start) / dur, 1);
-      el.textContent = fmt(Math.floor(target * (1 - Math.pow(1 - p, 3))));
-      if (p < 1) requestAnimationFrame(step);
+      el.textContent = fmt(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(step); else done = true;
     })(start);
+    /* rAF stops firing in a backgrounded or non-compositing tab, which
+       would strand the number mid-count — showing a wrong figure, not
+       just an unfinished one. this lands it on the real value either way. */
+    setTimeout(() => { if (!done) el.textContent = fmt(target); }, dur + 200);
   });
   countUp.io.observe(el);
 }
@@ -892,54 +911,106 @@ countUp($("#stArtworks"), ART.length);
   }
 })();
 
-/* ---------- live data: the stats pipe (nirupama's gist) ----------
-   the gist api serves the current revision uncached — this is what
-   survives a 10 s push interval. the raw url sits behind github's
-   CDN (~5 min cache), so it's only the fallback. every element with
-   data-stat-key gets filled, wherever it lives. */
-(async function statsPipe(){
+/* ---------- live data: the stats pipe ----------
+   every entry in SOURCES (data.js) is fetched in parallel and kept in
+   its own bucket. an element with data-stat-key="foo" shows the first
+   source that publishes `foo`; data-stat-key="gist.foo" pins it to one.
+   sources with a `refresh` re-fetch on an interval and repaint — the
+   first paint animates, later ones just swap the number so the page
+   doesn't twitch every 30 s. */
+(function statsPipe(){
+  const sources = typeof SOURCES === "object" && SOURCES ? SOURCES : {};
+  const ids = Object.keys(sources);
   const slots = $$("[data-stat-key]");
   const statusEls = $$('[data-stat="status"]');
+  const store = {};          // source id → parsed object, or null when it failed
+  let painted = false;       // first paint animates, the rest don't
+
+  const allDown = () => ids.every(id => !store[id]);
   const fail = () => {
     slots.forEach(el => { el.textContent = "░░░"; el.classList.add("live-err"); });
     statusEls.forEach(el => el.textContent = "no answer");
     statFail("#stServers", "#stServersSrc");
     statFail("#stVisits", "#stVisitsSrc", "stats pipe // wire me");
   };
-  /* every *.json file in the gist gets parsed and merged into one
-     object — each project can own its file (no override risk between
-     writers), the site reads them all in a single request. keep keys
-     unique across files (prefix by project when in doubt). */
-  async function fetchStats(){
-    try {
-      const res = await fetch(SITE.statsGistApi);
-      if (!res.ok) throw new Error(res.status);
-      const g = await res.json();
-      const merged = {};
-      Object.values(g.files || {}).forEach(f => {
-        if (!f.filename.endsWith(".json") || !f.content || f.truncated) return;
-        try { Object.assign(merged, JSON.parse(f.content)); } catch { /* one bad file shouldn't sink the rest */ }
-      });
-      if (!Object.keys(merged).length) throw new Error("no json files in gist");
-      return merged;
-    } catch {
-      const res = await fetch(SITE.statsUrl, { cache: "no-store" });
-      if (!res.ok) throw new Error(res.status);
-      return res.json();
-    }
-  }
-  if (!SITE.statsUrl && !SITE.statsGistApi){ fail(); return; }
-  let d;
-  try { d = await fetchStats(); } catch { fail(); return; }
 
-  slots.forEach(el => {
-    const v = d[el.dataset.statKey];
+  /* every *.json file in a gist gets parsed and merged into one object —
+     each project can own its file (no override risk between writers) and
+     the site still reads them all in a single request. keep keys unique
+     across files (prefix by project when in doubt). */
+  function parseGist(g){
+    const merged = {};
+    Object.values(g.files || {}).forEach(f => {
+      if (!f.filename.endsWith(".json") || !f.content || f.truncated) return;
+      try { Object.assign(merged, JSON.parse(f.content)); } catch { /* one bad file shouldn't sink the rest */ }
+    });
+    if (!Object.keys(merged).length) throw new Error("no json files in gist");
+    return merged;
+  }
+
+  /* url first, fallback only if it didn't answer. returns null when a
+     source is fully unreachable — one dead api doesn't take the rest. */
+  async function load(src){
+    for (const url of [src.url, src.fallback].filter(Boolean)){
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(res.status);
+        const body = await res.json();
+        /* the gist API wraps the payload in a files map; a raw gist url
+           serves the json straight — so the fallback is checked by shape,
+           not by which url it came from. */
+        const data = src.format === "gist" && body && body.files ? parseGist(body) : body;
+        if (!data || typeof data !== "object") throw new Error("not an object");
+        if (src.map) Object.entries(src.map).forEach(([from, to]) => {
+          if (data[from] !== undefined) data[to] = data[from];
+        });
+        return data;
+      } catch { /* try the next url */ }
+    }
+    return null;
+  }
+
+  /* "guild_count" → whichever source has it first.
+     "gist.guild_count" → that source only. */
+  function lookup(key){
+    const dot = key.indexOf(".");
+    if (dot > 0 && sources[key.slice(0, dot)]){
+      const d = store[key.slice(0, dot)];
+      return d ? d[key.slice(dot + 1)] : undefined;
+    }
+    for (const id of ids){
+      const d = store[id];
+      if (d && d[key] != null) return d[key];
+    }
+    return undefined;
+  }
+  function sourceOf(key){
+    const dot = key.indexOf(".");
+    if (dot > 0 && sources[key.slice(0, dot)]) return key.slice(0, dot);
+    return ids.find(id => store[id] && store[id][key] != null);
+  }
+
+  const asPercent = v => (Math.round(v * 100) / 100) + "%";
+
+  /* a number that already animated just gets swapped — no twitch every
+     refresh. one that's still waiting below the fold gets its pending
+     job rewritten, so it animates to the fresh value, not the stale one. */
+  function setNumber(el, v, compact, format){
+    if (painted && el.dataset.counted) el.textContent = fmtFor(compact, format)(v);
+    else countUp(el, v, compact, format);
+  }
+
+  function paintSlot(el){
+    const v = lookup(el.dataset.statKey);
     if (v == null){ el.textContent = "░░░"; el.classList.add("live-err"); return; }
+    el.classList.remove("live-err");
     /* an array value renders as a sparkline instead of a number */
     if (Array.isArray(v)){ sparkline(el, v, el.dataset.compact != null); return; }
-    if (el.dataset.fmt === "percent"){ el.textContent = (Math.round(v * 100) / 100) + "%"; return; }
+    /* percents animate like every other number — they just count in
+       decimals, so 99.98% doesn't crawl 0…99 and land a hair off */
+    if (el.dataset.fmt === "percent"){ setNumber(el, v, false, asPercent); return; }
     const compact = el.dataset.compact != null;
-    countUp(el, v, compact);
+    setNumber(el, v, compact);
     /* compact values keep the full number readable in the label */
     if (compact && v >= 1e4){
       const label = el.closest(".mini-stat, .stat")?.querySelector("span");
@@ -948,25 +1019,77 @@ countUp($("#stArtworks"), ART.length);
         label.textContent += " · " + v.toLocaleString();
       }
     }
-  });
-
-  if (d.visits != null){
-    countUp($("#stVisits"), d.visits);
-    const vs = $("#visits"); if (vs) vs.textContent = "VISITS // " + Number(d.visits).toLocaleString();
-    const src = $("#stVisitsSrc"); if (src) src.textContent = "stats pipe // live";
-  } else {
-    statFail("#stVisits", "#stVisitsSrc", "stats pipe // wire me");
   }
 
-  /* online = the gist was touched recently. shows its age, honestly. */
-  const age = d.last_updated ? Math.floor(Date.now() / 1000) - d.last_updated : null;
-  const stale = age == null || age > SITE.staleAfter;
-  /* this is the BOT's heartbeat — it stays inside the project box.
-     the sysbar dot belongs to the operator's presence (lanyard). */
-  statusEls.forEach(el => {
+  /* a source is online when its heartbeat key is recent. epochs come in
+     seconds or milliseconds depending on the api — anything past year
+     ~5138 in seconds is obviously ms. shows its age, honestly.
+     this is the PROJECT's heartbeat — the sysbar dot is the operator's
+     presence (lanyard), a different thing entirely. */
+  function paintStatus(el){
+    const id = el.dataset.statSource || ids[0];
+    const src = sources[id], d = store[id];
+    /* each dead end names itself, so a misconfigured status says which
+       mistake it is: a source id that isn't in SOURCES, an endpoint that
+       never answered (usually a missing CORS header), or a source with no
+       heartbeat key to read. anything else is a real age. */
+    const dead =
+      !src ? "no source" :
+      !d ? "no answer" :
+      !src.heartbeat ? "no heartbeat" : null;
+    if (dead){ el.textContent = dead; el.style.color = "var(--signal)"; return; }
+    const raw = d[src.heartbeat];
+    const beat = raw > 1e11 ? Math.floor(raw / 1000) : raw;
+    const age = beat ? Math.floor(Date.now() / 1000) - beat : null;
+    const stale = age == null || age > (src.staleAfter ?? SITE.staleAfter);
     el.textContent = stale ? "offline?" : "online · " + fmtAge(age);
     el.style.color = stale ? "var(--signal)" : "var(--cyan)";
-  });
+  }
+
+  function paint(){
+    if (allDown()){ fail(); return; }
+    slots.forEach(paintSlot);
+    statusEls.forEach(paintStatus);
+
+    /* the numbers grid names its own source under each figure — keep it
+       honest when a key moves from one endpoint to another */
+    const serversSrc = $("#stServersSrc"), servedBy = sources[sourceOf("guild_count")];
+    if (serversSrc && servedBy){ serversSrc.textContent = (servedBy.label || "stats pipe") + " // live"; serversSrc.classList.remove("off"); }
+
+    const visits = lookup("visits");
+    if (visits != null){
+      setNumber($("#stVisits"), visits, false);
+      const vs = $("#visits"); if (vs) vs.textContent = "VISITS // " + Number(visits).toLocaleString();
+      const el = $("#stVisitsSrc");
+      if (el){ el.textContent = (sources[sourceOf("visits")]?.label || "stats pipe") + " // live"; el.classList.remove("off"); }
+    } else {
+      statFail("#stVisits", "#stVisitsSrc", "stats pipe // wire me");
+    }
+    painted = true;
+  }
+
+  /* a hiccup on a poll keeps the last good payload instead of blanking
+     the whole source — one timeout shouldn't wipe numbers that were
+     right a second ago. the heartbeat ages out on its own, so a source
+     that stays down slides into "offline?" honestly. "no answer" then
+     means exactly one thing: nothing ever arrived. */
+  async function refresh(id){
+    const fresh = await load(sources[id]);
+    if (fresh) store[id] = fresh;
+    paint();
+  }
+
+  if (!ids.length){ fail(); return; }
+  /* first pass waits for everyone so the page paints once, then each
+     source that asked for it keeps ticking on its own clock */
+  Promise.all(ids.map(async id => { store[id] = await load(sources[id]); }))
+    .then(() => {
+      paint();
+      ids.forEach(id => {
+        const every = sources[id].refresh;
+        if (every > 0) setInterval(() => refresh(id), every * 1000);
+      });
+    });
 })();
 
 function fmtAge(s){

@@ -84,15 +84,22 @@ Wiring data to a project:
 ```js
 stats: [
   { label: "some number", value: 42 },            // by hand
-  { label: "live number", key: "my_gist_key" },   // from the stats gist
+  { label: "live number", key: "my_key" },        // from any source
   { label: "big number",  key: "messages_tracked", compact: true }, // 713545 → 713K, full number shown in the label
   { label: "percent",     key: "uptime", fmt: "percent" },
+  { label: "pinned",      key: "nirupama.uptime" },   // from one named source
+  { label: "status",      status: "nirupama" },       // a source's heartbeat
 ]
 ```
 
-`key` reads from the stats gist JSON — so wiring live data for a new
-project = have the bot/backend push one more key, reference it here.
-No other code changes.
+`key` reads from whatever the endpoints in `SOURCES` publish (see
+[the stats pipe](#the-stats-pipe-live-numbers)) — so wiring live data
+for a new project = have the bot/backend publish one more key,
+reference it here. No other code changes.
+
+`status` takes a **source id**, not a key: it prints that source's
+heartbeat (`online · 40s ago` / `offline?` / `no answer`). Any project
+can have one, and two projects can watch different sources.
 
 ## Add a social / link
 
@@ -268,9 +275,9 @@ right after the jump — on click and on arrival from subpages (whose
 links use `./#about` so no `index.html` lingers either). The only hash
 that persists is `#p/…`, because that one *is* the share state.
 
-## Sparklines (graphs from the gist)
+## Sparklines (graphs from a stats source)
 
-Any stats-gist key whose value is an **array of numbers** renders as a
+Any stats key whose value is an **array of numbers** renders as a
 sparkline instead of a number — cyan line, latest value beside it,
 min/max/latest in the hover tooltip. So when ComputerCraft (or anything
 else) starts pushing history, e.g.
@@ -321,57 +328,112 @@ next to the bio (`.log-side`) is just `<span>` lines.
 
 ## The stats pipe (live numbers)
 
-**Already wired.** Nirupama pushes `stats.json` to gist
-`cdb82a1247ae6095f5d43098eb074dba`. The site fetches it in two steps:
+**Already wired.** Every live number on the site comes from
+`js/data.js` → `SOURCES`. One entry per endpoint. All of them are
+fetched in parallel on load, each into its own bucket, and the site
+looks a key up across them.
 
-1. **Gist API** (`SITE.statsGistApi`) — serves the current revision
-   with no CDN cache, so it keeps up with a ~10 s push interval.
-   Costs one unauthenticated GitHub API request per visitor load
-   (limit: 60/h per IP, shared with the other GitHub calls — fine).
-2. Fallback: the hashless **raw URL** (`SITE.statsUrl`) — GitHub's CDN
-   caches it ~5 min, so it's the backup, not the primary.
+```js
+const SOURCES = {
+  nirupama: {
+    url: "https://api.mista.tech/nirupama",
+    heartbeat: "heartbeat_epoch_ms",
+    staleAfter: 1200,
+    refresh: 60,
+  },
+  gist: {
+    url: "https://api.github.com/gists/cdb82a1247ae6095f5d43098eb074dba",
+    format: "gist",
+    fallback: "https://gist.githubusercontent.com/.../raw/stats.json",
+    heartbeat: "last_updated",
+  },
+};
+```
 
-**One file per project:** the site parses **every `*.json` file in the
-gist** and merges them into one object, in a single request. So each
-repo/bot pushes only its own file — no writer can clobber another.
-Keep key names unique across files (prefix by project when in doubt,
-e.g. `myproject_users`), then reference them from `PROJECTS` stats
-with `key: "myproject_users"`. Files over 1 MB get truncated by the
-gist API and are skipped — stats files will never get close.
+| field | what it does |
+|---|---|
+| `url` | endpoint returning a JSON object. **required** |
+| `fallback` | second url, tried only when the first fails |
+| `format` | `"gist"` → merge every `*.json` file in the gist response. omitted → the body *is* the object |
+| `heartbeat` | key holding the last-write epoch — seconds or ms, both understood. drives the online/offline readout |
+| `staleAfter` | seconds before that heartbeat reads `offline?`. defaults to `SITE.staleAfter`. **must clear the writer's push interval** — set it below that and the status spends most of every cycle wrongly claiming `offline?` |
+| `refresh` | seconds between re-fetches. omit = fetch once on load |
+| `map` | `{ "their_name": "our_name" }` rename table for apis that don't use the site's key names |
+| `label` | shown in the `// live` source line under a stat |
 
-Shape the site reads (every key optional):
+**Adding an endpoint is the whole job.** Add a source, then reference
+its keys from `PROJECTS` (or a `data-stat-key` attribute in the HTML) —
+no `app.js` changes.
+
+**Resolving a key:** sources are tried **top to bottom, first one that
+has the key wins**, so the most trustworthy api goes first. When two
+publish the same name, pin one with a prefix:
+
+```js
+{ label: "uptime", key: "nirupama.uptime" }   // that source only, no fallthrough
+```
+
+**Failure is per-source.** A dead endpoint (or a missing CORS header)
+leaves its bucket empty and the others still paint; keys only it served
+show `░░░`. Everything goes dark only when every source is down. A
+*poll* that fails keeps the last good payload rather than blanking the
+source — one timeout shouldn't erase numbers that were right a minute
+ago, and the heartbeat ages into `offline?` on its own if it stays down.
+
+**A status readout names its own failure**, so a misconfigured one tells
+you which mistake it is:
+
+| it says | it means |
+|---|---|
+| `online · 40s ago` | heartbeat is fresh |
+| `offline?` | answered, but the heartbeat is older than `staleAfter` |
+| `no answer` | nothing ever arrived — wrong url, or **no CORS header for this origin** |
+| `no heartbeat` | the source loaded but has no `heartbeat` key configured |
+| `no source` | the `status:` id isn't in `SOURCES` — typo in `data.js` |
+
+**One file per project (gist sources):** the site parses every `*.json`
+file in the gist and merges them, in a single request — each repo/bot
+pushes only its own file, no writer can clobber another. Keep key names
+unique across files (prefix by project when in doubt). Files over 1 MB
+get truncated by the gist API and are skipped.
+
+Keys the site currently looks for (all optional):
 
 ```json
 {
   "guild_count": 12,
   "user_count": 492,
-  "uptime": 100.0,
-  "last_updated": 1783687032,
+  "uptime": 99.98,
   "messages_tracked": 713545,
+  "heartbeat_epoch_ms": 1786210307229,
   "visits": 1234
 }
 ```
 
-- `last_updated` drives the online/offline status — if it's older
-  than `SITE.staleAfter` (seconds), the bot shows as `offline?`.
-  Currently 1200 s. Once the bot pushes every ~10 s (via the gist
-  API path above, that actually shows up), `staleAfter` can drop to
-  something like 60 for a much sharper heartbeat.
-- `visits` isn't pushed yet, so that stat says `wire me`. Add the key
-  to the gist (or the backend) and it lights up — no code change.
+- `visits` isn't served by anything yet, so that stat says `wire me`.
+  Publish the key from any source and it lights up — no code change.
+- An array value renders as a sparkline instead of a number
+  (see [Sparklines](#sparklines-graphs-from-a-stats-source)).
 
-### The go backend (later)
+### Adding an endpoint — the requirements
 
-Serve the same JSON shape and swap `statsUrl` — one line.
-Requirements:
-
-- `GET /stats` → JSON above, `Content-Type: application/json`
-- CORS: `Access-Control-Allow-Origin: *` (or the site origin) —
-  without it the browser silently refuses and the site shows
-  `offline // no answer`.
+- `GET <url>` → a JSON **object**, `Content-Type: application/json`.
+- **CORS**: `Access-Control-Allow-Origin` must cover the site's origin
+  (`https://mista.tech`). Without it the browser drops the response
+  silently and the numbers go dark — this is the failure mode to check
+  first when something says `no answer`.
 - No CDN in front of it = actually realtime numbers.
 - If it counts visits, have the frontend POST a ping — add that to
   `app.js` when the endpoint exists.
+
+### Websockets (not wired)
+
+`wss://api.mista.tech/nirupama/live` exists but the site doesn't speak
+it. Polling via `refresh` is close enough for numbers that move this
+slowly; a socket would mean reconnect/backoff handling in `app.js` for
+a few seconds of latency. If it ever happens, the shape to aim for is a
+source with `socket: "wss://…"` that writes into the same bucket the
+HTTP fetch fills — everything downstream already repaints on its own.
 
 ### Offloading data.js itself (later)
 

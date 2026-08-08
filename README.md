@@ -6,10 +6,12 @@ One file (`index.html`) + an `assets/` folder. No build step, no framework. Host
 
 Everything editable is at the **top of the `<script>` block** in `index.html`:
 
-1. **Nirupama stats** — point `CONFIG.endpoints.nirupamaStats` at your API.
-   Expected JSON: `{ "servers": 2, "members": 140, "uptime": "99.9%", "online": true }`
-   (add CORS headers on your backend: `Access-Control-Allow-Origin: https://yourdomain`)
-2. **Visit counter** — point `CONFIG.endpoints.visits` at your backend.
+1. **Live numbers** — add your API to `SOURCES` in `js/data.js`, then
+   reference its keys from `PROJECTS`. Any endpoint returning a flat
+   JSON object works: `{ "guild_count": 12, "uptime": 99.9 }`.
+   (add CORS headers on your backend: `Access-Control-Allow-Origin: https://yourdomain`
+   — without them the browser drops the response and the numbers go dark)
+2. **Visit counter** — serve a `visits` key from any source in `SOURCES`.
    Expected JSON: `{ "visits": 1234 }`. Increment server-side on each GET.
 3. **Music** — drop an mp3 at `assets/track.mp3` and set `CONFIG.audio.title`.
 4. **GitHub** — already live via the public API (`api.github.com`), no key needed.
