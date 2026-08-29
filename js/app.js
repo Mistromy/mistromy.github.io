@@ -310,12 +310,24 @@ const slugFor = t => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/
 const altFor  = item => item.alt ||
   (item.title + " — " + mediums(item).join(" and ") + " artwork by Mist" + (item.tags ? " (" + item.tags + ")" : ""));
 
-/* the grid loads deploy-generated tile thumbnails (p/t/<slug>.s.jpg,
-   ~100 KB) instead of the multi-MB originals — the single biggest
-   lighthouse win. locally (or if generation failed) the thumb 404s
-   and the original steps in. the fullscreen viewer always gets the
-   original. */
-const tileSrcFor = item => "p/t/" + slugFor(item.title) + ".s.jpg";
+/* the grid loads deploy-generated tiles (p/t/<slug>.webp, ~60 KB, with a
+   .jpg beside it) instead of the multi-MB originals — the single biggest
+   lighthouse win. scripts/gen_embeds.py writes both at one size.
+   the fullscreen viewer and the /p/ embeds always get the original.
+
+   no <picture> here, deliberately: measureArt has to load something to
+   read its aspect ratio anyway, so it walks this list in order and the
+   first entry that DECODES is both the measurement and the tile the grid
+   renders — the fetch is already in cache, so the second use is free.
+   that also makes the webp/jpg choice a real feature test rather than a
+   mime-type guess, and it never pulls two formats of the same image. */
+const tileSrcsFor = item => {
+  const base = "p/t/" + slugFor(item.title);
+  return [base + ".webp", base + ".jpg"];
+};
+/* what the "latest transmission" panel asks for — it's one <img> with its
+   own onerror chain, so it takes the universal format */
+const tileSrcFor = item => "p/t/" + slugFor(item.title) + ".jpg";
 
 function measureArt(items){
   return Promise.all(items.map(it => new Promise(res => {
@@ -328,17 +340,21 @@ function measureArt(items){
       v.src = it.img;
       return;
     }
-    const done = (src, im) => { it._src = src; it._ar = im.naturalWidth / im.naturalHeight; it._ok = true; res(); };
-    const thumb = tileSrcFor(it);
-    const t = new Image();
-    t.onload = () => done(thumb, t);
-    t.onerror = () => {
-      const im = new Image();
-      im.onload  = () => done(it.img, im);
-      im.onerror = () => { it._ar = PLACEHOLDER_AR; it._ok = false; res(); };
-      im.src = it.img;
+    const done = (src, im) => {
+      it._src = src;
+      it._ar = im.naturalWidth / im.naturalHeight; it._ok = true; res();
     };
-    t.src = thumb;
+    /* the tiles first, then the original — a 404 (no build) and a format
+       the browser can't decode both land in onerror, so one chain covers
+       "generation didn't run" and "this browser has no webp" alike */
+    const chain = [...tileSrcsFor(it), it.img];
+    (function attempt(i){
+      if (i >= chain.length){ it._ar = PLACEHOLDER_AR; it._ok = false; return res(); }
+      const im = new Image();
+      im.onload  = () => done(chain[i], im);
+      im.onerror = () => attempt(i + 1);
+      im.src = chain[i];
+    })(0);
   })));
 }
 
@@ -355,9 +371,11 @@ function makeTile(item, w, h){
   /* a dead cover with live extra frames still opens (stencil tile) */
   if (extra) tile.classList.add("openable");
   if (item._ok){
+    const alt = altFor(item).replace(/"/g,"&quot;");
+    /* _src is whatever measureArt proved this browser can decode */
     const media = isVideo(item.img)
-      ? '<video src="' + item.img + '" muted loop autoplay playsinline aria-label="' + altFor(item).replace(/"/g,"&quot;") + '"></video>'
-      : '<img src="' + (item._src || item.img) + '" alt="' + altFor(item).replace(/"/g,"&quot;") + '" loading="lazy" decoding="async">';
+      ? '<video src="' + item.img + '" muted loop autoplay playsinline aria-label="' + alt + '"></video>'
+      : '<img src="' + (item._src || item.img) + '" alt="' + alt + '" loading="lazy" decoding="async">';
     tile.innerHTML =
       '<span class="tile-tag">' + tag + "</span>" +
       (extra ? '<span class="tile-count">+' + extra + "</span>" : "") +
@@ -1110,7 +1128,12 @@ function fmtAge(s){
   const KEY = "mist_audio";
   let saved = {};
   try { saved = JSON.parse(sessionStorage.getItem(KEY) || "{}"); } catch {}
-  const player = new Audio(SITE.audio.src);
+  const player = new Audio();
+  /* Audio() defaults to preload="auto", which pulls the whole track on
+     every page load for the ~nobody who presses play. set the source
+     only once it's actually wanted. */
+  player.preload = "none";
+  player.src = SITE.audio.src;
   player.loop = true;
   player.volume = saved.volume ?? SITE.audio.volume ?? 0.12;
   player.addEventListener("loadedmetadata", () => {

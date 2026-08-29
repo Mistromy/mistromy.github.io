@@ -8,18 +8,25 @@ carry per-artwork og:image tags. These stubs can: /p/smart-juice serves
 real og tags (the artwork as the embed image) and instantly redirects
 humans to the live lightbox at art.html#p/smart-juice.
 
-WhatsApp only shows LARGE previews for jpeg/png images under ~300 KB,
-which ArtStation's /large/ webps are not. So when Pillow is available
-(it is in CI), each artwork also gets a small JPG thumbnail in p/t/
-and the og:image points there — big embeds everywhere. Without Pillow
-the stub falls back to the original image URL (Discord still works).
+og:image points at the ORIGINAL image url (ArtStation's cdn, or this
+site for local files) — unfurlers get the full-quality piece, and the
+bytes are served by someone else's cdn. og:image:width/height are
+stamped from the real file so Discord renders it large instead of
+guessing.
+
+Separately, and only for the gallery grid, each artwork gets ONE
+downscaled tile in p/t/ — written twice, as .webp (what almost
+everything loads) and .jpg (the universal fallback). Rows are ~300 px
+tall, so 900 px covers 2x screens. This is the lighthouse fix: without
+it the grid pulls multi-MB originals. Needs Pillow (present in CI);
+without it the grid falls back to the originals and still works.
 
 Data source:
   - default: local js/data.js
   - env DATA_JS_URL=<raw gist url> — for when data.js moves off-repo.
 
-Runs automatically via .github/workflows/gen-embeds.yml (on push +
-cron + manual). Manual: python scripts/gen_embeds.py
+Runs automatically as a step in .github/workflows/deploy.yml, before
+the pages upload. Manual: python scripts/gen_embeds.py
 """
 
 import os
@@ -31,14 +38,14 @@ import urllib.request
 from pathlib import Path
 
 BASE = "https://mistromy.github.io/"
-# embed image: as large as whatsapp's large-preview rules allow
-# (jpeg/png, < ~300 KB) — clicking the preview should feel full-size
-EMBED_MAX = 1600
-EMBED_CAP = 290_000
 # tile image: what the gallery grid actually loads (rows are ~300 px
-# tall, so 900 px covers 2x screens) — this is the lighthouse fix
+# tall, so 900 px covers 2x screens) — this is the lighthouse fix.
+# one size, two formats: webp for everyone, jpg for the stragglers.
 TILE_MAX = 900
 TILE_CAP = 160_000
+# og:image types worth declaring — anything else, let the unfurler sniff
+OG_TYPES = {".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+            ".png": "image/png", ".webp": "image/webp"}
 UA = {"User-Agent": "Mozilla/5.0 (compatible; mist-embed-gen/1.0)"}
 
 try:
@@ -46,7 +53,7 @@ try:
     HAVE_PIL = True
 except ImportError:
     HAVE_PIL = False
-    print("note: Pillow not installed — using original image urls (whatsapp previews stay small)")
+    print("note: Pillow not installed — no gallery tiles, the grid will load originals")
 
 root = Path(__file__).resolve().parent.parent
 
@@ -78,32 +85,39 @@ if HAVE_PIL:
     tdir.mkdir(exist_ok=True)
 
 
-def save_capped(im, dest: Path, max_px: int, cap: int):
-    """resize + walk quality down until the jpg fits the byte cap."""
-    im2 = im.copy()
-    im2.thumbnail((max_px, max_px))
+def save_capped(im, dest: Path, cap: int, fmt: str):
+    """write `im` as fmt, walking quality down until it fits the byte cap.
+    the last quality wins even if it doesn't fit — a slightly fat tile
+    beats a missing one."""
+    opts = {"JPEG": dict(optimize=True, progressive=True), "WEBP": dict(method=5)}[fmt]
     buf = io.BytesIO()
     for q in (85, 78, 70, 62, 55):
         buf = io.BytesIO()
-        im2.save(buf, "AVIF", quality=q, optimize=True, progressive=True)
+        im.save(buf, fmt, quality=q, **opts)
         if buf.tell() <= cap:
             break
     dest.write_bytes(buf.getvalue())
-    return im2.size
+    return buf.tell()
 
 
-def make_thumbs(url: str, slug_: str):
-    """fetch once, write the embed jpg and the tile jpg. (w,h) of the
-    embed image, or None if the source is unreachable."""
+def make_tiles(url: str, slug_: str):
+    """fetch the original once, write the webp + jpg gallery tiles.
+    returns (w,h) of the ORIGINAL — that's what og:image points at —
+    or None if the source is unreachable."""
     try:
         with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=60) as r:
             raw = r.read()
         im = Image.open(io.BytesIO(raw)).convert("RGB")
-        dims = save_capped(im, tdir / f"{slug_}.avif", EMBED_MAX, EMBED_CAP)
-        save_capped(im, tdir / f"{slug_}.s.avif", TILE_MAX, TILE_CAP)
-        return dims
+        full = im.size
+        tile = im.copy()
+        tile.thumbnail((TILE_MAX, TILE_MAX))
+        wb = save_capped(tile, tdir / f"{slug_}.webp", TILE_CAP, "WEBP")
+        jb = save_capped(tile, tdir / f"{slug_}.jpg", TILE_CAP, "JPEG")
+        print(f"  {slug_}: {full[0]}x{full[1]} -> tile {tile.size[0]}x{tile.size[1]} "
+              f"(webp {wb // 1024} KB, jpg {jb // 1024} KB)")
+        return full
     except Exception as e:  # a dead image shouldn't sink the run
-        print(f"  thumbs failed for {url}: {e}")
+        print(f"  tiles failed for {url}: {e}")
         return None
 
 
@@ -122,14 +136,18 @@ for i, (pos, title) in enumerate(titles):
     s = slug(title)
     target = f"{BASE}art.html#p/{s}"
 
+    # the embed always shows the original — full quality, and the bytes
+    # come off artstation's cdn rather than this one. the tiles below are
+    # only ever loaded by the gallery grid.
     og_image, size_tags = img, ""
     if HAVE_PIL:
-        dims = make_thumbs(img, s)
+        dims = make_tiles(img, s)
         if dims:
-            og_image = f"{BASE}p/t/{s}.avif"
             size_tags = (f'<meta property="og:image:width" content="{dims[0]}">\n'
-                         f'<meta property="og:image:height" content="{dims[1]}">\n'
-                         f'<meta property="og:image:type" content="image/avif">\n')
+                         f'<meta property="og:image:height" content="{dims[1]}">\n')
+    og_type = OG_TYPES.get(os.path.splitext(img.split("?")[0])[1].lower())
+    if og_type:
+        size_tags += f'<meta property="og:image:type" content="{og_type}">\n'
 
     t, n, im_ = html.escape(title, quote=True), html.escape(note, quote=True), html.escape(og_image, quote=True)
     (out / f"{s}.html").write_text(f"""<!DOCTYPE html>
@@ -154,6 +172,6 @@ redirecting to the archive… <a style="color:#5df2ff" href="{target}">click if 
 """, encoding="utf-8")
     made.append(s)
 
-print(f"wrote {len(made)} stubs to p/" + (" (with thumbnails in p/t/)" if HAVE_PIL else ""))
+print(f"wrote {len(made)} stubs to p/" + (" (with webp+jpg tiles in p/t/)" if HAVE_PIL else ""))
 for s in made:
     print(f"  {BASE}p/{s}")

@@ -138,32 +138,15 @@ const STACK = [
   { name: "Blender", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/blender/blender-original.svg" },
   { name: "VS Code", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg" },
   { name: "GitHub", icon: "https://api.iconify.design/simple-icons/github.svg?color=%23e9e3d3" },
-  { name: "Affinity", icon: "https://upload.wikimedia.org/wikipedia/commons/c/cf/Affinity_%28App%29_Logo.svg" },        // drop the current-logo file here
-  { name: "Photoshop", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/photoshop/photoshop-original.svg", sub: "not anymore" },
+  { name: "Affinity", icon: "https://upload.wikimedia.org/wikipedia/commons/c/cf/Affinity_%28App%29_Logo.svg" },
   { name: "Substance Painter", icon: "https://experienceleague.adobe.com/en/docs/substance-3d/general-knowledge/ecosystem/media_1cb978542586dac191339b3512cfd11bd8285165c.svg?width=2000&format=webply&optimize=mediums" },
   { name: "Paint.NET", icon: "https://static.wikia.nocookie.net/logopedia/images/c/c7/Paint.NET_2014_Stacked.png/revision/latest?cb=20220510141637" },
-  { name: "Fusion", icon: "https://api.iconify.design/simple-icons/autodesk.svg?color=%23e9e3d3", sub: "sometimes" },
+  { name: "Fusion", icon: "https://api.iconify.design/simple-icons/autodesk.svg?color=%23e9e3d3" },
   { name: "SolidWorks", icon: "https://img.icons8.com/?size=512&id=62397&format=png" },
   { name: "Onshape", icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/onshape.svg" },
-  { name: "InDesign", icon: "https://api.iconify.design/simple-icons/adobeindesign.svg?color=%23e9e3d3" },
-  { name: "Premiere Pro", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/premierepro/premierepro-original.svg" },
   { name: "DaVinci Resolve", icon: "https://api.iconify.design/simple-icons/davinciresolve.svg?color=%23e9e3d3" },
-  { name: "Unreal Engine", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/unrealengine/unrealengine-original.svg" },
-  { name: "Figma", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg" },
-  { name: "Python", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" },
   { name: "Go", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg" },
-  { name: "Lua", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/lua/lua-original.svg" },
-  { name: "PostgreSQL", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg", sub: "it works" },
-  { name: "InfluxDB", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/influxdb/influxdb-original.svg", sub: "used once" },
-  { name: "C#", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg", sub: "rusty" },
-  { name: "C++", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg", sub: "rusty" },
   { name: "Git", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg" },
-  /* benched — count them once the first finished project exists:
-  { name: "Maya",    icon: "https://api.iconify.design/simple-icons/autodeskmaya.svg?color=%23e9e3d3" },
-  { name: "Houdini", icon: "https://api.iconify.design/simple-icons/houdini.svg?color=%23e9e3d3" },
-  { name: "After Effects", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/aftereffects/aftereffects-original.svg" },
-  { name: "Illustrator",   icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/illustrator/illustrator-plain.svg" },
-  */
 ];
 
 /* ---------- the archive — 2d and cgi. same pile, one word: art.
@@ -194,7 +177,7 @@ const STACK = [
 const ART = [
   {
     title: "NO ENTRY", year: "2026", medium: ["2d", "photo"], img: "https://cdnb.artstation.com/p/assets/images/images/100/731/981/large/mist-no-entry2.jpg?1783886414", tags: "brutalist, color, print",
-    note: "really enjoying making this. photo taken in pozań",
+    note: "really enjoying making this. photo taken in Poznań",
     images: ["https://cdna.artstation.com/p/assets/images/images/100/723/294/large/mist-whatsapp-image-2026-07-07-at-22-19-58.jpg?1783861718"],
     post: { artstation: "https://www.artstation.com/artwork/kw4Oa6" }
   },
@@ -258,8 +241,7 @@ const ART = [
     note: "Inspired by some pinterest post."
   },
   {
-    title: "Flower Field", year: "2024", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/090/255/863/large/mist-field.jpg?1753366060", tags: "nature · scatter",
-    note: "I don't like this one."
+    title: "Flower Field", year: "2024", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/090/255/863/large/mist-field.jpg?1753366060", tags: "nature · scatter"
   },
   {
     title: "Some cult area", year: "2024", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/088/487/197/large/mist-ancient-gatewayfinal.jpg?1748424711", tags: "scene · story",
@@ -267,7 +249,7 @@ const ART = [
   },
   {
     title: "Dark Kitchen", year: "2024", medium: "cgi", img: "https://cdnb.artstation.com/p/assets/images/images/088/487/019/large/mist-kimchen.jpg?1748424326", tags: "interior · archviz",
-    note: "I didnt know how to texture walls."
+    note: "I didn't know how to texture walls."
   },
   {
     title: "Moody Bar/room", year: "2024", medium: "cgi", img: "https://cdna.artstation.com/p/assets/images/images/088/489/024/medium/mist-unreal-bar-final1080p.jpg?1748428191", tags: "interior · lighting",
