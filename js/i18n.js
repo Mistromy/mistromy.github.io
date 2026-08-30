@@ -63,9 +63,9 @@ const PL = {
      that exists in two versions can disagree with itself, and the
      one a regulator reads should be the one that was written. */
   "art.h1": "Grafika",
-  "art.sub": "2D i CGI na jednej kupce — plakaty, wnętrza, studia światła, eksperymenty z typografią. Wszystko, od najnowszych. Kliknij pracę, żeby ją otworzyć; przy niektórych jest też to, co za nimi stoi.",
+  "art.sub": "2D i CGI, wszystko w jednym miejscu. Plakaty, Wnętrza i zewnętrza. Wszystko czego nie wstydzę się pokazać.",
   "labs.h1": "Labs",
-  "labs.sub": "Jak to właściwie działa. Architektura, matematyka, proces i rzeczy w trakcie — zarówno kod, jak i CGI.",
+  "labs.sub": "Głębsze analizy dla nerdów. Jak to właściwie działa. Architektura, matematyka, proces i rzeczy w trakcie — zarówno kod, jak i CGI.",
   "labs.empty": "Jeszcze nic nie opublikowałem. Pierwszy tekst w drodze.",
   /* ✏ "Oopsie Daisy" is a joke, not a phrase — replace it, don't translate it */
   "e404.h1": "Ups",
@@ -78,9 +78,9 @@ const PL = {
      ✏ all three of these are your voice. the <span class="pending">
         wrappers must survive any rewrite — they are what gives
         those two phrases their underline. */
-  "intro.p1": "<b>Mist</b>. albo <b>sudomist</b>, albo <b>Mistromy</b> — zależy które nazwy były wolne. Robię CGI, koduję, od niedawna grafikę 2D, i ogólnie wszystko co ma coś wspólnego z komputerami.",
-  "intro.p2": "Udaję, że wiem co robię, i chyba działa? niektóre <span class=\"pending\">liczby poniżej</span> są całkiem duże.",
-  "intro.p3": "Więcej o mnie — <span class=\"pending\">tam niżej</span>, dla pasjonatów i stalkerów.",
+  "intro.p1": "<b>Mist</b>, również <b>sudomist</b> oraz <b>Mistromy</b>, zależnie od jakie nazwy były dostępne. Tworzę obrazki CGI, programuję i ogólnie wszystko co jest związane z komputerami.",
+  "intro.p2": "Lubię udawać że wiem co robię, i czasami chyba działa. Niektóre <span class=\"pending\">liczby poniżej</span> są całkiem duże.",
+  "intro.p3": "Więcej o mnie <span class=\"pending\">również niżej</span>, dla pasjonatów i stalkerów.",
 };
 
 /* ------------------------------------------------------------
