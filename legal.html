@@ -4,280 +4,219 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MIST — legal, privacy & credits</title>
+  <title>Legal — MIST</title>
   <meta name="description"
     content="Privacy notice, data handling, and third-party acknowledgements for Mist's portfolio site.">
   <link rel="canonical" href="https://mistromy.github.io/legal.html">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="css/fonts.css">
-  <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="https://avatars.githubusercontent.com/u/125371422?v=4" type="image/x-icon">
-  <!-- no analytics on this page, deliberately: the page explaining the
-       tracking shouldn't be tracking you while you read it -->
-  <style>
-    /* plain prose column — this page is a document, not a console */
-    .doc {
-      max-width: 760px;
-      padding: 8px 0 80px
-    }
-
-    .doc h3 {
-      font-family: var(--mono);
-      font-size: 13px;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--bone);
-      margin: 38px 0 12px;
-      padding-top: 22px;
-      border-top: 1px solid var(--line)
-    }
-
-    .doc h3:first-of-type {
-      border-top: none;
-      padding-top: 0
-    }
-
-    .doc p,
-    .doc li {
-      color: var(--concrete);
-      margin-bottom: 14px
-    }
-
-    .doc ul {
-      padding-left: 20px
-    }
-
-    .doc li {
-      margin-bottom: 8px
-    }
-
-    .doc b {
-      color: var(--bone);
-      font-weight: 500
-    }
-
-    .doc table {
-      border-collapse: collapse;
-      width: 100%;
-      margin: 0 0 18px;
-      font-size: 14px
-    }
-
-    .doc td {
-      border: 1px solid var(--line);
-      padding: 9px 12px;
-      color: var(--concrete);
-      vertical-align: top
-    }
-
-    .doc td:first-child {
-      color: var(--bone);
-      font-family: var(--mono);
-      font-size: 12px;
-      white-space: nowrap
-    }
-
-    .doc .updated {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--concrete);
-      opacity: .7
-    }
-  </style>
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/site.css">
+  <!-- NO ANALYTICS ON THIS PAGE, DELIBERATELY: the page explaining the
+       tracking should not be tracking you while you read it. Do not
+       paste the gtag block in here when copying the head from another
+       page. -->
 </head>
 
-<body data-sector="legal">
+<!--
+  ⚠ THIS PAGE MAKES FACTUAL CLAIMS ABOUT WHAT THE SITE DOES.
+  If you add an embed, a font CDN, an API call, or anything that
+  stores something on the visitor's device, the lists below stop
+  being true and have to be updated in the same commit.
 
-  <div class="cursor-fx" id="cursorFx" aria-hidden="true"></div>
+  What changed at the rewrite, and why the lists are shorter:
+    · fonts are now self-hosted, so Google Fonts is gone as a
+      recipient — no visitor IP reaches fonts.gstatic.com
+    · the live stats board, the Discord presence card, the
+      contribution chart and the icon strip were all removed, so
+      Lanyard, ghchart, api.mista.tech, jsDelivr, Iconify, Icons8,
+      Wikimedia, Fandom and Adobe are no longer contacted at all
+    · a language preference is now stored on the device, which the
+      Summary and the new "Storage on your device" section have to
+      declare — see the note in there
+-->
 
-  <header class="sysbar">
-    <div class="sys-left">
-      <span class="dot" id="sysDot"></span>
-      <span class="sys-name">MIST.SYS</span>
-      <span class="sys-item" id="sysStatus">sector:/legal</span>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">skip to content</a>
+
+  <aside class="rail">
+    <a class="rail-mark" href="./" aria-label="Mist, home"></a>
+
+    <div class="rail-lang" id="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="pl" aria-pressed="false">PL</button>
     </div>
-    <div class="sys-right">
-      <span class="sys-item" id="epoch">SYS_EPOCH // ——————————</span>
+
+    <nav class="rail-nav" aria-label="Primary">
+      <a class="d0" href="./" data-i18n="nav.home">Home</a>
+      <a class="d1" href="./#art" data-i18n="nav.art">Art</a>
+      <a class="d2" href="art.html" data-i18n="nav.gallery">Full gallery</a>
+      <span class="d1 soon" data-i18n="nav.projects">Projects</span>
+      <span class="d2 soon" data-i18n="nav.allprojects">All projects</span>
+      <span class="d1 soon" data-i18n="nav.socials">Socials</span>
+      <span class="d1 soon" data-i18n="nav.about">About</span>
+      <a class="d0" href="labs.html" data-i18n="nav.labs">Labs</a>
+    </nav>
+
+    <div class="rail-foot">
+      <p class="rail-links">
+        <a href="https://discord.com/users/859371145076932619" target="_blank" rel="noopener"
+          data-i18n="foot.contact">contact</a><br>
+        <a href="legal.html" aria-current="page" data-i18n="foot.legal">legal</a>
+      </p>
+      <p class="rail-copy">© <span id="yr"></span> mist</p>
+      <p class="rail-quote random-quote">—</p>
     </div>
-  </header>
+  </aside>
 
-  <nav class="nav" aria-label="Primary">
-    <button class="nav-burger" id="navBurger" aria-expanded="false" aria-controls="navLinks">/// menu</button>
-    <div class="nav-links" id="navLinks">
-      <a href="./#about">/ABOUT</a>
-      <a href="./#links">/LINKS</a>
-      <div class="nav-item">
-        <a href="./#art">/ART</a>
-        <div class="nav-drop"><a href="art.html">FULL ARCHIVE -&gt;</a></div>
-      </div>
-      <div class="nav-item">
-        <a href="./#sys">/SYS</a>
-        <div class="nav-drop"><a href="projects.html">ALL PROJECTS -&gt;</a></div>
-      </div>
-      <a href="./#log">/BIO</a>
+  <main id="main">
+    <div class="pagehead">
+      <p class="crumb"><a href="./" data-i18n="crumb.home">&lt;- back home</a></p>
+      <h1>Legal</h1>
+      <p class="sub">Privacy notice, data handling, and third-party acknowledgements for this website.</p>
     </div>
-    <span class="nav-note" data-random-note>// stay condensed</span>
-  </nav>
 
-  <main>
-    <section id="legal">
-      <div class="wrap">
-        <div class="section-head">
-          <p class="crumb"><a href="./">&lt;- back to base</a><span>// you are in: /legal</span></p>
-          <h1 class="chroma">Legal</h1>
-          <p>Privacy notice, data handling, and third-party acknowledgements for this
-            website.</p>
-        </div>
+    <!-- Deliberately NOT translated. A privacy notice that exists in
+         two versions can disagree with itself, and the one a regulator
+         reads should be the one that was written. -->
+    <div class="doc">
+      <h2>Summary</h2>
+      <p>This website sets no cookies and creates no persistent identifier for you. It
+        provides no account system, no comment facility, and no forms, and does not
+        request your name, email address, or any other personal detail. The only thing
+        stored on your device is a language preference, described below, which is set
+        only if you choose a language yourself.</p>
 
-        <div class="doc">
-          <h3>Summary</h3>
-          <p>This website sets no cookies and stores no persistent identifier on your
-            device. It provides no account system, no comment facility, and no forms, and
-            does not request your name, email address, or any other personal detail. As no
-            information is stored on or read from your device, no consent banner is
-            required under the ePrivacy Directive as implemented in Ireland
-            (S.I. No. 336/2011).</p>
+      <h2>Storage on your device</h2>
+      <p>If you select English or Polish using the switch in the navigation column, that
+        choice is saved in your browser's local storage under the key
+        <code>mist.lang</code>, so that the site opens in the language you picked. It
+        holds the two letters of the language code and nothing else. It is not an
+        identifier, is never transmitted anywhere, and is readable only by this website
+        on this device. Clearing your browsing data removes it.</p>
+      <p>Under the ePrivacy Directive as implemented in Ireland (S.I. No. 336/2011),
+        storage which is strictly necessary to provide a service the user has explicitly
+        requested is exempt from the consent requirement. Recording a language you have
+        just chosen falls within that exemption, which is why no consent banner is shown.
+        No other information is written to your device.</p>
 
-          <h3>Analytics</h3>
-          <p>This website uses Google Analytics 4 in cookieless mode. Consent for
-            <code>analytics_storage</code> and <code>ad_storage</code> is set to
-            <code>denied</code> by default, before the measurement tag is initialised. In
-            this configuration Google Analytics transmits anonymous events rather than
-            writing a <code>_ga</code> cookie, and page views cannot be linked into a
-            profile of an individual visitor across sessions.
-          </p>
-          <p>The following is transmitted with each event: IP address (used to derive an
-            approximate country or region, and not retained thereafter), browser and
-            device type, the page requested, and the referring page. An IP address
-            constitutes personal data under the General Data Protection Regulation
-            (Regulation (EU) 2016/679), which is the basis for this notice.</p>
-          <table>
-            <tr>
-              <td>Controller</td>
-              <td>The operator of this website, publishing under the name Mist</td>
-            </tr>
-            <tr>
-              <td>Processor</td>
-              <td>Google Ireland Limited, Gordon House, Barrow Street, Dublin 4</td>
-            </tr>
-            <tr>
-              <td>Purpose</td>
-              <td>Aggregate measurement of visitor numbers and of which pages are read</td>
-            </tr>
-            <tr>
-              <td>Legal basis</td>
-              <td>Article 6(1)(f) GDPR, legitimate interest in aggregate audience measurement. No profiling is carried
-                out and no data is used for advertising purposes</td>
-            </tr>
-            <tr>
-              <td>Retention</td>
-              <td>2 months for event data, the minimum available in Google Analytics 4</td>
-            </tr>
-            <tr>
-              <td>Transfers</td>
-              <td>Google processes data outside the EEA under Standard Contractual Clauses and the EU–US Data Privacy
-                Framework</td>
-            </tr>
-          </table>
+      <h2>Analytics</h2>
+      <p>This website uses Google Analytics 4 in cookieless mode. Consent for
+        <code>analytics_storage</code> and <code>ad_storage</code> is set to
+        <code>denied</code> by default, before the measurement tag is initialised. In this
+        configuration Google Analytics transmits anonymous events rather than writing a
+        <code>_ga</code> cookie, and page views cannot be linked into a profile of an
+        individual visitor across sessions.</p>
+      <p>The following is transmitted with each event: IP address (used to derive an
+        approximate country or region, and not retained thereafter), browser and device
+        type, the page requested, and the referring page. An IP address constitutes
+        personal data under the General Data Protection Regulation
+        (Regulation (EU) 2016/679), which is the basis for this notice.</p>
+      <p>This page carries no analytics tag.</p>
+      <table>
+        <tr>
+          <td>Controller</td>
+          <td>The operator of this website, publishing under the name Mist</td>
+        </tr>
+        <tr>
+          <td>Processor</td>
+          <td>Google Ireland Limited, Gordon House, Barrow Street, Dublin 4</td>
+        </tr>
+        <tr>
+          <td>Purpose</td>
+          <td>Aggregate measurement of visitor numbers and of which pages are read</td>
+        </tr>
+        <tr>
+          <td>Legal basis</td>
+          <td>Article 6(1)(f) GDPR, legitimate interest in aggregate audience measurement. No profiling is carried out
+            and no data is used for advertising purposes</td>
+        </tr>
+        <tr>
+          <td>Retention</td>
+          <td>2 months for event data, the minimum available in Google Analytics 4</td>
+        </tr>
+        <tr>
+          <td>Transfers</td>
+          <td>Google processes data outside the EEA under Standard Contractual Clauses and the EU–US Data Privacy
+            Framework</td>
+        </tr>
+      </table>
 
-          <h3>Third-party recipients</h3>
-          <p>Where a page loads a file hosted by another organisation, your browser issues
-            a request directly to that organisation's server, which necessarily discloses
-            your IP address to it. This is inherent to how the web operates and is not a
-            transfer of any further information. The organisations concerned are:</p>
-          <ul>
-            <li>Google — analytics (<code>googletagmanager.com</code>) and web fonts (<code>fonts.googleapis.com</code>,
-              <code>fonts.gstatic.com</code>)</li>
-            <li>ArtStation, operated by Epic Games — delivery of artwork images</li>
-            <li>GitHub — profile image, repository statistics, and stored statistics data</li>
-            <li>Lanyard (<code>api.lanyard.rest</code>) — Discord presence information</li>
-            <li>ghchart (<code>ghchart.rshah.org</code>) — contribution activity chart</li>
-            <li>jsDelivr, Iconify, Icons8, Wikimedia Foundation, Fandom, and Adobe — interface icons</li>
-            <li><code>api.mista.tech</code> — a server operated by the site operator, providing live project statistics
-            </li>
-          </ul>
-          <p>None of the above are advertising networks. None receives any information
-            beyond that which a browser transmits with an ordinary request for a file.</p>
+      <h2>Third-party recipients</h2>
+      <p>Where a page loads a file hosted by another organisation, your browser issues a
+        request directly to that organisation's server, which necessarily discloses your
+        IP address to it. This is inherent to how the web operates and is not a transfer
+        of any further information. Typefaces and stylesheets are served from this site
+        itself, so no request for them leaves it. The organisations concerned are:</p>
+      <ul>
+        <li>Google — analytics only (<code>googletagmanager.com</code>)</li>
+        <li>ArtStation, operated by Epic Games — delivery of artwork images</li>
+        <li>GitHub — the profile image used as this site's icon</li>
+      </ul>
+      <p>None of the above are advertising networks. None receives any information beyond
+        that which a browser transmits with an ordinary request for a file.</p>
 
-          <h3>Rights of the data subject</h3>
-          <p>Under Articles 15 to 22 of the GDPR you have the right to request access to,
-            rectification of, or erasure of personal data concerning you, to request
-            restriction of processing, and to object to processing carried out on the
-            basis of legitimate interest.</p>
-          <p>A practical limitation should be stated clearly. Because analytics are
-            operated without cookies or any other persistent identifier, no data held can
-            be attributed to an identified or identifiable individual, and the records
-            cannot be searched by reference to a person. In the terms of Article 11 of the
-            GDPR, the controller is not in a position to identify the data subject.
-            Requests will nonetheless be answered, and will set out what data exists.</p>
-          <p>Complaints may be addressed to the Data Protection Commission, Ireland
-            (<code>dataprotection.ie</code>), or to the supervisory authority of your
-            place of residence.</p>
+      <h2>Rights of the data subject</h2>
+      <p>Under Articles 15 to 22 of the GDPR you have the right to request access to,
+        rectification of, or erasure of personal data concerning you, to request
+        restriction of processing, and to object to processing carried out on the basis of
+        legitimate interest.</p>
+      <p>A practical limitation should be stated clearly. Because analytics are operated
+        without cookies or any other persistent identifier, no data held can be attributed
+        to an identified or identifiable individual, and the records cannot be searched by
+        reference to a person. In the terms of Article 11 of the GDPR, the controller is
+        not in a position to identify the data subject. Requests will nonetheless be
+        answered, and will set out what data exists.</p>
+      <p>Complaints may be addressed to the Data Protection Commission, Ireland
+        (<code>dataprotection.ie</code>), or to the supervisory authority of your place of
+        residence.</p>
 
-          <h3>Contact</h3>
-          <!-- TODO: replace with the real address once the handle/domain is settled.
-               a mailto here is also the site's only professional contact route. -->
-          <p>Enquiries concerning this notice, data protection requests, and copyright
-            or takedown notices may be directed to the site operator by
-            <a href="https://discord.com/users/859371145076932619" target="_blank" rel="noopener">direct message
-              (@sudomist)</a>. An email address will be
-            published here in due course.
-          </p>
+      <h2>Contact</h2>
+      <!-- TODO: replace with the real address once the handle/domain is settled.
+           this is also the site's only professional contact route. -->
+      <p>Enquiries concerning this notice, data protection requests, and copyright or
+        takedown notices may be directed to the site operator by
+        <a href="https://discord.com/users/859371145076932619" target="_blank" rel="noopener">direct message
+          (@sudomist)</a>. An email address will be published here in due course.</p>
 
-          <h3>Copyright</h3>
-          <p>All artwork, renders, photography, and written content on this website are
-            the property of the site operator. No licence is granted for their
-            reproduction, redistribution, or use as training data for machine learning
-            systems. Permission may be requested using the contact details above.</p>
-          <p>The source code of this website is published at
-            <a href="https://github.com/mistromy" target="_blank" rel="noopener">github.com/mistromy</a>.
-            The Nirupama project is licensed under the GNU Affero General Public License
-            version 3.
-          </p>
+      <h2>Copyright</h2>
+      <p>All artwork, renders, photography, and written content on this website are the
+        property of the site operator. No licence is granted for their reproduction,
+        redistribution, or use as training data for machine learning systems. Permission
+        may be requested using the contact details above.</p>
+      <p>The source code of this website is published at
+        <a href="https://github.com/mistromy" target="_blank" rel="noopener">github.com/mistromy</a>. The Nirupama
+        project is licensed under the GNU Affero General Public License version 3.</p>
 
-          <h3>Acknowledgements</h3>
-          <ul>
-            <li>Typefaces: Allerta Stencil, Archivo, and IBM Plex Mono, each licensed under the SIL Open Font License
-              1.1.</li>
-            <li>Interface icons: Devicon (MIT Licence), Simple Icons via Iconify (CC0 1.0), and Icons8.</li>
-            <li>Contribution activity chart: ghchart, by Rushi Shah.</li>
-            <li>Discord presence data: Lanyard, by Phineas.</li>
-            <li>Product names and logos displayed on this website are the trademarks of
-              their respective proprietors. They are reproduced solely to identify the
-              software used by the site operator. No affiliation with, sponsorship by, or
-              endorsement from the proprietors is claimed or implied.</li>
-          </ul>
+      <h2>Acknowledgements</h2>
+      <ul>
+        <li>Roboto, by Christian Robertson, licensed under the Apache License 2.0.</li>
+        <li>Cabinet Grotesk, by Indian Type Foundry, distributed by Fontshare and licensed
+          for personal and commercial use under the ITF Free Font Licence.</li>
+        <li>IBM Plex Mono, licensed under the SIL Open Font License 1.1.</li>
+        <li>Consolas is a trademark of Microsoft Corporation. It is named as a preferred
+          typeface only; no copy of it is distributed by this website.</li>
+        <li>Product names and logos displayed on this website are the trademarks of their
+          respective proprietors. They are reproduced solely to identify the software used
+          by the site operator. No affiliation with, sponsorship by, or endorsement from
+          the proprietors is claimed or implied.</li>
+      </ul>
 
-          <h3>Corrections</h3>
-          <p>Where any statement on this page is inaccurate or out of date, or where an
-            attribution has been omitted, notification via the contact details above will
-            result in correction.</p>
+      <h2>Corrections</h2>
+      <p>Where any statement on this page is inaccurate or out of date, or where an
+        attribution has been omitted, notification via the contact details above will
+        result in correction.</p>
 
-          <p class="updated" style="margin-top:36px">last reviewed // <span id="legalDate">—</span></p>
-        </div>
-      </div>
-    </section>
+      <p class="updated">last reviewed // <span id="legalDate">—</span></p>
+    </div>
   </main>
 
-  <footer>
-    <div class="wrap foot-grid">
-      <div>
-        <div class="sig">Mist</div>
-        <p>SYS_EPOCH // <span id="footEpoch">—</span></p>
-      </div>
-      <p>© <span id="year"></span> mist · <a href="./">home</a> · <a href="https://github.com/mistromy" target="_blank"
-          rel="noopener">github</a></p>
-    </div>
-  </footer>
-
   <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/site.js"></script>
   <script>
-    /* the review date is the file's own last-modified — no hand-editing a
-       date that then goes stale and quietly makes the page look abandoned */
+    /* the review date is the file's own last-modified — no hand-editing
+       a date that then goes stale and quietly makes the page look
+       abandoned */
     document.getElementById("legalDate").textContent =
       new Date(document.lastModified).toISOString().slice(0, 10);
   </script>

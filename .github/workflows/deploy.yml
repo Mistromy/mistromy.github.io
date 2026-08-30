@@ -10,7 +10,7 @@
 #     gitignored, artstation images stay out of the repo, no pulls.
 #   - generation always runs BEFORE deployment, in the same run.
 #   - asset urls get stamped with the commit sha, so browsers pick up
-#     new data.js/app.js/css immediately instead of after their cache
+#     new data.js/site.js/css immediately instead of after their cache
 #     heuristics feel like it.
 #
 # triggers: any push to main; the "Run workflow" button; and (for the
@@ -53,10 +53,18 @@ jobs:
         env:
           DATA_JS_URL: ${{ vars.DATA_JS_URL }}
 
+      # every stylesheet and script the pages actually load has to be
+      # listed here. one that is missed keeps being served from the
+      # visitor's cache after a deploy, so they get new markup against
+      # old css — which looks like the site is broken rather than
+      # stale. (this list was still naming app.js and style.css long
+      # after both were deleted.)
       - name: stamp asset urls for cache busting
         run: |
           v=${GITHUB_SHA::8}
-          sed -i "s|js/data.js\"|js/data.js?v=$v\"|g; s|js/app.js\"|js/app.js?v=$v\"|g; s|css/style.css\"|css/style.css?v=$v\"|g" *.html
+          for f in js/data.js js/i18n.js js/site.js css/fonts.css css/site.css; do
+            sed -i "s|$f\"|$f?v=$v\"|g" *.html
+          done
 
       - uses: actions/configure-pages@v5
 

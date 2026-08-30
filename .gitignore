@@ -36,3 +36,9 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# affinity working files — source of truth, not web assets.
+# this repo IS the webserver: anything committed here is publicly
+# downloadable, and draft.af is 12MB.
+assets/*.af
+assets/*.af~lock~

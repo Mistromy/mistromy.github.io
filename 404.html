@@ -2,110 +2,68 @@
 <html lang="en">
 
 <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1TMG615E9J"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    // cookieless mode: no _ga cookies, no consent banner needed.
-    // analytics still arrive as anonymous pings (slightly less precise).
-    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
-    gtag('js', new Date());
-
-    gtag('config', 'G-1TMG615E9J');
-  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MIST — signal lost</title>
+  <title>404 — MIST</title>
   <meta name="robots" content="noindex">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="icon" href="https://avatars.githubusercontent.com/u/125371422?v=4" type="image/x-icon">
   <link rel="stylesheet" href="css/fonts.css">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="css/site.css">
 </head>
 
-<body data-sector="404">
+<!-- GitHub Pages serves this for any unmatched path, so it must not
+     assume it is at the site root: every href here is absolute (/…),
+     because a relative one resolves against the URL that failed. -->
 
-  <div class="cursor-fx" id="cursorFx" aria-hidden="true"></div>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">skip to content</a>
 
-  <!-- system bar -->
-  <header class="sysbar">
-    <div class="sys-left">
-      <span class="dot" id="sysDot"></span>
-      <span class="sys-name">MIST.SYS</span>
-      <span class="sys-item" id="sysStatus">signal lost</span>
+  <aside class="rail">
+    <a class="rail-mark" href="/" aria-label="Mist, home"></a>
+
+    <div class="rail-lang" id="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="pl" aria-pressed="false">PL</button>
     </div>
-    <div class="sys-right">
-      <span class="sys-item" id="epoch">SYS_EPOCH // ——————————</span>
+
+    <nav class="rail-nav" aria-label="Primary">
+      <a class="d0" href="/" data-i18n="nav.home">Home</a>
+      <a class="d1" href="/#art" data-i18n="nav.art">Art</a>
+      <a class="d2" href="/art.html" data-i18n="nav.gallery">Full gallery</a>
+      <span class="d1 soon" data-i18n="nav.projects">Projects</span>
+      <span class="d2 soon" data-i18n="nav.allprojects">All projects</span>
+      <span class="d1 soon" data-i18n="nav.socials">Socials</span>
+      <span class="d1 soon" data-i18n="nav.about">About</span>
+      <a class="d0" href="/labs.html" data-i18n="nav.labs">Labs</a>
+    </nav>
+
+    <div class="rail-foot">
+      <p class="rail-links">
+        <a href="https://discord.com/users/859371145076932619" target="_blank" rel="noopener"
+          data-i18n="foot.contact">contact</a><br>
+        <a href="/legal.html" data-i18n="foot.legal">legal</a>
+      </p>
+      <p class="rail-copy">© <span id="yr"></span> mist</p>
+      <p class="rail-quote random-quote">—</p>
     </div>
-  </header>
+  </aside>
 
-  <!-- nav -->
-  <nav class="nav" aria-label="Primary">
-    <button class="nav-burger" id="navBurger" aria-expanded="false" aria-controls="navLinks">/// menu</button>
-    <div class="nav-links" id="navLinks">
-      <a href="/#about">/ABOUT</a>
-      <a href="/#links">/LINKS</a>
-      <div class="nav-item">
-        <a href="/#art">/ART</a>
-        <div class="nav-drop"><a href="/art.html">FULL ARCHIVE -&gt;</a></div>
-      </div>
-      <div class="nav-item">
-        <a href="/#sys">/SYS</a>
-        <div class="nav-drop"><a href="/projects.html">ALL PROJECTS -&gt;</a></div>
-      </div>
-      <a href="/#log">/BIO</a>
+  <main id="main">
+    <div class="pagehead">
+      <p class="crumb"><a href="/" data-i18n="crumb.home">&lt;- back home</a></p>
+      <h1 data-i18n="e404.h1">Oopsie Daisy</h1>
+      <p class="sub" data-i18n="e404.sub">There is nothing at this address. It may have moved, or it may never have
+        existed — either way, the work is all one door back.</p>
     </div>
-    <span class="nav-note" data-random-note>// stay condensed</span>
-  </nav>
 
-  <main>
-    <section id="lost">
-      <div class="hero">
-        <div class="bin bin-l" aria-hidden="true"></div>
-        <div class="bin bin-r" aria-hidden="true"></div>
-        <div class="wrap">
-          <p class="eyebrow">// err — sector not found. running diagnostic…</p>
-          <h1 class="glitch" id="glitchName" data-text="404">404</h1>
-          <p class="lede">
-            <b>Oopsie Daisy!</b><br>
-            // <span class="random-quote">—</span>
-          </p>
-          <div class="hero-cta">
-            <a class="btn btn-solid" href="/">back to base</a>
-            <a class="btn" id="lostBtn" href="/art.html">take me somewhere -&gt;</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="marquee" aria-hidden="true">
-      <span class="marquee-track" id="marqueeTrack"></span>
+    <div class="empty">
+      <p class="quote random-quote">—</p>
     </div>
   </main>
 
-  <footer>
-    <div class="wrap foot-grid">
-      <div>
-        <div class="sig">Mist</div>
-        <p>SYS_EPOCH // <span id="footEpoch">—</span> · <span class="random-quote">—</span></p>
-      </div>
-      <p>© <span id="year"></span> mist · <a href="/">home</a> · <a href="/legal.html">legal</a> · <span
-          class="random-quote">—</span></p>
-    </div>
-  </footer>
-
-  <script src="/js/data.js"></script>
-  <script src="/js/app.js"></script>
-  <script>
-    /* "take me somewhere" → a random artwork, deep-linked */
-    (function () {
-      const btn = document.getElementById("lostBtn");
-      if (!btn || typeof ART === "undefined" || !ART.length) return;
-      const item = ART[Math.random() * ART.length | 0];
-      btn.href = "/art.html#p/" + slugFor(item.title);
-    })();
-  </script>
+  <script src="js/data.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/site.js"></script>
 </body>
 
 </html>

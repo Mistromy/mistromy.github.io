@@ -4,14 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Art — MIST</title>
+  <title>Labs — MIST</title>
   <meta name="description"
-    content="The full archive of Mist's work — 2D poster art, photography and CGI environment renders, light studies and type experiments.">
-  <meta property="og:title" content="Art — MIST">
-  <meta property="og:image" content="https://mistromy.github.io/assets/og.png">
-  <meta property="og:description" content="Every piece — 2D posters, photography, and CGI environments.">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="canonical" href="https://mistromy.github.io/art.html">
+    content="Writeups by Mist — architecture, the maths, process and work-in-progress behind the code and the CGI.">
+  <link rel="canonical" href="https://mistromy.github.io/labs.html">
   <link rel="icon" href="https://avatars.githubusercontent.com/u/125371422?v=4" type="image/x-icon">
 
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-1TMG615E9J"></script>
@@ -27,9 +23,10 @@
   <link rel="stylesheet" href="css/site.css">
 </head>
 
-<!-- The archive. Same machinery as the homepage's taster, minus the
-     row cap: data-rows="0" means the layout engine keeps going until
-     it runs out of work. Nothing else on the page competes with it. -->
+<!-- Labs is empty and says so. An empty section that invents three
+     plausible-looking writeups is worse than one that admits it has
+     nothing yet — add entries to LABS in js/data.js and this page
+     will grow a list. -->
 
 <body>
   <a class="skip" href="#main" data-i18n="skip">skip to content</a>
@@ -45,12 +42,12 @@
     <nav class="rail-nav" aria-label="Primary">
       <a class="d0" href="./" data-i18n="nav.home">Home</a>
       <a class="d1" href="./#art" data-i18n="nav.art">Art</a>
-      <a class="d2" href="art.html" aria-current="page" data-i18n="nav.gallery">Full gallery</a>
+      <a class="d2" href="art.html" data-i18n="nav.gallery">Full gallery</a>
       <span class="d1 soon" data-i18n="nav.projects">Projects</span>
       <span class="d2 soon" data-i18n="nav.allprojects">All projects</span>
       <span class="d1 soon" data-i18n="nav.socials">Socials</span>
       <span class="d1 soon" data-i18n="nav.about">About</span>
-      <a class="d0" href="labs.html" data-i18n="nav.labs">Labs</a>
+      <a class="d0" href="labs.html" aria-current="page" data-i18n="nav.labs">Labs</a>
     </nav>
 
     <div class="rail-foot">
@@ -67,30 +64,15 @@
   <main id="main">
     <div class="pagehead">
       <p class="crumb"><a href="./" data-i18n="crumb.home">&lt;- back home</a></p>
-      <h1 data-i18n="art.h1">Art</h1>
-      <p class="sub" data-i18n="art.sub">2D and CGI in one pile — posters, environments, light studies, type
-        experiments. Everything, newest first. Click a piece to open it; some carry the work behind them.</p>
+      <h1 data-i18n="labs.h1">Labs</h1>
+      <p class="sub" data-i18n="labs.sub">How the things actually work. Architecture, the maths, process and
+        work-in-progress — for both the code and the CGI.</p>
     </div>
 
-    <section class="archive">
-      <div id="grid" data-rows="0"></div>
-    </section>
+    <div class="empty" id="labs-list">
+      <p data-i18n="labs.empty">Nothing published yet. The first writeup is in progress.</p>
+    </div>
   </main>
-
-  <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Artwork viewer">
-    <button class="lb-arrow lb-prev" id="lbPrev" aria-label="Previous">&lt;</button>
-    <button class="lb-arrow lb-next" id="lbNext" aria-label="Next">&gt;</button>
-    <div class="panel" id="lbPanel">
-      <div class="panel-h">
-        <div>
-          <h3 id="lbTitle">—</h3>
-          <p class="meta" id="lbMeta">—</p>
-        </div>
-        <div class="tools" id="lbTools"></div>
-      </div>
-      <div class="stage" id="lbStage"></div>
-    </div>
-  </div>
 
   <script src="js/data.js"></script>
   <script src="js/i18n.js"></script>

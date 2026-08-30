@@ -4,18 +4,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MIST — Portfolio</title>
+  <title>MIST — CGI artist and backend developer</title>
+
   <!-- the boring, literal version — this is what search engines and AI
        overviews should repeat, not the fun facts from the bio -->
   <meta name="description"
     content="Mist (Mistromy) — student, CGI artist and developer. 3D environment renders and 2D poster art, plus software projects including the Nirupama Discord bot. Portfolio and links.">
-  <meta property="og:title" content="MIST — art & code portfolio">
+  <meta property="og:title" content="MIST — art &amp; code portfolio">
   <meta property="og:image" content="https://mistromy.github.io/assets/og.png">
   <meta property="og:description"
     content="Mist (Mistromy) — student, CGI artist and developer. 3D renders, 2D posters, and software projects.">
   <!-- discord shows the image big only when this is present -->
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://mistromy.github.io/">
+  <link rel="icon" href="https://avatars.githubusercontent.com/u/125371422?v=4" type="image/x-icon">
+
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -36,319 +39,196 @@
     ]
   }
   </script>
-  <!-- google analytics — make a data stream for this site in GA, paste
-       the measurement id, uncomment. displaying visitor counts on the
-       page is a different story: the GA4 Data API needs oauth / a
-       service account, i.e. the go backend. see DOCS.md.-->
-  <!-- Google tag (gtag.js) -->
+
+  <!-- Google tag (gtag.js) — cookieless mode: no _ga cookies, so no
+       consent banner is required. Analytics arrive as anonymous pings
+       (slightly less precise). The claims this makes are the ones
+       legal.html has to keep matching. -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-1TMG615E9J"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
-    // cookieless mode: no _ga cookies, no consent banner needed.
-    // analytics still arrive as anonymous pings (slightly less precise).
     gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
     gtag('js', new Date());
-
     gtag('config', 'G-1TMG615E9J');
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   <link rel="stylesheet" href="css/fonts.css">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="https://avatars.githubusercontent.com/u/125371422?v=4" type="image/x-icon"> <!--favicon-->
+  <link rel="stylesheet" href="css/site.css">
 </head>
 
+<!--
+  ============================================================
+  MIST — homepage
+
+  THE WHOLE PAGE, IN ORDER:
+    rail      static column, right hand side
+    #top      /// mist ///, the tagline, the copy, the reel
+    #art      the gallery taster, three rows
+
+  And nothing else, by design. What the previous version of this
+  page carried — the numbers board, the projects section, the links
+  grid, the long bio, the boot sequence, the sysbar, the audio
+  player — is written down in CONTENT.md so none of it is lost, and
+  none of it is here.
+
+  ------------------------------------------------------------
+  ⚠ TWO PHRASES THAT DO NOT POINT ANYWHERE YET
+
+  "numbers further down" and "down below" are styled as links
+  because the design calls for it, but they are <span>s, not <a>s —
+  the sections they promise no longer exist on this page, and a
+  link that 404s is worse than one that waits.
+
+  To turn either back into a real link, swap the tag and add href:
+      <span class="pending">…</span>
+   →  <a class="inline" href="…">…</a>
+  ------------------------------------------------------------
+
+  DOM ORDER vs VISUAL ORDER
+  The rail is FIRST in the markup and moved to the right in CSS
+  with `order`. That is deliberate: tab order follows the markup,
+  so a keyboard visitor reaches the navigation before sixteen
+  gallery tiles instead of after them.
+  ============================================================
+-->
+
 <body>
+  <a class="skip" href="#main" data-i18n="skip">skip to content</a>
 
-  <!-- cursor fringe — follows the pointer, never replaces it -->
-  <div class="cursor-fx" id="cursorFx" aria-hidden="true"></div>
+  <!-- ==================== RAIL ==================== -->
+  <aside class="rail">
+    <a class="rail-mark" href="./" aria-label="Mist, home"></a>
 
-  <!-- boot sequence — plays once per session, click to skip -->
-  <div class="boot" id="boot" aria-hidden="true">
-    <div class="bootlog" id="bootLog"></div>
-    <span class="boot-skip">click anywhere to skip</span>
-  </div>
-
-  <!-- system bar -->
-  <header class="sysbar">
-    <div class="sys-left">
-      <span class="dot" id="sysDot"></span>
-      <span class="sys-name">MIST.SYS</span>
-      <span class="sys-item" id="sysStatus">condensing…</span>
+    <div class="rail-lang" id="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="pl" aria-pressed="false">PL</button>
     </div>
-    <div class="sys-right">
-      <span class="sys-item" id="epoch">SYS_EPOCH // ——————————</span>
-      <span class="sys-item" id="visits">VISITS // ———</span>
-      <div class="audio" id="audio">
-        <button id="audioBtn" aria-label="Play or pause audio">►</button>
-        <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-        <span class="audio-title" id="audioTitle">no_signal.mp3</span>
-        <input type="range" id="audioVol" min="0" max="100" value="12" aria-label="Volume">
-      </div>
+
+    <!-- THE INDENT IS THE INFORMATION.
+
+         d0  a root. its own place.
+         d1  a zone ON this page — an anchor, not a navigation.
+         d2  the full page that zone is a taster of.
+
+         Every row is the same size and the same distance apart;
+         only the indent moves. It should read like `tree` output.
+
+         Rows whose href is an anchor on this page are also a
+         position readout — js/site.js lights whichever zone you
+         are currently standing in. -->
+    <nav class="rail-nav" aria-label="Primary">
+      <a class="d0" href="#top" data-i18n="nav.home">Home</a>
+
+      <a class="d1" href="#art" data-i18n="nav.art">Art</a>
+      <a class="d2" href="art.html" data-i18n="nav.gallery">Full gallery</a>
+
+      <!-- not designed yet — inert spans, so nothing 404s.
+           swap to <a href="…"> when the pages exist. -->
+      <span class="d1 soon" data-i18n="nav.projects">Projects</span>
+      <span class="d2 soon" data-i18n="nav.allprojects">All projects</span>
+
+      <span class="d1 soon" data-i18n="nav.socials">Socials</span>
+      <span class="d1 soon" data-i18n="nav.about">About</span>
+
+      <a class="d0" href="labs.html" data-i18n="nav.labs">Labs</a>
+    </nav>
+
+    <div class="rail-foot">
+      <p class="rail-links">
+        <!-- the discord dm, which data.js calls the fastest way to
+             reach him. still no email until the handle is settled. -->
+        <a href="https://discord.com/users/859371145076932619" target="_blank" rel="noopener"
+          data-i18n="foot.contact">contact</a><br>
+        <a href="legal.html" data-i18n="foot.legal">legal</a>
+      </p>
+      <p class="rail-copy">© <span id="yr"></span> mist</p>
+      <p class="rail-quote random-quote">—</p>
     </div>
-  </header>
+  </aside>
 
-  <!-- nav — same on every page. /ART and /SYS drop down to the full pages -->
-  <nav class="nav" aria-label="Primary">
-    <button class="nav-burger" id="navBurger" aria-expanded="false" aria-controls="navLinks">/// menu</button>
-    <div class="nav-links" id="navLinks">
-      <a href="#about" data-nav="about">/ABOUT</a>
-      <a href="#links" data-nav="links">/LINKS</a>
-      <div class="nav-item">
-        <a href="#art" data-nav="art">/ART</a>
-        <div class="nav-drop"><a href="art.html">FULL ARCHIVE -&gt;</a></div>
-      </div>
-      <div class="nav-item">
-        <a href="#sys" data-nav="sys">/SYS</a>
-        <div class="nav-drop"><a href="projects.html">ALL PROJECTS -&gt;</a></div>
-      </div>
-      <a href="#log" data-nav="log">/BIO</a>
-    </div>
-    <span class="nav-note" data-random-note>// stay condensed</span>
-  </nav>
+  <main id="main">
 
-  <main>
+    <!-- ==================== TOP ====================
+         One zone, so the rail has something to call "Home" while
+         you are standing in it. -->
+    <section id="top">
 
-    <!-- ==================== ABOUT ==================== -->
-    <section id="about" class="about-section">
-      <div class="bin bin-l" aria-hidden="true"></div>
-      <div class="bin bin-r" aria-hidden="true"></div>
-      <div class="wrap">
-        <!-- one grid from the very top: everything left, the latest
-             transmission right — so the panel can ride the whole way -->
-        <div class="about-layout">
-          <div class="about-main">
-            <div class="hero-block">
-              <p class="eyebrow">// transmission open — can you hear me?</p>
-              <div class="hero-id">
-                <div class="pfp" id="pfpFrame">
-                  <img id="pfpImg" src="https://avatars.githubusercontent.com/u/125371422?v=4" alt="Mist's avatar"
-                    fetchpriority="high" width="104" height="104">
-                </div>
-                <h1 class="glitch" id="glitchName" data-text="MIST">MIST</h1>
-              </div>
-              <p class="lede">
-                <b>Student</b>. <b>CGI artist</b>. I also write code - <b>some of it runs</b>, but most doesn't even
-                walk.
-              </p>
-              <div class="hero-cta">
-                <a class="btn btn-solid" href="#art">my art</a>
-                <a class="btn" href="#sys">my projects</a>
-                <a class="btn" href="#links">my socials</a>
-              </div>
-            </div>
+      <!-- The slashes are real "/" glyphs set in Cabinet Grotesk,
+           not drawn shapes: the typeface's own slash carries the
+           right slant and weight, where drawn boxes read as uneven.
 
-            <div class="about-copy rv">
-              <!-- filled with a random MARQUEE line on every load -->
-              <blockquote><span>// stdout</span><span class="random-quote">—</span></blockquote>
-              <p><b>Mist.</b> aka <b>sudomist</b> or <b>Mistromy</b> depending on what usernames were taken.
-                I do CGI, coding, recently started 2D art, and generally anything that is involved with computers.</p>
-              <p>I try to pretend I know what I'm doing, and apparently it's working?
-                some of the <a href="#sys">numbers further down</a> are pretty big. </p>
-              <p>More about me — <a href="#log">down below</a>, for the passionates and stalkers.</p>
-            </div>
-          </div>
-
-          <aside class="about-side">
-            <!-- latest transmission — auto-filled from ART[0] in js/data.js -->
-            <div class="latest rv" aria-label="Latest artwork">
-              <div class="latest-head"><span>LATEST // TRANSMISSION</span><b id="latestStamp">—</b></div>
-              <button class="latest-frame" id="latestFrame" type="button" aria-label="View latest artwork full size">
-                <img id="latestImg" src="" alt="">
-              </button>
-              <div class="latest-meta">
-                <p class="latest-title" id="latestTitle">—</p>
-                <p id="latestNote"></p>
-                <a href="#art" class="latest-more">full archive -&gt;</a>
-              </div>
-            </div>
-          </aside>
+           The signature is bigger than them and OVERFLOWS them top
+           and bottom, and the gap either side is deliberately
+           unequal — "/" leans, so equal gaps look unequal. All
+           three offsets are variables in css/site.css. -->
+      <header class="masthead">
+        <div class="mast-row">
+          <span class="slashes" aria-hidden="true">///</span>
+          <h1 class="mast-mark"><span class="sr">Mist</span></h1>
+          <span class="slashes" aria-hidden="true">///</span>
         </div>
+        <p class="tagline" data-i18n="tagline">
+          CGI Artist<em>·</em>Backend Dev<em>·</em>Student
+        </p>
+      </header>
+
+      <!-- His copy, unabridged. This is the personality; it does
+           not get trimmed for tidiness. -->
+      <div class="intro">
+        <p class="quote random-quote">—</p>
+
+        <p data-i18n="intro.p1"><b>Mist</b>. aka <b>sudomist</b> or <b>Mistromy</b> depending on what usernames were
+          taken. I do CGI, coding, recently started 2D art, and generally anything that is involved with computers.</p>
+
+        <p data-i18n="intro.p2">I try to pretend I know what I'm doing, and apparently it's working? some of the
+          <span class="pending">numbers further down</span> are pretty big.</p>
+
+        <p data-i18n="intro.p3">More about me — <span class="pending">down below</span>, for the passionates and
+          stalkers.</p>
+      </div>
+
+      <!-- Every piece, scrolling, masked to nothing at both edges.
+           Purely a texture band: pointer-events off, aria-hidden,
+           and it holds no information the gallery below doesn't. It
+           shows BREADTH without asking anyone to click. -->
+      <div class="reel" aria-hidden="true">
+        <div class="reel-track" id="reel"></div>
       </div>
     </section>
 
-    <!-- ==================== LINKS ==================== -->
-    <section id="links">
-      <div class="wrap">
-        <div class="section-head rv">
-          <p class="eyebrow">// find my socials</p>
-          <h2 class="chroma scramble">Links</h2>
-        </div>
-        <div class="links-grid" id="linksGrid"></div>
-      </div>
-    </section>
+    <!-- ==================== ART ZONE ====================
+         A TASTER, not the archive. data-rows caps it at whole rows
+         — the layout engine stops on a row boundary rather than
+         slicing one in half, so it never ends on a ragged edge.
+         The rest lives on art.html.
 
-    <!-- ==================== ART ==================== -->
+         Still to come, and deliberately left out for you to
+         design: a section header, and the "more" button. -->
     <section id="art">
-      <div class="wrap">
-        <div class="section-head rv">
-          <p class="eyebrow">// the newest transmissions — full archive one door down</p>
-          <h2 class="chroma"><a class="scramble" href="art.html">Art</a></h2>
-          <p>2D and CGI in one pile — posters, environments, light studies, type
-            experiments. The newest few live here; the rest are in the archive.</p>
-        </div>
-        <!-- data-limit is a soft suggestion: the taster shows whole
-             rows (2-3) around that count, never a ragged edge -->
-        <div class="jgrid" id="artGrid" data-limit="6"></div>
-        <div class="hero-cta rv" style="padding-bottom:80px">
-          <a class="btn btn-solid" href="art.html">full archive -&gt;</a>
-        </div>
-      </div>
-    </section>
-
-    <div class="marquee" aria-hidden="true">
-      <span class="marquee-track" id="marqueeTrack"></span>
-    </div>
-
-    <!-- ==================== SYS ==================== -->
-    <section id="sys">
-      <div class="wrap">
-        <div class="section-head rv">
-          <p class="eyebrow">// sector_sys — err… nominal</p>
-          <h2 class="chroma"><a class="scramble" href="projects.html">Sys</a></h2>
-          <p>The dabbling, in public. Every number below is fetched live —
-            if a wire's cut, it says so instead of making something up.</p>
-        </div>
-
-        <!-- flagship project — rendered from PROJECTS in js/data.js -->
-        <div id="flagshipMount"></div>
-
-        <div class="numbers rv">
-          <p class="eyebrow">// the numbers — live where the wires reach, honest everywhere</p>
-          <div class="numbers-grid">
-            <div class="stat"><b id="stRepos">░░░</b><span>public repos</span><i id="stReposSrc">github // live</i>
-            </div>
-            <div class="stat"><b id="stFollowers">░░░</b><span>github followers</span><i id="stFollowersSrc">github //
-                live</i></div>
-            <div class="stat"><b id="stCommits">░░░</b><span>commits on one bot</span><i id="stCommitsSrc">github //
-                live</i></div>
-            <div class="stat"><b id="stServers" data-stat-key="guild_count">░░░</b><span>servers running
-                Nirupama</span><i id="stServersSrc">stats pipe // live</i></div>
-            <div class="stat"><b id="stArtworks">░░░</b><span>pieces in the archive</span><i>counted by the site //
-                live</i></div>
-            <div class="stat"><b id="stVisits">░░░</b><span>visits to this console</span><i id="stVisitsSrc">stats pipe
-                // wire me</i></div>
-          </div>
-        </div>
-
-        <div class="hero-cta rv" style="padding:40px 0 80px">
-          <a class="btn btn-solid" href="projects.html">all projects -&gt;</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== LOG ==================== -->
-    <section id="log">
-      <div class="wrap">
-        <div class="section-head rv">
-          <p class="eyebrow">// bio — for the passionates and the stalkers</p>
-          <h2 class="chroma scramble">Bio</h2>
-          <p>The long version, as written. One take, no hindsight. The queue of
-            what's next sits beside it — no promises attached.</p>
-        </div>
-
-        <!-- the present tense — what you do NOW, next to the tools you do it with -->
-        <div class="bio-now rv">
-          <div class="bio-now-copy">
-            <p class="eyebrow">// currently</p>
-            <!-- ✏ WRITE THIS — 2-3 short paragraphs, present tense: what you
-                 make these days, what you're learning, what's worth asking
-                 you about. the line below is a placeholder, not copy. -->
-            <p>I'm a Polish, self-taught student from Ireland. </p>
-            <p>I am fully self taught in cgi and coding. I don't really learn things by the book. I have an idea, i
-              start making a stupid project, and try to stick something together with my limited knowledge. When i learn
-              something new, it's because I actually need it. But usually it ends up in me re-inventing the wheel.
-            </p>
-          </div>
-          <div>
-            <p class="eyebrow">// the stack — hover for names</p>
-            <div class="stack-grid" id="stackGrid" aria-label="Tools and stack"></div>
-          </div>
-        </div>
-
-        <div class="log-grid">
-          <!-- data-nosnippet: search engines / AI overviews must not quote
-               the fun facts as if they were the resume -->
-          <div class="log-prose rv" data-nosnippet>
-            <p>I started getting involved with computers in 2018, when I first tried Scratch.
-              After that, <b>it only got worse</b>. God knows when and why I tried HTML, then I started
-              making some websites for my own use. Then I learned about Python, and around that time —
-              it was 2021 — I started using Discord. And I just never moved on.</p>
-            <p>During 2021 I also started trying other things. Until then my "hobby" was origami.
-              But I started learning piano, and I was following my dad's footsteps, developing a liking
-              for computers, photography and Photoshop. I never made anything serious back then, but it
-              was fun — which is the biggest mistake I ever made, as I now know that <b>fun is for the
-                weak</b>. Around early 2022, I tried Blender. I don't know what made me do that, but I gave
-              it a go. And I failed. I don't remember if my friend showed it to me first, or how I found
-              it, but at some point I watched the donut tutorial. As they say, ignorance is bliss, and I
-              was quite literally unaware of how bad my work was. I was completely blinded by the fact
-              that the render engine did the lighting for me and made a basic room look good. And then I
-              just started doing Blender. I never watch tutorials, so over the 4–5 years I've done it,
-              and the 800+ hours poured into Blender alone, I am nowhere near where I wanna be.
-              But <i>We ball</i>.</p>
-            <p>During this entire time I had this pent-up desire for more, though. So I was making
-              Discord bots — my biggest project yet, <a href="#sys">Nirupama</a>, started as a super
-              basic levels bot, and I just kept adding more to him. And even though I completely switched
-              to Blender, some seed of creativity from Photoshop stayed, until very recently — where I
-              tried 2D art for the first time in a long time. And oh, my old friend <b>blissful
-                ignorance</b>: I think it looks good, so I'll do that for a while now, if I don't get
-              bored. Because I'm having fun.</p>
-          </div>
-          <aside class="log-aside rv">
-            <p class="eyebrow">// my current status</p>
-            <!-- a little discord bio — live via lanyard. avatar and
-                 status fill themselves; the names are just text. -->
-            <div class="dcard" aria-label="Discord status">
-              <div class="dcard-id">
-                <span class="dcard-pfp">
-                  <img id="dcAvatar" src="" alt="">
-                  <i class="dcard-dot" id="dcDot"></i>
-                </span>
-                <span class="dcard-names"><b>Mist</b><span>sudomist</span></span>
-              </div>
-              <p class="dcard-status" id="dcStatus">checking…</p>
-              <p class="dcard-act" id="dcAct"></p>
-            </div>
-          </aside>
-        </div>
-      </div>
+      <div id="grid" data-rows="3"></div>
     </section>
 
   </main>
 
-  <!-- lightbox -->
-  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Artwork viewer">
-    <button class="close" id="lbClose">close [esc]</button>
-    <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous artwork">&lt;</button>
-    <button class="lb-nav lb-next" id="lbNext" aria-label="Next artwork">&gt;</button>
-    <figure>
-      <header class="lb-head">
-        <div class="lb-info">
-          <p class="lb-meta" id="lbMeta">—</p>
+  <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Artwork viewer">
+    <button class="lb-arrow lb-prev" id="lbPrev" aria-label="Previous">&lt;</button>
+    <button class="lb-arrow lb-next" id="lbNext" aria-label="Next">&gt;</button>
+    <div class="panel" id="lbPanel">
+      <div class="panel-h">
+        <div>
           <h3 id="lbTitle">—</h3>
-          <p class="lb-note" id="lbNote"></p>
+          <p class="meta" id="lbMeta">—</p>
         </div>
-        <span class="lb-links" id="lbLinks"></span>
-      </header>
-      <div class="lb-stack" id="lbStack"></div>
-    </figure>
+        <div class="tools" id="lbTools"></div>
+      </div>
+      <div class="stage" id="lbStage"></div>
+    </div>
   </div>
 
-  <footer>
-    <div class="wrap foot-grid">
-      <div>
-        <div class="sig"><img src="assets/Mist.svg" height="44px"></div>
-        <p><span class="random-quote">—</span></p>
-      </div>
-      <p><b>© <span id="year"></span> mist · <a href="https://github.com/mistromy" target="_blank"
-            rel="noopener">github</a> · <a href="https://www.artstation.com/mistromy" target="_blank"
-            rel="noopener">artstation</a> · <a href="legal.html">legal</a></b></p>
-    </div>
-  </footer>
-
   <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/site.js"></script>
 </body>
 
 </html>

@@ -2,7 +2,7 @@
    MIST — data
    this file is the whole CMS. everything the site lists lives
    here — links, art, plans, config. add a line, get a card.
-   how to add things → DOCS.md. the machinery is in js/app.js,
+   how to add things → DOCS.md. the machinery is in js/site.js,
    you should almost never need to touch it.
    ============================================================ */
 
@@ -28,12 +28,10 @@ const SITE = {
      api rate-limits (shields has its own generous limits) */
   commitsBadge: "https://img.shields.io/github/commit-activity/t/Mistromy/Nirupama.json",
 
-  /* set to null to remove the audio widget entirely */
-  audio: {
-    src: "assets/track.mp3",   // drop an mp3 into assets/ and rename
-    title: "tamagotchi-taconafide.mp3",
-    volume: 0.12,              // really quiet on purpose — slider in the widget
-  },
+  /* the audio widget is gone, and so is assets/track.mp3. it played
+     someone else's copyrighted track, unasked, on a page whose own
+     legal notice has to be accurate — a liability and an annoyance
+     in one. don't put it back. */
 };
 
 /* ---------- where the live numbers come from ----------
@@ -179,7 +177,7 @@ const ART = [
     title: "NO ENTRY", year: "2026", medium: ["2d", "photo"], img: "https://cdnb.artstation.com/p/assets/images/images/100/731/981/large/mist-no-entry2.jpg?1783886414", tags: "brutalist, color, print",
     note: "really enjoying making this. photo taken in Poznań",
     images: ["https://cdna.artstation.com/p/assets/images/images/100/723/294/large/mist-whatsapp-image-2026-07-07-at-22-19-58.jpg?1783861718"],
-    post: { artstation: "https://www.artstation.com/artwork/kw4Oa6" }
+    post: { artstation: "https://www.artstation.com/artwork/kw4Oa6", instagram: "https://www.instagram.com/p/Db3YEsTiCcJ" }
   },
   {
     title: "DON'T LOOK DOWN", year: "2026", medium: ["2d", "photo"], img: "assets/dontlook_down.png", tags: "stencil · schematic · collage",
@@ -315,6 +313,20 @@ const PROJECTS = [
     ],
   },
   */
+];
+
+/* ---------- /labs — the writeups. its own section, not a project card.
+   art breakdowns and code architecture both live here.
+   { title, kind, year, blurb, url }
+   kind: "cgi" | "code" | anything else you want as a label.
+   empty array = the section renders an honest "nothing yet" state
+   instead of inventing entries. add one line, get a row:
+
+   { title: "ccmanager — the world model", kind: "code", year: "2026",
+     blurb: "sparse chunked voxels, morton ordering, and why A* needed
+             orientation in the search node.", url: "labs/ccmanager.html" },
+*/
+const LABS = [
 ];
 
 /* the log prose lives in index.html (#log) — it's writing, not data */

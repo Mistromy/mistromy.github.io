@@ -1,96 +1,140 @@
 /* ============================================================
    MIST — self-hosted fonts
-   generated from google's own css, so the unicode-ranges are the
-   real ones. the files are already in assets/fonts/.
 
-   TO ACTIVATE, in every <head> (index, art, projects, 404, legal):
-   delete the three google lines — the two <link rel=preconnect>
-   and the <link href="fonts.googleapis...css2..."> — and put this
-   in their place, ABOVE style.css:
+   Three families, and every file listed here exists in
+   assets/fonts/. Nothing is fetched from a third party, which is
+   why legal.html can say no visitor IP reaches a font CDN — if you
+   ever add a <link> to Google Fonts, that sentence stops being
+   true and has to change in the same commit.
 
-     <link rel="stylesheet" href="css/fonts.css">
+   THE latin / latin-ext SPLIT
+   "latin" covers a–z and the usual punctuation. Polish letters
+   (ą ę ł ż ź ń ó ś ć) live in "latin-ext" — mgła, wszędzie, Poznań
+   all need it. unicode-range tells the browser which file a
+   character is in, so the ext file is only ever downloaded on a
+   page that actually contains one. The English page never pays for
+   the Polish one. Dropping the ext file would break Polish words
+   mid-word, not merely restyle them.
 
-   why: removes a render-blocking request to a third party, drops
-   two preconnects, and stops every visitor's ip reaching google
-   before the page paints. one fewer processor to name in legal.
+   Cabinet Grotesk is the exception: Fontshare ships ONE file per
+   weight covering the whole charset, so there is nothing to split
+   and no unicode-range to declare.
 
-   ABOUT THE TWO FILES PER WEIGHT: "latin" covers a-z and the
-   usual punctuation. polish letters (ą ę ł ż ź ń ó ś ć) live in
-   "latin-ext" — mgła, wszędzie, Poznań all need it. unicode-range
-   tells the browser which file a character is in, so the ext file
-   is only ever downloaded on a page that actually contains one.
-   latin alone would break polish words mid-word.
-
-   japanese (起きてください, もやもや) is in none of these families
-   and falls back to a system font — same as it does today.
+   Japanese (起きてください, もやもや — they turn up in the marquee)
+   is in none of these and falls back to a system font. That is
+   deliberate; a CJK subset is megabytes.
 
    font-display:swap = text paints immediately in the fallback and
-   re-renders when the file lands; never an invisible page.
+   re-renders when the file lands. Never an invisible page.
+
+   ⚠ ADDING A WEIGHT: add the file AND both @font-face blocks. A
+   weight declared but not shipped makes the browser synthesise it,
+   which looks like a different typeface.
+
+   LICENCES — the versions named in legal.html:
+     Roboto           Apache License 2.0
+     Cabinet Grotesk  ITF Free Font Licence (Fontshare)
+     IBM Plex Mono    SIL Open Font License 1.1
    ============================================================ */
 
-@font-face{
-  font-family:'Allerta Stencil';
-  src:url('../assets/fonts/allerta-stencil-400.woff2') format('woff2');
-  font-weight:400;font-style:normal;font-display:swap;
-  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+/* ---------- Roboto — body text ----------
+   300 Light is the page default. 500 is emphasis (b, strong).
+   400 is here for anything set at normal weight. 700 is NOT
+   shipped: next to 300 it shouts, and css/site.css maps b/strong
+   to 500 precisely so nothing can ask for it. */
+@font-face {
+  font-family: 'Roboto';
+  src: url('../assets/fonts/roboto-300.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-@font-face{
-  font-family:'Archivo';
-  src:url('../assets/fonts/archivo-400.woff2') format('woff2');
-  font-weight:400;font-style:normal;font-display:swap;
-  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../assets/fonts/roboto-300-ext.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-@font-face{
-  font-family:'Archivo';
-  src:url('../assets/fonts/archivo-400-ext.woff2') format('woff2');
-  font-weight:400;font-style:normal;font-display:swap;
-  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../assets/fonts/roboto-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-@font-face{
-  font-family:'Archivo';
-  src:url('../assets/fonts/archivo-500.woff2') format('woff2');
-  font-weight:500;font-style:normal;font-display:swap;
-  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../assets/fonts/roboto-400-ext.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-@font-face{
-  font-family:'Archivo';
-  src:url('../assets/fonts/archivo-500-ext.woff2') format('woff2');
-  font-weight:500;font-style:normal;font-display:swap;
-  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../assets/fonts/roboto-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-@font-face{
-  font-family:'Archivo';
-  src:url('../assets/fonts/archivo-700.woff2') format('woff2');
-  font-weight:700;font-style:normal;font-display:swap;
-  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../assets/fonts/roboto-500-ext.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-@font-face{
-  font-family:'Archivo';
-  src:url('../assets/fonts/archivo-700-ext.woff2') format('woff2');
-  font-weight:700;font-style:normal;font-display:swap;
-  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+
+/* ---------- Cabinet Grotesk — the display face ----------
+   800 for the tagline and page headings, 900 for the masthead
+   slashes. Verified to carry the Polish diacritics itself, so PL
+   headings do not silently fall back. */
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('../assets/fonts/cabinet-grotesk-800.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
 }
-@font-face{
-  font-family:'IBM Plex Mono';
-  src:url('../assets/fonts/plex-mono-400.woff2') format('woff2');
-  font-weight:400;font-style:normal;font-display:swap;
-  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('../assets/fonts/cabinet-grotesk-900.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
 }
-@font-face{
-  font-family:'IBM Plex Mono';
-  src:url('../assets/fonts/plex-mono-400-ext.woff2') format('woff2');
-  font-weight:400;font-style:normal;font-display:swap;
-  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+
+/* ---------- IBM Plex Mono — the rail, labels, quotes ----------
+   The design asks for Consolas, which ships with Windows and is
+   not redistributable, so it can never be self-hosted. Plex Mono
+   is what everyone else gets. Regular only: nothing on the site
+   sets mono bold. */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../assets/fonts/plex-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-@font-face{
-  font-family:'IBM Plex Mono';
-  src:url('../assets/fonts/plex-mono-700.woff2') format('woff2');
-  font-weight:700;font-style:normal;font-display:swap;
-  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face{
-  font-family:'IBM Plex Mono';
-  src:url('../assets/fonts/plex-mono-700-ext.woff2') format('woff2');
-  font-weight:700;font-style:normal;font-display:swap;
-  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../assets/fonts/plex-mono-400-ext.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
