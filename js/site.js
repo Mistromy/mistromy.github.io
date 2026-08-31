@@ -23,7 +23,24 @@ const slug = t => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, 
 const mediums = it => [].concat(it.medium);
 const altFor = it => it.alt ||
   `${it.title} — ${mediums(it).join(" and ")} artwork by Mist${it.tags ? ` (${it.tags})` : ""}`;
-const tileSrcs = it => [`p/t/${slug(it.title)}.webp`, `p/t/${slug(it.title)}.jpg`];
+/* THE DIRECTORY THIS PAGE WAS SERVED FROM, captured once at load and
+   never recomputed.
+
+   The viewer rewrites the address bar to /p/<slug> while it is open.
+   From that moment a RELATIVE path like "p/no-entry" no longer
+   resolves against the site root — the browser resolves it against
+   the current directory, which is now /p/, giving /p/p/no-entry. Each
+   arrow press added another /p/, the resulting address 404'd on
+   reload, and Back walked through a trail of URLs that were never
+   real. Everything that builds a path has to go through ROOT.
+
+   HOME is the page itself, hash dropped: closing the viewer puts the
+   address back to the page you actually opened it from, which is
+   art.html for a deep link and / for the homepage. */
+const ROOT = location.pathname.replace(/[^/]*$/, "").replace(/\/p\/$/, "/");
+const HOME = ROOT === location.pathname ? location.pathname : location.pathname + location.search;
+
+const tileSrcs = it => [`${ROOT}p/t/${slug(it.title)}.webp`, `${ROOT}p/t/${slug(it.title)}.jpg`];
 
 /* language first — it caches the English out of the DOM, so
    nothing may rewrite page text before this runs */
@@ -105,6 +122,40 @@ if (yrEl) yrEl.textContent = new Date().getFullYear();
   if ("ResizeObserver" in window) new ResizeObserver(sync).observe(rail);
   addEventListener("resize", sync);
   addEventListener("langchange", sync);   /* polish labels wrap differently */
+})();
+
+/* ---------- keep the tagline on one line, in any language ----------
+
+   "CGI Artist · Backend Dev · Student" fits at full size. The Polish
+   "Grafik CGI · Backend Dev · Student" is longer and used to wrap
+   onto two lines, which breaks the block under the masthead.
+
+   Shrinking the size in CSS until Polish fits would punish English
+   for Polish's length, and would still be a guess the next language
+   breaks. So: measure, and scale only when it overflows. Width
+   scales close enough to linearly with font-size — letter-spacing is
+   in em, so it scales too — which is why one pass lands it; the
+   0.98 is headroom for the rounding.
+
+   Runs again after the webfont lands, because Cabinet Grotesk and
+   the fallback have different metrics, and on every language switch. */
+(function fitTagline() {
+  const el = $(".tagline");
+  if (!el) return;
+
+  const fit = () => {
+    el.style.fontSize = "";                    /* back to the CSS size before measuring */
+    const avail = el.clientWidth;
+    const natural = el.scrollWidth;
+    if (!avail || natural <= avail) return;    /* it fits: leave it alone */
+    const base = parseFloat(getComputedStyle(el).fontSize);
+    el.style.fontSize = (base * (avail / natural) * 0.98) + "px";
+  };
+
+  fit();
+  addEventListener("resize", fit);
+  addEventListener("langchange", fit);
+  document.fonts?.ready.then(fit);
 })();
 
 /* ---------- the random lines ----------
@@ -297,7 +348,7 @@ function open(i, replace = false) {
   /* instagram-style: the address bar shows the piece, the page never
      navigates or repaints. /p/<slug> is a real stub for unfurlers, so
      a reload or a paste still resolves. */
-  const url = "p/" + slug(it.title);
+  const url = ROOT + "p/" + slug(it.title);
   if (replace || pushed) history.replaceState({ p: idx }, "", url);
   else { history.pushState({ p: idx }, "", url); pushed = true; }
   x.focus();
@@ -309,7 +360,10 @@ function shut(fromPop = false) {
   stage.innerHTML = "";
   document.body.classList.remove("locked");
   if (pushed && !fromPop) { pushed = false; history.back(); }
-  else if (!fromPop) history.replaceState(null, "", location.pathname);
+  /* HOME, not location.pathname — by now the address bar says
+     /p/<slug>, so restoring "the current path" would just leave the
+     piece's URL sitting there after the viewer had closed */
+  else if (!fromPop) history.replaceState(null, "", HOME);
   pushed = false;
   lastFocus?.focus();
   lastFocus = null;

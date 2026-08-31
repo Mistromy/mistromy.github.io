@@ -78,7 +78,7 @@ const PL = {
      ✏ all three of these are your voice. the <span class="pending">
         wrappers must survive any rewrite — they are what gives
         those two phrases their underline. */
-  "intro.p1": "<b>Mist</b>, również <b>sudomist</b> oraz <b>Mistromy</b>, zależnie od jakie nazwy były dostępne. Tworzę obrazki CGI, programuję i ogólnie wszystko co jest związane z komputerami.",
+  "intro.p1": "<b>Mist</b>, znany też jako <b>sudomist</b> lub <b>Mistromy</b>, w zależności od tego, które nicki były wolne. Zajmuję się grafiką CGI, jak również programowaniem i od niedawna grafiką 2D.",
   "intro.p2": "Lubię udawać że wiem co robię, i czasami chyba działa. Niektóre <span class=\"pending\">liczby poniżej</span> są całkiem duże.",
   "intro.p3": "Więcej o mnie <span class=\"pending\">również niżej</span>, dla pasjonatów i stalkerów.",
 };

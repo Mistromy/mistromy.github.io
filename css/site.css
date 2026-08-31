@@ -418,11 +418,20 @@ main {
   text-align: center;
   font-family: var(--display);
   font-weight: 800;
-  font-size: clamp(19px, 3.1vw, 35px);
-  /*TODO revert this to 36 and make the line remain a single line in the polish version */
+  font-size: clamp(19px, 3.1vw, 36px);
   letter-spacing: .035em;
   text-transform: uppercase;
   line-height: 1.08;
+  /* ONE LINE, ALWAYS — in every language.
+
+     nowrap is only half of it: on its own the longer Polish string
+     would stop wrapping and start overflowing instead. fitTagline()
+     in js/site.js measures the line against the column and scales
+     the font down only when it actually needs to, so English keeps
+     the full 36px and Polish shrinks just enough to fit. Dropping
+     the size in CSS to suit the longest string would shrink English
+     too, for no reason. */
+  white-space: nowrap;
 }
 
 .tagline em {

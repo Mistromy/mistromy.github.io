@@ -7,13 +7,22 @@
   <title>404 — MIST</title>
   <meta name="robots" content="noindex">
   <link rel="icon" href="https://avatars.githubusercontent.com/u/125371422?v=4" type="image/x-icon">
-  <link rel="stylesheet" href="css/fonts.css">
-  <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/site.css">
 </head>
 
-<!-- GitHub Pages serves this for any unmatched path, so it must not
-     assume it is at the site root: every href here is absolute (/…),
-     because a relative one resolves against the URL that failed. -->
+<!-- GitHub Pages serves this page's CONTENT at whatever address
+     failed, without redirecting — so the browser resolves relative
+     paths against that address, not against the site root.
+
+     A miss under /p/ is the likeliest 404 there is (a stale or
+     mistyped artwork link), and at /p/whatever a relative
+     "css/site.css" asks for /p/css/site.css, which does not exist.
+     The page then renders as unstyled text.
+
+     So EVERY path here — stylesheets, scripts and links alike — is
+     absolute. Do not "tidy" them back to relative to match the
+     other pages. -->
 
 <body>
   <a class="skip" href="#main" data-i18n="skip">skip to content</a>
@@ -61,9 +70,9 @@
     </div>
   </main>
 
-  <script src="js/data.js"></script>
-  <script src="js/i18n.js"></script>
-  <script src="js/site.js"></script>
+  <script src="/js/data.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/site.js"></script>
 </body>
 
 </html>
