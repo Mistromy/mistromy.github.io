@@ -180,19 +180,19 @@ const ART = [
     post: { artstation: "https://www.artstation.com/artwork/kw4Oa6", instagram: "https://www.instagram.com/p/Db3YEsTiCcJ" }
   },
   {
-    title: "DON'T LOOK DOWN", year: "2026", medium: ["2d", "photo"], img: "assets/dontlook_down.png", tags: "stencil · schematic · collage",
+    title: "DON'T LOOK DOWN", year: "2026", medium: ["2d", "photo"], img: "https://cdnb.artstation.com/p/assets/images/images/100/723/241/large/mist-dontlook-down.jpg?1783861550", tags: "stencil · schematic · collage",
     note: "MORE OF MY OWN PHOTOGRAPHY",
     images: ["https://cdnb.artstation.com/p/assets/images/images/100/723/301/large/mist-whatsapp-image-2026-07-06-at-15-47-50.jpg?1783861746"],
     post: { artstation: "https://www.artstation.com/artwork/G1Xdz3" }
   },
   {
-    title: "OPEN YOUR EYES", year: "2026", medium: ["2d", "photo"], img: "assets/eyes.png", tags: "photo · binary · type",
+    title: "OPEN YOUR EYES", year: "2026", medium: ["2d", "photo"], img: "https://cdnb.artstation.com/p/assets/images/images/100/681/089/large/mist-eyes.jpg?1783691774", tags: "photo · binary · type",
     note: "More of my own photography.",
     images: ["https://cdnb.artstation.com/p/assets/images/images/100/723/323/large/mist-img-20260704-214932.jpg?1783861815"],
     post: { artstation: "https://www.artstation.com/artwork/41bln4" }
   },
   {
-    title: "DON'T STOP", year: "2026", medium: ["2d", "photo"], img: "assets/lights.png", tags: "glitch · datamosh · signal",
+    title: "DON'T STOP", year: "2026", medium: ["2d", "photo"], img: "https://cdnb.artstation.com/p/assets/images/images/100/543/347/large/mist-lights.jpg?1783265712", tags: "glitch · datamosh · signal",
     note: "My third ever poster. Based on my own photography.",
     images: ["https://cdnb.artstation.com/p/assets/images/images/100/723/347/large/mist-original.jpg?1783861935"],
     post: { artstation: "https://www.artstation.com/artwork/8vWQ3x" }
