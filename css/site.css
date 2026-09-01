@@ -97,7 +97,19 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  scroll-behavior: smooth
+  scroll-behavior: smooth;
+  /* Always reserve the scrollbar's width, whether or not there is
+     one. Two things this fixes:
+
+     · the gallery measures its column, fills it, and the page
+       becomes tall enough to grow a scrollbar — which takes ~15px
+       back off the column the rows were just sized against. The
+       grid then overhangs its own column until something triggers
+       a re-layout.
+     · navigating from a short page (legal) to a tall one (art)
+       shifted the whole layout sideways by the scrollbar width.
+       The rail and masthead visibly jumped. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -650,6 +662,13 @@ a.inline {
   display: flex;
   gap: 14px;
   margin-bottom: 14px
+}
+
+/* the final row when it has too few pictures to fill the width.
+   centred, because a short row pushed against the left edge reads
+   as a layout that broke rather than one that ran out of work */
+.jrow-tail {
+  justify-content: center
 }
 
 /* THE HOVER FIX.

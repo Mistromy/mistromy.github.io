@@ -233,40 +233,119 @@ if (yrEl) yrEl.textContent = new Date().getFullYear();
    gallery — v2, verbatim
    ============================================================ */
 const OPEN = [];
-const measure = it => new Promise(res => {
-  const chain = [...tileSrcs(it), it.img];
-  (function attempt(i) {
-    if (i >= chain.length) return res(null);
-    const im = new Image();
-    im.onload = () => res(Object.assign(it, { _src: chain[i], _ar: im.naturalWidth / im.naturalHeight }));
-    im.onerror = () => attempt(i + 1);
-    im.src = chain[i];
-  })(0);
-});
 
+/* ============================================================
+   remembered aspect ratios
+
+   The grid cannot place a single tile until it knows the shape of
+   every picture, and the only way to learn that from an <img> is to
+   load it. So the first visit blocks on sixteen image loads before
+   anything appears — and it did that again on every hop between the
+   homepage and the archive, because the ratios were never kept.
+
+   They are geometry, not content: two numbers per picture that
+   never change. Keeping them means the second visit lays the whole
+   grid out in the same tick, and the pictures then stream into
+   boxes that already exist.
+
+   Keyed by the URL that was actually measured, so pointing an entry
+   at a different file invalidates its own entry and nothing else.
+   Bump VER to throw the lot away.
+   ============================================================ */
+const AR = (() => {
+  const KEY = "mist.ar.1";
+  let map = {};
+  try { map = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch { }
+  let queued = false;
+  return {
+    get: k => map[k],
+    set(k, v) {
+      map[k] = v;
+      /* one write per batch, not one per picture */
+      if (queued) return;
+      queued = true;
+      setTimeout(() => {
+        queued = false;
+        try { localStorage.setItem(KEY, JSON.stringify(map)); } catch { }
+      }, 0);
+    },
+  };
+})();
+
+const measure = it => {
+  const key = slug(it.title);
+  const hit = AR.get(key);
+  /* a hit resolves synchronously — no request, no decode, no wait */
+  if (hit && hit.a > 0) return Promise.resolve(Object.assign(it, { _src: hit.s, _ar: hit.a }));
+
+  return new Promise(res => {
+    const chain = [...tileSrcs(it), it.img];
+    (function attempt(i) {
+      if (i >= chain.length) return res(null);
+      const im = new Image();
+      im.onload = () => {
+        const ar = im.naturalWidth / im.naturalHeight;
+        AR.set(key, { s: chain[i], a: ar });
+        res(Object.assign(it, { _src: chain[i], _ar: ar }));
+      };
+      im.onerror = () => attempt(i + 1);
+      im.src = chain[i];
+    })(0);
+  });
+};
+
+/* returns the width it actually laid out at — the caller has to
+   remember that number rather than re-reading clientWidth, see the
+   scrollbar note in gallery() */
 function layout(mount, items, maxRows) {
   const W = mount.clientWidth;
-  if (!W) return;
+  if (!W) return 0;
   const gap = 14, H = W < 640 ? 190 : 300;
-  const rows = [];
+
+  /* `full` records WHY each row ended.
+
+     A row pushed because the next picture would not fit is COMPLETE:
+     it has to justify edge to edge, and its height is whatever that
+     takes. The leftovers pushed after the loop are not complete, and
+     stretching one or two pictures across a full row would blow them
+     up out of all proportion. Only that tail needs a ceiling. */
+  const rows = [], full = [];
   let row = [], sum = 0;
   for (const it of items) {
     const w = Math.min(W, it._ar * H);
     if (row.length && sum + w + gap * row.length > W) {
-      rows.push(row); row = []; sum = 0;
+      rows.push(row); full.push(true);
+      row = []; sum = 0;
       if (maxRows && rows.length >= maxRows) break;   /* a taster stops at whole rows */
     }
     row.push(it); sum += w;
   }
-  if (row.length && (!maxRows || rows.length < maxRows)) rows.push(row);
+  if (row.length && (!maxRows || rows.length < maxRows)) { rows.push(row); full.push(false); }
 
   mount.innerHTML = "";
+  const heights = [];
   rows.forEach((r, ri) => {
     const arSum = r.reduce((s, it) => s + it._ar, 0);
     let h = (W - gap * (r.length - 1)) / arSum;
-    if (ri === rows.length - 1 && h > H * 1.25) h = H;
+
+    /* THE CAP APPLIES TO A SHORT ROW, NOT TO THE LAST ROW.
+
+       The old rule capped whichever row came last, regardless of
+       whether it was full — so a complete final row whose natural
+       height happened to exceed the limit was slammed down to H and
+       stopped reaching the right edge. That is exactly the bottom
+       row of the homepage taster: shorter than the row above it,
+       with a hole beside it, for no reason at all.
+
+       The ceiling is the row directly above, so a ragged tail can
+       never tower over its neighbour, and H when there is no row
+       above to measure against. */
+    if (!full[ri]) h = Math.min(h, heights[ri - 1] ?? H);
+    heights.push(h);
+
     const el = document.createElement("div");
-    el.className = "jrow";
+    /* a short tail is centred — left-aligned it reads as a mistake */
+    el.className = "jrow" + (full[ri] ? "" : " jrow-tail");
     r.forEach(it => {
       const extra = (it.images || []).length;
       const b = document.createElement("button");
@@ -279,11 +358,24 @@ function layout(mount, items, maxRows) {
         (extra ? `<span class="plus">+${extra}</span>` : "") +
         `<img src="${it._src}" alt="${altFor(it).replace(/"/g, "&quot;")}" loading="lazy" decoding="async">` +
         `<span class="name">${it.title}</span>`;
+
+      /* The src may have come from the remembered ratios rather than
+         from a load that just succeeded, so it can be a URL that has
+         since gone. Walk the same fallback chain the measurement
+         uses; indexOf advances every time, so this cannot loop. */
+      const im = b.querySelector("img");
+      im.addEventListener("error", () => {
+        const chain = [...tileSrcs(it), it.img];
+        const next = chain.indexOf(im.getAttribute("src")) + 1;
+        if (next > 0 && next < chain.length) im.src = chain[next];
+      });
+
       b.addEventListener("click", () => open(OPEN.indexOf(it)));
       el.appendChild(b);
     });
     mount.appendChild(el);
   });
+  return W;
 }
 
 (async function gallery() {
@@ -292,15 +384,36 @@ function layout(mount, items, maxRows) {
   const maxRows = parseInt(mount.dataset.rows || "0", 10);
   const pool = maxRows ? Math.min(ART.length, maxRows * 5) : ART.length;
   (await Promise.all(ART.slice(0, pool).map(measure))).filter(Boolean).forEach(m => OPEN.push(m));
-  layout(mount, OPEN, maxRows);
+  /* THE REMEMBERED WIDTH IS THE ONE LAYOUT USED, not the one the
+     box has afterwards.
+
+     Filling an empty grid makes the page tall enough to grow a
+     scrollbar, which takes ~15px back off the grid — after the rows
+     have already been sized for the wider box. Re-reading
+     clientWidth here therefore records the NEW width while the
+     tiles are built for the OLD one, and the guard below then
+     decides nothing has changed and never corrects it. The gallery
+     silently overhangs its column by the width of a scrollbar, on
+     every load, forever.
+
+     Taking the width back from layout() closes that gap: the
+     ResizeObserver sees 1089 against a remembered 1104 and relays. */
+  let w = layout(mount, OPEN, maxRows);
+
+  /* Check once, synchronously, whether filling the grid changed the
+     grid. scrollbar-gutter handles the usual cause, but anything
+     that reflows on insert would do it too — and the alternative is
+     waiting for a ResizeObserver, which does not report at all in a
+     throttled tab or some embedded webviews. Reading clientWidth
+     forces layout, so this is exact rather than hopeful. */
+  if (mount.clientWidth !== w) w = layout(mount, OPEN, maxRows);
+
   /* a mount with no width yet (hidden tab, display:none ancestor, a
      container that hasn't been laid out) makes layout() bail — without
      a retry the gallery stays empty forever. watch the box itself. */
-  let w = mount.clientWidth;
   const relayout = () => {
     if (mount.clientWidth === w) return;
-    w = mount.clientWidth;
-    layout(mount, OPEN, maxRows);
+    w = layout(mount, OPEN, maxRows);
   };
   if ("ResizeObserver" in window) new ResizeObserver(relayout).observe(mount);
   addEventListener("resize", relayout);

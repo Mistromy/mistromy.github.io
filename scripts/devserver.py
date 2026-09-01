@@ -34,8 +34,12 @@ PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 4174
 
 
 class DevHandler(SimpleHTTPRequestHandler):
+    # code you edit: never cached. everything else: cached normally.
+    SOURCE = (".html", ".css", ".js", ".json", ".xml", ".md", "/")
+
     def end_headers(self):
-        """Never let the browser cache anything in development.
+        """Stop the browser serving stale CODE, without un-caching
+        the artwork.
 
         SimpleHTTPRequestHandler sends Last-Modified and no
         Cache-Control, so browsers fall back to HEURISTIC freshness
@@ -43,12 +47,20 @@ class DevHandler(SimpleHTTPRequestHandler):
         failure is vicious because it is silent and selective: the
         HTML reloads, the stylesheet often reloads, and the one
         stale file looks like a bug in the code you just wrote.
-        It cost real time twice while translating i18n.js.
 
-        Production is unaffected — the deploy workflow stamps every
-        asset URL with the commit sha, which is the real fix there.
+        But blanket no-store is worse than the disease — it also
+        drops every thumbnail, so each hop between / and /art.html
+        re-downloads the whole gallery and the site feels broken.
+        Only the files you actually edit are held uncacheable.
+
+        Production is unaffected either way: the deploy workflow
+        stamps asset URLs with the commit sha, which is the real fix
+        there.
         """
-        self.send_header("Cache-Control", "no-store, must-revalidate")
+        if self.path.split("?")[0].endswith(self.SOURCE):
+            self.send_header("Cache-Control", "no-store, must-revalidate")
+        else:
+            self.send_header("Cache-Control", "max-age=600")
         super().end_headers()
 
     def do_GET(self):
