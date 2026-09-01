@@ -72,7 +72,12 @@ const PL = {
   "e404.sub": "Pod tym adresem nic nie ma. Może się przeniosło, może nigdy nie istniało — tak czy siak, wszystkie prace są jedne drzwi wstecz.",
 
   /* ---- masthead ---- */
-  "tagline": "Grafik CGI<em>·</em>Backend Dev<em>·</em>Student",
+  /* the spaces around the separators are literal and must survive a
+     rewrite — the CSS no longer adds any margin of its own */
+  "tagline": "Grafik CGI<em> &ensp;·&ensp; </em>Backend Dev<em> &ensp;·&ensp; </em>Student",
+
+  /* ---- section headers ---- */
+  "zone.art": "Grafika",
 
   /* ---- the copy ----
      ✏ all three of these are your voice. the <span class="pending">

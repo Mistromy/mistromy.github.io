@@ -124,32 +124,55 @@ if (yrEl) yrEl.textContent = new Date().getFullYear();
   addEventListener("langchange", sync);   /* polish labels wrap differently */
 })();
 
-/* ---------- keep the tagline on one line, in any language ----------
+/* ---------- lock the tagline to the width of the signature ----------
 
-   "CGI Artist · Backend Dev · Student" fits at full size. The Polish
-   "Grafik CGI · Backend Dev · Student" is longer and used to wrap
-   onto two lines, which breaks the block under the masthead.
+   The masthead is meant to read as ONE mark: /// mist /// on top,
+   the tagline directly beneath, their outer edges flush. So the
+   tagline is not given a size — it is given a WIDTH, and the size
+   falls out of it.
 
-   Shrinking the size in CSS until Polish fits would punish English
-   for Polish's length, and would still be a guess the next language
-   breaks. So: measure, and scale only when it overflows. Width
-   scales close enough to linearly with font-size — letter-spacing is
-   in em, so it scales too — which is why one pass lands it; the
-   0.98 is headroom for the rounding.
+   Measured against the slash row's INK, not against the column.
+   .mast-row is a block, so its clientWidth is the whole 700px
+   column regardless of how wide the artwork inside it actually is;
+   the number that matters runs from the left edge of the first
+   slash to the right edge of the last.
 
-   Runs again after the webfont lands, because Cabinet Grotesk and
-   the fallback have different metrics, and on every language switch. */
+   Scales in both directions, unlike the old version which only ever
+   shrank. That is the point: the line lands on exactly the same
+   width in English and in Polish, so the longer string simply
+   resolves to a slightly smaller size instead of overflowing, and
+   the two languages occupy an identical footprint.
+
+   Runs again after the webfont lands — Cabinet Grotesk and the
+   fallback have different metrics, so a measurement taken before it
+   arrives describes the wrong typeface — and on every language
+   switch. */
 (function fitTagline() {
   const el = $(".tagline");
-  if (!el) return;
+  const row = $(".mast-row");
+  if (!el || !row) return;
 
   const fit = () => {
-    el.style.fontSize = "";                    /* back to the CSS size before measuring */
-    const avail = el.clientWidth;
-    const natural = el.scrollWidth;
-    if (!avail || natural <= avail) return;    /* it fits: leave it alone */
-    const base = parseFloat(getComputedStyle(el).fontSize);
-    el.style.fontSize = (base * (avail / natural) * 0.98) + "px";
+    const marks = $$(".slashes, .mast-mark", row).map(n => n.getBoundingClientRect());
+    if (!marks.length) return;
+    const target = Math.max(...marks.map(r => r.right)) - Math.min(...marks.map(r => r.left));
+    if (!target) return;
+
+    /* measure at a known size, then solve. width is near enough
+       linear in font-size — letter-spacing is in em, so it scales
+       with the type rather than fighting it — which is why a single
+       pass lands instead of needing a search. */
+    const probe = 100;
+    el.style.fontSize = probe + "px";
+    const at100 = el.scrollWidth;
+    if (!at100) { el.style.fontSize = ""; return; }
+    const size = probe * (target / at100);
+    el.style.fontSize = size + "px";
+
+    /* publish it: the section headers are set to this exact size, so
+       they track the masthead at every width instead of being a
+       clamp() that happens to look close at one of them */
+    document.documentElement.style.setProperty("--tagline-size", size + "px");
   };
 
   fit();

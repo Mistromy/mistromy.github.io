@@ -376,13 +376,39 @@ main {
    I happened to test. */
 .masthead {
   padding-block: clamp(56px, 9vw, 118px) 0;
-  --mast: clamp(58px, 11vw, 140px);
+  /* the measuring stick for everything inside — see .mast-row */
+  container-type: inline-size;
 }
 
 .mast-row {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Fallback for browsers without container queries. */
+  --mast: clamp(58px, 11vw, 140px);
+}
+
+/* THE MASTHEAD FILLS ITS COLUMN.
+
+   The whole row measures about 4.85x --mast (two slash groups, the
+   signature at 1.9x, and the two gaps), so dividing the column by
+   4.85 is the size at which it exactly spans the width available.
+   140px caps it, which is what it already reached on desktop — so
+   this changes nothing there.
+
+   On a phone it changes a lot. The old floor of 58px left the row
+   at 281px inside 335px of usable width, and since the tagline is
+   locked to the row, that wasted 54px came straight off the type:
+   13.6px, too small to read comfortably. Filling the width fixes
+   the tagline as a side effect.
+
+   cqw, not vw: vw is the whole window and knows nothing about the
+   216px rail, so at ~900px wide it would size the masthead for
+   space that the rail is already using and overflow the column. */
+@supports (container-type: inline-size) {
+  .mast-row {
+    --mast: min(140px, calc(100cqw / 4.85));
+  }
 }
 
 /* real "/" glyphs in Cabinet Grotesk. line-height:1 and a block
@@ -418,30 +444,44 @@ main {
 }
 
 .tagline {
-  margin-top: clamp(10px, 1.6vw, 22px);
+  /* tight to the signature — the two are one object, not a heading
+     with a subtitle under it */
+  margin-top: clamp(4px, 0.8vw, 11px);
   text-align: center;
   font-family: var(--display);
   font-weight: 800;
-  font-size: clamp(19px, 3.1vw, 36px);
-  letter-spacing: .035em;
+  /* a STARTING size only. fitTagline() overwrites it — see below. */
+  font-size: 30px;
+  /* 130 tracking in Affinity is 130/1000 em */
+  letter-spacing: .13em;
   text-transform: uppercase;
   line-height: 1.08;
-  /* ONE LINE, ALWAYS — in every language.
 
-     nowrap is only half of it: on its own the longer Polish string
-     would stop wrapping and start overflowing instead. fitTagline()
-     in js/site.js measures the line against the column and scales
-     the font down only when it actually needs to, so English keeps
-     the full 36px and Polish shrinks just enough to fit. Dropping
-     the size in CSS to suit the longest string would shrink English
-     too, for no reason. */
+  /* THE MASTHEAD IS ONE BLOCK.
+
+     The tagline is scaled by fitTagline() in js/site.js to span
+     exactly the width of the /// mist /// row above it — never
+     wider, never narrower. So its edges line up with the outer
+     edges of the slashes at every screen size, and the two rows
+     read as a single locked-up mark instead of a headline with a
+     caption that happens to sit near it.
+
+     That also settles Polish for free: the longer string simply
+     resolves to a slightly smaller size against the same width,
+     rather than overflowing or wrapping. Both languages occupy the
+     identical footprint.
+
+     nowrap is what makes the measurement meaningful — scrollWidth
+     only reports the true single-line width if it is not allowed
+     to wrap. */
   white-space: nowrap;
 }
 
+/* no margin: the separators carry a real space either side in the
+   markup now, and adding margin on top of that double-spaces them */
 .tagline em {
   font-style: normal;
   color: var(--dim);
-  margin: 0 .45em
 }
 
 /* ---------- intro ---------- */
@@ -554,8 +594,56 @@ a.inline {
    the archive — the gallery, unchanged from v2 apart from the
    hover fix noted below
    ============================================================ */
+/* ============================================================
+   section headers
+
+   Same face as the masthead tagline, small, all caps, heavily
+   tracked. No rule, no glyph, no eyebrow — the SPACE above it is
+   what separates one section from the next. A divider line would
+   be a second thing saying what the padding already says, and on a
+   page this bare every extra mark counts double.
+
+   The letter-spacing trick: CSS puts the tracking AFTER the last
+   letter too, so a centred, heavily tracked word sits visibly off
+   to the right by half its tracking. Pulling one tracking-width
+   off the right margin cancels exactly that.
+   ============================================================ */
+.zone-head {
+  font-family: var(--display);
+  font-weight: 800;
+  /* SAME SIZE AS THE TAGLINE, at every width.
+
+     --tagline-size is published by fitTagline() in js/site.js after
+     it solves the masthead fit, so the two stay locked together
+     instead of drifting apart the moment the viewport changes.
+
+     The fallback is not decoration: subpages have no masthead to
+     measure, so fitTagline never runs there and this clamp is what
+     they actually use. It is tuned to land where the homepage's
+     measured value lands, so a header looks the same on both. */
+  font-size: var(--tagline-size, clamp(16px, 2.2vw, 29px));
+  letter-spacing: .38em;
+  margin-right: -.38em;
+  /* optical centring — see above */
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--paper);
+  padding-top: clamp(72px, 10vw, 132px);
+  padding-bottom: clamp(26px, 3.4vw, 44px);
+}
+
+/* on a subpage the header IS the page's opening, not a divider
+   between two blocks — so it does not need a section's worth of air
+   above it, and the work can start high up the page */
+.pagehead .zone-head {
+  padding-top: clamp(32px, 4vw, 56px);
+  /* nothing below: .archive supplies the gap to the first row, and
+     two paddings stacked is what put the gallery 334px down */
+  padding-bottom: 0;
+}
+
 #art {
-  padding-top: clamp(52px, 8vw, 86px)
+  padding-top: 0
 }
 
 .jrow {
@@ -870,13 +958,27 @@ body.panning-idle .panbar {
   color: var(--paper)
 }
 
-.pagehead h1 {
+/* The big treatment, still used by legal / labs / 404 — pages that
+   are mostly text and need an opening that arrives.
+
+   :not(.zone-head) matters: `.pagehead h1` is specificity (0,1,1)
+   and `.zone-head` is (0,1,0), so without it this rule silently
+   wins on any subpage that opts into the tracked header and the
+   class appears to do nothing. */
+.pagehead h1:not(.zone-head) {
   font-family: var(--display);
   font-weight: 900;
   font-size: clamp(38px, 6.5vw, 82px);
   line-height: .95;
   letter-spacing: .01em;
   text-transform: uppercase;
+}
+
+/* a pagehead built around the tracked label carries no padding of
+   its own — the label brings its own, and doubling them is what
+   pushes the work off the first screen */
+.pagehead:has(.zone-head) {
+  padding-block: 0;
 }
 
 .pagehead p.sub {

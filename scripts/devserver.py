@@ -34,6 +34,23 @@ PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 4174
 
 
 class DevHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        """Never let the browser cache anything in development.
+
+        SimpleHTTPRequestHandler sends Last-Modified and no
+        Cache-Control, so browsers fall back to HEURISTIC freshness
+        and happily reuse a .js file you edited seconds ago. That
+        failure is vicious because it is silent and selective: the
+        HTML reloads, the stylesheet often reloads, and the one
+        stale file looks like a bug in the code you just wrote.
+        It cost real time twice while translating i18n.js.
+
+        Production is unaffected — the deploy workflow stamps every
+        asset URL with the commit sha, which is the real fix there.
+        """
+        self.send_header("Cache-Control", "no-store, must-revalidate")
+        super().end_headers()
+
     def do_GET(self):
         if self.path.startswith(PREFIX + "/"):
             self.proxy(self.path[len(PREFIX):])
