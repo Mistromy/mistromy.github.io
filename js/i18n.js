@@ -68,7 +68,7 @@ const PL = {
   "labs.sub": "Głębsze analizy dla nerdów. Jak to właściwie działa. Architektura, matematyka, proces i rzeczy w trakcie — zarówno kod, jak i CGI.",
   "labs.empty": "Jeszcze nic nie opublikowałem. Pierwszy tekst w drodze.",
   /* ✏ "Oopsie Daisy" is a joke, not a phrase — replace it, don't translate it */
-  "e404.h1": "Ups",
+  "e404.h1": "O rajuśku!",
   "e404.sub": "Pod tym adresem nic nie ma. Może się przeniosło, może nigdy nie istniało — tak czy siak, wszystkie prace są jedne drzwi wstecz.",
 
   /* ---- masthead ---- */
@@ -84,7 +84,7 @@ const PL = {
         wrappers must survive any rewrite — they are what gives
         those two phrases their underline. */
   "intro.p1": "<b>Mist</b>, znany też jako <b>sudomist</b> lub <b>Mistromy</b>, w zależności od tego, które nicki były wolne. Zajmuję się grafiką CGI, jak również programowaniem i od niedawna grafiką 2D.",
-  "intro.p2": "Lubię udawać że wiem co robię, i czasami chyba działa. Niektóre <span class=\"pending\">liczby poniżej</span> są całkiem duże.",
+  "intro.p2": "Lubię udawać że wiem co robię, i czasami to chyba działa. Niektóre <span class=\"pending\">liczby poniżej</span> są całkiem duże.",
   "intro.p3": "Więcej o mnie <span class=\"pending\">również niżej</span>, dla pasjonatów i stalkerów.",
 };
 
