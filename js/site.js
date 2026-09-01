@@ -331,7 +331,15 @@ function open(i, replace = false) {
     const img = document.createElement("img");
     img.src = f.src;
     img.alt = altFor(it) + (n ? ` — frame ${n + 1}` : "");
-    img.addEventListener("click", e => { if (!Z.dragged) toggleZoom(img, e); });
+    /* stopPropagation is load-bearing: without it this click carries
+       on up to .lb, whose handler treats any click while zoomed as
+       "outside the image, step back out" — and undoes the zoom this
+       very click just created. */
+    img.addEventListener("click", e => {
+      if (Z.dragged) return;
+      e.stopPropagation();
+      toggleZoom(img, e);
+    });
     stage.appendChild(img);
     if (f.tag) {
       const tg = document.createElement("span");
@@ -383,6 +391,89 @@ function clamp(k, baseRect) {
 function apply(animate) {
   Z.clone.style.transition = animate && !reduced ? "transform .28s cubic-bezier(.2,.7,.3,1)" : "none";
   Z.clone.style.transform = `translate(${Z.x}px,${Z.y}px) scale(${Z.k})`;
+  updateBars();
+}
+
+/* ============================================================
+   pan indicators
+
+   Two hairlines, along the bottom and the right, each as long as
+   the fraction of the image you can currently see and sitting where
+   you are inside it.
+
+   This is the answer to "how does anybody know they can move this".
+   A scrollbar is the one affordance every single person already
+   reads without being taught, and unlike a caption or an icon it
+   also answers the second question — how much is left, and which
+   way. It is information, not decoration.
+
+   They fade out ~900ms after the image stops moving, so they are
+   present exactly while they are relevant and never become
+   furniture. Nothing is drawn at all when an axis has no overflow.
+   ============================================================ */
+function makeBars() {
+  const mk = cls => {
+    const b = document.createElement("div");
+    b.className = "panbar " + cls;
+    b.setAttribute("aria-hidden", "true");
+    document.body.appendChild(b);
+    return b;
+  };
+  Z.bars = { x: mk("panbar-x"), y: mk("panbar-y") };
+}
+
+function killBars() {
+  if (!Z.bars) return;
+  Z.bars.x.remove();
+  Z.bars.y.remove();
+  Z.bars = null;
+  clearTimeout(Z.idle);
+  document.body.classList.remove("panning-idle");
+}
+
+function updateBars() {
+  if (!Z.bars || !Z.base) return;
+  const r = Z.base;
+
+  /* offset = how far the image's leading edge sits off-screen. the
+     clone is pinned at r.left/r.top and transformed from origin
+     0 0, so its edge on screen is r.left + Z.x. */
+  const set = (el, size, viewport, offset) => {
+    if (size <= viewport + 1) { el.style.setProperty("--vis", "0"); return; }
+    const frac = viewport / size;
+    const p = Math.min(1, Math.max(0, offset / (size - viewport)));
+    el.style.setProperty("--len", (frac * 100) + "%");
+    el.style.setProperty("--pos", (p * (100 - frac * 100)) + "%");
+    el.style.setProperty("--vis", "1");
+  };
+  set(Z.bars.x, r.width * Z.k, innerWidth, -(r.left + Z.x));
+  set(Z.bars.y, r.height * Z.k, innerHeight, -(r.top + Z.y));
+
+  document.body.classList.remove("panning-idle");
+  clearTimeout(Z.idle);
+  Z.idle = setTimeout(() => document.body.classList.add("panning-idle"), 900);
+}
+
+/* ANCHORED ZOOM — the one primitive wheel, pinch and click all use.
+
+   Zoom that scales about the element's origin makes the thing you
+   were looking at slide off screen, so you chase it with a drag
+   afterwards. This keeps the point under the cursor (or under the
+   midpoint of two fingers) pinned exactly where it is: convert that
+   screen point into the image's own unscaled coordinates, change k,
+   then solve for the translate that puts the same image point back
+   under the same screen point. */
+function zoomTo(k, cx, cy, animate) {
+  const r = Z.base;
+  if (!r) return;
+  k = Math.max(1, Math.min(k, Z.max));
+  const px = (cx - r.left - Z.x) / Z.k;      /* image-local point... */
+  const py = (cy - r.top - Z.y) / Z.k;
+  Z.k = k;
+  Z.x = cx - r.left - px * k;                /* ...put back under the cursor */
+  Z.y = cy - r.top - py * k;
+  clamp(k, r);
+  apply(animate);
 }
 
 /* the ORIGINAL <img> never moves. a COPY is lifted out and grown on top
@@ -407,6 +498,15 @@ function toggleZoom(img, e) {
   img.style.visibility = "hidden";
 
   Z.img = img; Z.clone = clone; Z.base = r; Z.k = 1; Z.x = 0; Z.y = 0;
+  /* k is 1:1 pixels — the level a click lands on. The ceiling sits
+     ABOVE it on purpose: with max == the click level there is
+     nowhere for a pinch-out or a wheel-zoom to go, so on a phone
+     (where 1:1 is already a big number) the gesture would silently
+     do nothing. 1.6x past native is enough to inspect a detail
+     without turning the file to mush; the 8 is a hard stop. */
+  Z.nat = k;
+  Z.max = Math.min(Math.max(k * 1.6, 4), 8);
+  makeBars();
   apply(false);
   /* flush this as the transition's starting point. reading a layout
      property forces it synchronously — rAF would be the usual trick but
@@ -421,7 +521,7 @@ function toggleZoom(img, e) {
   apply(true);
   lb.classList.add("zooming");
   clone.addEventListener("click", () => { if (!Z.dragged) unzoom(); });
-  clone.addEventListener("pointerdown", startDrag);
+  clone.addEventListener("pointerdown", onPointerDown);
 }
 
 function unzoom(instant = false) {
@@ -429,6 +529,7 @@ function unzoom(instant = false) {
   if (!img || !clone) return;
   Z.img = null;
   lb.classList.remove("zooming");
+  killBars();
   const done = () => { clone.remove(); img.style.visibility = ""; Z.clone = null; };
   if (instant || reduced) return done();
   /* animate back onto wherever the original actually sits now, rather
@@ -442,43 +543,167 @@ function unzoom(instant = false) {
   setTimeout(done, 340);              /* transitionend can be skipped */
 }
 
-/* drag to pan — on the copy, so the grid underneath is inert */
-function startDrag(e) {
+/* ============================================================
+   pan and pinch — one pointer map, so mouse, pen and touch are the
+   same code path and a finger lifting mid-pinch does not strand the
+   gesture.
+
+   One pointer down  → drag to pan.
+   Two pointers down → pinch to zoom about their midpoint.
+   Lift one of two   → hands back to panning from where that finger
+                       now is, instead of the image jumping by
+                       however far the other finger had travelled.
+   ============================================================ */
+const pointers = new Map();
+
+/* a tap is not a drag. without a threshold the few pixels a finger
+   moves while lifting would count as a pan, and the tap-to-close
+   click would be swallowed every time. */
+const DRAG_SLOP = 6;
+
+const pinchNow = () => {
+  const [a, b] = [...pointers.values()];
+  return {
+    d: Math.hypot(a.x - b.x, a.y - b.y),
+    cx: (a.x + b.x) / 2,
+    cy: (a.y + b.y) / 2,
+  };
+};
+
+function onPointerDown(e) {
   if (!Z.clone) return;
   e.preventDefault();
-  Z.dragged = false;
-  const sx = e.clientX - Z.x, sy = e.clientY - Z.y;
-  Z.clone.setPointerCapture?.(e.pointerId);
-  Z.clone.style.cursor = "grabbing";
-  const move = ev => {
-    Z.x = ev.clientX - sx; Z.y = ev.clientY - sy;
-    Z.dragged = true;
-    clamp(Z.k, Z.base);
-    apply(false);
-  };
-  const up = () => {
-    if (Z.clone) Z.clone.style.cursor = "zoom-out";
-    removeEventListener("pointermove", move);
-    removeEventListener("pointerup", up);
-    setTimeout(() => Z.dragged = false, 0);   /* let the click handler see it */
-  };
-  addEventListener("pointermove", move);
-  addEventListener("pointerup", up);
+  /* throws NotFoundError if the pointer is no longer active by the
+     time this runs. capture is an optimisation here — pointermove is
+     bound to the window anyway — so losing it must not abort the
+     gesture before a single finger has been registered. */
+  try { Z.clone.setPointerCapture?.(e.pointerId); } catch { }
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  if (pointers.size === 1) {
+    Z.dragged = false;
+    Z.downAt = { x: e.clientX, y: e.clientY };
+    Z.panFrom = { x: e.clientX - Z.x, y: e.clientY - Z.y };
+    Z.clone.style.cursor = "grabbing";
+  } else if (pointers.size === 2) {
+    const p = pinchNow();
+    Z.pinch = { d: p.d, k: Z.k };
+    Z.dragged = true;                 /* a pinch must never read as a tap */
+  }
 }
+
+function onPointerMove(e) {
+  if (!pointers.has(e.pointerId) || !Z.clone) return;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  if (pointers.size >= 2 && Z.pinch) {
+    const p = pinchNow();
+    if (p.d > 0 && Z.pinch.d > 0) zoomTo(Z.pinch.k * (p.d / Z.pinch.d), p.cx, p.cy, false);
+    return;
+  }
+  if (!Z.panFrom) return;
+  if (Z.downAt && Math.hypot(e.clientX - Z.downAt.x, e.clientY - Z.downAt.y) > DRAG_SLOP) {
+    Z.dragged = true;
+  }
+  Z.x = e.clientX - Z.panFrom.x;
+  Z.y = e.clientY - Z.panFrom.y;
+  clamp(Z.k, Z.base);
+  apply(false);
+}
+
+function onPointerUp(e) {
+  pointers.delete(e.pointerId);
+
+  if (pointers.size < 2) Z.pinch = null;
+  if (pointers.size === 1) {
+    /* re-anchor the pan on the finger that is still down */
+    const [p] = [...pointers.values()];
+    Z.panFrom = { x: p.x - Z.x, y: p.y - Z.y };
+    Z.downAt = { x: p.x, y: p.y };
+    return;
+  }
+  if (pointers.size) return;
+
+  Z.panFrom = Z.downAt = null;
+  if (Z.clone) Z.clone.style.cursor = "zoom-out";
+  setTimeout(() => Z.dragged = false, 0);   /* let the click handler see it */
+  /* pinched all the way back down: close rather than leaving a
+     zoomed view that is no longer zoomed into anything */
+  if (Z.img && Z.k <= 1.02) unzoom();
+}
+
+/* on the window, not the clone: a drag that leaves the image still
+   has to keep panning, and a pointer released off-screen still has
+   to end the gesture */
+addEventListener("pointermove", onPointerMove);
+addEventListener("pointerup", onPointerUp);
+addEventListener("pointercancel", onPointerUp);
 /* Everything below binds to the viewer's own markup, so it is
    fenced off: legal, labs and 404 load this same file and have no
    #lb in them. Without the fence the script would throw on those
    pages and take the rail's language toggle down with it. */
 if (lb) {
-  /* you can't scroll out from under a zoomed image */
-  lb.addEventListener("wheel", e => { if (Z.img) e.preventDefault(); }, { passive: false });
+  /* WHEEL, while zoomed.
+
+     It used to be swallowed outright so you couldn't scroll out from
+     under the image — which stopped the bug but left the wheel doing
+     nothing, and the wheel is the first thing anyone tries. Now it
+     pans, and the image still can't be scrolled out from under.
+
+     ctrl/⌘ + wheel zooms instead. That is not an extra keybinding to
+     learn: a two-finger pinch on a trackpad is delivered to the page
+     as a wheel event with ctrlKey set, so this is what makes trackpad
+     pinch work at no extra cost.
+
+     deltaMode has to be normalised — Firefox reports lines, not
+     pixels, and unconverted a single notch pans the width of a
+     character instead of a chunk of image.
+
+     The listener is on window rather than .lb because the zoomed
+     clone is a child of <body>, outside .lb entirely. */
+  addEventListener("wheel", e => {
+    if (!Z.img) return;                       /* not zoomed: let the stage scroll */
+    e.preventDefault();
+    const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1;
+    if (e.ctrlKey || e.metaKey) {
+      zoomTo(Z.k * Math.exp(-e.deltaY * unit * 0.0035), e.clientX, e.clientY, false);
+      if (Z.k <= 1.02) unzoom();
+      return;
+    }
+    Z.x -= e.deltaX * unit;
+    Z.y -= e.deltaY * unit;
+    clamp(Z.k, Z.base);
+    apply(false);
+  }, { passive: false });
 
   $("#lbPrev").addEventListener("click", () => step(-1));
   $("#lbNext").addEventListener("click", () => step(1));
   lb.addEventListener("click", e => {
-    if (Z.img) return;                                 /* zoomed: clicks belong to the image */
+    /* Zoomed: anything that is NOT the image steps back out of the
+       zoom, rather than doing nothing. Reaching this handler already
+       means "not the image" — the zoomed clone lives on <body>,
+       outside .lb, so its own clicks never bubble here. One click
+       out of the zoom, a second click out of the viewer. */
+    if (Z.img) { if (!Z.dragged) unzoom(); return; }
     if (!e.target.closest(".panel, .lb-arrow")) shut();
   });
+
+  /* THE PAGE MUST NOT ZOOM.
+
+     touch-action:none on the clone stops Chrome and Firefox, but
+     iOS Safari ignores touch-action for the document pinch
+     entirely. So once our zoom hits its floor and stops consuming
+     the gesture, the browser picks it up and starts scaling the
+     whole page instead — which is the thing you can't undo without
+     double-tapping your way back out.
+
+     Eating multi-touch moves for as long as the viewer is zoomed is
+     the only thing that reliably stops it. Single-finger touches
+     fall through untouched, so panning and the swipe gestures below
+     still work. */
+  addEventListener("touchmove", e => {
+    if (Z.img && e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
   addEventListener("popstate", () => { if (lb.classList.contains("open")) shut(true); });
   addEventListener("keydown", e => {
     if (!lb.classList.contains("open")) return;
@@ -494,12 +719,27 @@ if (lb) {
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
   });
-  let sx = null, sy = null;
-  lb.addEventListener("touchstart", e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  /* SWIPES, while not zoomed.
+       sideways → previous / next piece
+       downward → close, the gesture every photo viewer on a phone
+                  has trained people to expect
+
+     scrollTop is captured at touchSTART, not at the end: a piece
+     with extra frames scrolls vertically, and "I was at the top
+     when I began pulling" is what separates a dismiss from an
+     ordinary scroll. Reading it afterwards would mean a fast scroll
+     that lands at the top also closes the viewer. */
+  let sx = null, sy = null, sTop = 0;
+  lb.addEventListener("touchstart", e => {
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    sTop = stage.scrollTop;
+  }, { passive: true });
   lb.addEventListener("touchend", e => {
     if (sx == null || Z.img) return;
     const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
     if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) step(dx < 0 ? 1 : -1);
+    else if (dy > 90 && Math.abs(dy) > 1.5 * Math.abs(dx) && sTop <= 0) shut();
     sx = sy = null;
   }, { passive: true });
 }

@@ -201,10 +201,14 @@ strong {
   display: block;
   width: 112px;
   aspect-ratio: 665/357;
-  margin-bottom: 30px;
+  /* centred in the column: auto margins centre the BOX, and the mask
+     is centred too so the ink sits in the middle of that box rather
+     than hugging its left edge. Both are needed — either one alone
+     leaves it visibly off to one side. */
+  margin: 0 auto 30px;
   background: var(--paper);
-  -webkit-mask: url('../assets/Mist.svg') left center/contain no-repeat;
-  mask: url('../assets/Mist.svg') left center/contain no-repeat;
+  -webkit-mask: url('../assets/Mist.svg') center/contain no-repeat;
+  mask: url('../assets/Mist.svg') center/contain no-repeat;
 }
 
 /* the > marker is absolutely positioned so showing and hiding it
@@ -794,6 +798,48 @@ a.inline {
 .lb.zooming .panel-h {
   opacity: 0;
   pointer-events: none
+}
+
+/* ---------- pan indicators ----------
+   Sized and positioned from --len / --pos, both set in js/site.js as
+   percentages of the viewport, which is what `position:fixed` sizes
+   against. --vis is 0 on an axis with nothing to pan.
+
+   The idle rule wins on specificity (0,2,0 against 0,1,0), so no
+   !important is needed to fade them out. */
+.panbar {
+  position: fixed;
+  z-index: 210;
+  background: var(--paper);
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: var(--vis, 0);
+  transition: opacity .3s ease;
+  /* a dark ring rather than a blend mode. mix-blend-mode:difference
+     would stay legible on any brightness, but it INVERTS HUE — over
+     the orange in a poster it comes back cyan, which is the one
+     thing a monochrome site cannot afford to put on top of the
+     artwork. A hairline outline is legible everywhere and adds no
+     colour of its own. */
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .55);
+}
+
+body.panning-idle .panbar {
+  opacity: 0
+}
+
+.panbar-x {
+  bottom: 10px;
+  height: 3px;
+  left: var(--pos, 0);
+  width: var(--len, 0)
+}
+
+.panbar-y {
+  right: 10px;
+  width: 3px;
+  top: var(--pos, 0);
+  height: var(--len, 0)
 }
 
 /* ============================================================
