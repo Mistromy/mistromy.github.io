@@ -78,6 +78,15 @@ const PL = {
 
   /* ---- section headers ---- */
   "zone.art": "Grafika",
+  "art.viewall": "Zobacz wszystko",
+
+  /* ---- the viewer ----
+     these two are rendered by js/site.js, not by the HTML, so
+     unlike every other key they have no English original on the
+     page to fall back to — site.js carries its own. keep both
+     short: the hint sits under the cursor. */
+  "zoom.hint": "przeciągnij · przewiń · esc",
+  "zoom.hint.touch": "przeciągnij · szczypnij · dotknij aby zamknąć",
 
   /* ---- the copy ----
      ✏ all three of these are your voice. the <span class="pending">

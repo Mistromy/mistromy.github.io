@@ -458,7 +458,7 @@ function open(i, replace = false) {
     tools.appendChild(a);
   });
   const x = document.createElement("button");
-  x.textContent = "close esc";
+  x.textContent = "close [esc]";
   x.addEventListener("click", shut);
   tools.appendChild(x);
 
@@ -484,6 +484,26 @@ function open(i, replace = false) {
       stage.appendChild(tg);
     }
   });
+  /* NO SUPPORTING FRAME MAY OUTSIZE THE COVER.
+
+     Each frame was sized on its own, so one that happened to be a
+     few hundred pixels wider than the cover rendered LARGER than
+     it — two versions of the same picture at two different sizes,
+     the smaller one on top. The cover is the piece; everything
+     under it is working material and has to read that way.
+
+     Capping rather than upscaling: stretching a small frame up to
+     match would only make it soft. */
+  const cover = stage.querySelector("img");
+  if (cover) {
+    const cap = () => {
+      const w = cover.getBoundingClientRect().width;
+      if (w) stage.style.setProperty("--frame-cap", w + "px");
+    };
+    if (cover.complete && cover.naturalWidth) cap();
+    else cover.addEventListener("load", cap, { once: true });
+  }
+
   stage.scrollTop = 0;
   lb.classList.add("open");
   document.body.classList.add("locked");
@@ -513,6 +533,26 @@ function shut(fromPop = false) {
   lastFocus = null;
 }
 const step = d => open((idx + d + OPEN.length) % OPEN.length, true);
+
+/* Move through the gallery WITHOUT dropping out of the zoom.
+
+   open() tears the zoom down to rebuild the stage, so the state has
+   to be carried across by hand and re-applied to the new cover. The
+   wait matters: a picture that has not loaded has no box yet, and
+   zooming to fit a zero-sized rect gives a scale of infinity. */
+function stepKeepingZoom(d) {
+  const wasZoomed = !!Z.img;
+  step(d);
+  if (!wasZoomed) return;
+  const img = stage.querySelector("img");
+  if (!img) return;
+  const go = () => {
+    if (!img.getBoundingClientRect().width) return;
+    toggleZoom(img, { clientX: innerWidth / 2, clientY: innerHeight / 2 });
+  };
+  if (img.complete && img.naturalWidth) go();
+  else img.addEventListener("load", go, { once: true });
+}
 
 /* ---------- zoom ---------- */
 function clamp(k, baseRect) {
@@ -547,6 +587,69 @@ function apply(animate) {
    present exactly while they are relevant and never become
    furniture. Nothing is drawn at all when an axis has no overflow.
    ============================================================ */
+/* ============================================================
+   the controls hint
+
+   Rides next to the cursor for a couple of seconds the first time
+   you zoom, then goes. Next to the cursor rather than pinned to a
+   corner because that is where you are already looking — a label in
+   a fixed position is something you have to notice, and a label
+   under your hand is something you cannot miss.
+
+   Once per SESSION, not per zoom: repeating it on the fortieth
+   picture would be nagging. sessionStorage rather than
+   localStorage, so a visitor coming back next week is reminded
+   once rather than never.
+
+   It also leaves the moment anything is dragged, scrolled or
+   pinched — at that point the reader has worked it out, and a hint
+   that outlives its usefulness is just something in the way.
+   ============================================================ */
+function hint(e) {
+  const KEY = "mist.zoomhint";
+  try { if (sessionStorage.getItem(KEY)) return; sessionStorage.setItem(KEY, "1"); } catch { }
+
+  const touch = matchMedia("(hover: none)").matches;
+  const text = (touch ? I18N.t("zoom.hint.touch") : I18N.t("zoom.hint"))
+    || (touch ? "drag · pinch · tap to close" : "drag · scroll · esc");
+
+  const el = document.createElement("div");
+  el.className = "zhint";
+  el.setAttribute("aria-hidden", "true");
+  el.textContent = text;
+  document.body.appendChild(el);
+
+  const place = (x, y) => {
+    /* flip to the other side of the cursor near an edge, so it is
+       never clipped off screen */
+    const w = el.offsetWidth, h = el.offsetHeight;
+    el.style.left = Math.min(x + 18, innerWidth - w - 8) + "px";
+    el.style.top = (y + h + 30 > innerHeight ? y - h - 14 : y + 22) + "px";
+  };
+  place(e.clientX ?? innerWidth / 2, e.clientY ?? innerHeight / 2);
+  /* flush the hidden state as the transition's starting point.
+     reading a layout property forces it synchronously — rAF is the
+     usual trick and is wrong here for the same reason it is wrong
+     in toggleZoom: it does not fire in a throttled or hidden tab,
+     and the hint would then sit at opacity 0 forever. */
+  void el.offsetWidth;
+  el.classList.add("on");
+
+  const follow = ev => place(ev.clientX, ev.clientY);
+  const done = () => {
+    removeEventListener("pointermove", follow);
+    removeEventListener("pointerdown", done);
+    removeEventListener("wheel", done);
+    clearTimeout(timer);
+    el.classList.remove("on");
+    setTimeout(() => el.remove(), 400);
+  };
+  addEventListener("pointermove", follow, { passive: true });
+  addEventListener("pointerdown", done, { passive: true });
+  addEventListener("wheel", done, { passive: true });
+  const timer = setTimeout(done, 1600);
+}
+
 function makeBars() {
   const mk = cls => {
     const b = document.createElement("div");
@@ -602,7 +705,15 @@ function updateBars() {
 function zoomTo(k, cx, cy, animate) {
   const r = Z.base;
   if (!r) return;
-  k = Math.max(1, Math.min(k, Z.max));
+  /* THE FLOOR IS THE FIT LEVEL, not 1.
+
+     Zooming out bottoms out at "the whole picture on screen" and
+     stays there. It must never shrink past that and it must never
+     close: one decisive scroll to zoom back out would otherwise
+     dismiss the viewer and then hand the rest of the gesture to the
+     browser, which starts zooming the page. Closing is for the
+     click, Escape, and the swipe. */
+  k = Math.max(Z.min ?? 1, Math.min(k, Z.max));
   const px = (cx - r.left - Z.x) / Z.k;      /* image-local point... */
   const py = (cy - r.top - Z.y) / Z.k;
   Z.k = k;
@@ -621,8 +732,20 @@ function zoomTo(k, cx, cy, animate) {
 function toggleZoom(img, e) {
   if (Z.img) return unzoom();
   const r = img.getBoundingClientRect();
-  /* enough to be worth it, capped so a small file doesn't turn to mush */
-  const k = Math.max(1.6, Math.min(img.naturalWidth / r.width || 2, 5));
+
+  /* ZOOM TO FIT THE SCREEN, not to 1:1.
+
+     A click used to jump straight to native pixels, which on a
+     2000px poster means landing somewhere in the middle of it with
+     no idea which part you are looking at. Fitting the viewport is
+     what people actually want first: the whole picture, as large as
+     it goes, with the panel and its chrome out of the way. Going
+     closer is what the wheel and the pinch are for.
+
+     min() of the two ratios is "contain" — the axis that runs out
+     of room first decides. */
+  const fit = Math.min(innerWidth / r.width, innerHeight / r.height);
+  const k = Math.max(1, fit);
 
   const clone = img.cloneNode(true);
   clone.removeAttribute("id");
@@ -634,15 +757,16 @@ function toggleZoom(img, e) {
   img.style.visibility = "hidden";
 
   Z.img = img; Z.clone = clone; Z.base = r; Z.k = 1; Z.x = 0; Z.y = 0;
-  /* k is 1:1 pixels — the level a click lands on. The ceiling sits
-     ABOVE it on purpose: with max == the click level there is
-     nowhere for a pinch-out or a wheel-zoom to go, so on a phone
-     (where 1:1 is already a big number) the gesture would silently
-     do nothing. 1.6x past native is enough to inspect a detail
-     without turning the file to mush; the 8 is a hard stop. */
-  Z.nat = k;
-  Z.max = Math.min(Math.max(k * 1.6, 4), 8);
+  /* The ceiling has to clear BOTH the fit level and native pixels,
+     or a gesture silently does nothing: on a phone native is already
+     a big number, and on a wide screen the fit can exceed it. 1.6x
+     past whichever is larger is enough to inspect a detail without
+     turning the file to mush; 8 is a hard stop. */
+  Z.nat = img.naturalWidth / r.width || k;
+  Z.min = k;                       /* fit — the floor, see zoomTo */
+  Z.max = Math.min(Math.max(k, Z.nat) * 1.6, 8);
   makeBars();
+  hint(e);
   apply(false);
   /* flush this as the transition's starting point. reading a layout
      property forces it synchronously — rAF would be the usual trick but
@@ -763,9 +887,8 @@ function onPointerUp(e) {
   Z.panFrom = Z.downAt = null;
   if (Z.clone) Z.clone.style.cursor = "zoom-out";
   setTimeout(() => Z.dragged = false, 0);   /* let the click handler see it */
-  /* pinched all the way back down: close rather than leaving a
-     zoomed view that is no longer zoomed into anything */
-  if (Z.img && Z.k <= 1.02) unzoom();
+  /* a pinch that runs out of room settles at the fit level and
+     stays open — see the floor note in zoomTo */
 }
 
 /* on the window, not the clone: a drag that leaves the image still
@@ -802,8 +925,8 @@ if (lb) {
     e.preventDefault();
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1;
     if (e.ctrlKey || e.metaKey) {
+      /* no close-on-zoom-out: zoomTo floors at the fit level */
       zoomTo(Z.k * Math.exp(-e.deltaY * unit * 0.0035), e.clientX, e.clientY, false);
-      if (Z.k <= 1.02) unzoom();
       return;
     }
     Z.x -= e.deltaX * unit;
@@ -812,8 +935,8 @@ if (lb) {
     apply(false);
   }, { passive: false });
 
-  $("#lbPrev").addEventListener("click", () => step(-1));
-  $("#lbNext").addEventListener("click", () => step(1));
+  $("#lbPrev").addEventListener("click", () => stepKeepingZoom(-1));
+  $("#lbNext").addEventListener("click", () => stepKeepingZoom(1));
   lb.addEventListener("click", e => {
     /* Zoomed: anything that is NOT the image steps back out of the
        zoom, rather than doing nothing. Reaching this handler already
@@ -844,9 +967,12 @@ if (lb) {
   addEventListener("keydown", e => {
     if (!lb.classList.contains("open")) return;
     if (e.key === "Escape") return Z.img ? unzoom() : shut();
+    /* the arrows work zoomed as well as not — being close in on one
+       picture is exactly when you want to see the next one the same
+       way, and it saves zooming out and back in for every piece */
+    if (e.key === "ArrowLeft") return stepKeepingZoom(-1);
+    if (e.key === "ArrowRight") return stepKeepingZoom(1);
     if (Z.img) return;
-    if (e.key === "ArrowLeft") step(-1);
-    if (e.key === "ArrowRight") step(1);
     if (e.key === "Tab") {
       const f = $$("button, a[href]", lb).filter(el => el.offsetParent !== null);
       if (!f.length) return;

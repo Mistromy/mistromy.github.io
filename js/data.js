@@ -334,7 +334,7 @@ const LABS = [
 /* ---------- the marquee ---------- */
 const MARQUEE = [
   "please, wake up", '"I guess, I\'m afraid..."', "#299.9KG CLUB", "I'll give up tomorrow",
-  "I choose UNLIMITED games, but no games", "mist you too", "visibility: low", "do not evaporate",
+  "I choose games, UNLIMITED games, but no games", "mist you too", "visibility: low", "do not evaporate",
   "起きてください", "mgła gęstnieje", "もやもや", "67", "mist-er Worldwide",
   '"Hey you, you\'re finally awake."', '"Protocol 3: Protect the Pilot"', "The fog is coming.", "rendered in 240p",
   "it works on my machine", "znowu mam hikikomori", "cicho wszędzie, głucho wszędzie",
@@ -352,5 +352,5 @@ const MARQUEE = [
   "not even close", "if you wish to defeat me, train for another hundred years", "I'm always in pursuit of knowledge",
   "clutching my pearls!", "I'm glad you asked!", "I don't believe in comedy",
   "w piątki leżę w wannie", 'git commit -m "please work"', "patrz, to noWy baTmAN", "unexpected like a mixtape",
-  "bede gral w gre",
+  "bede gral w gre", "im so like in like with you", "I just żarted", "noted.", "Insightful."
 ]

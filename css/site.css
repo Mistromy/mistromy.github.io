@@ -768,6 +768,36 @@ a.inline {
   opacity: 1
 }
 
+/* ---------- view all ----------
+   A grey hyperlink sitting just under the last row, and nothing
+   more. It follows sixteen loud pictures; a bordered button there
+   is a second thing asking to be looked at, and it wins that fight
+   against the work purely by being a shape. A link is enough — the
+   person reaching for it has already decided. */
+.after {
+  display: flex;
+  justify-content: center;
+  padding-top: 18px;
+}
+
+.view-all {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: .1em;
+  color: var(--dim-safe);
+  border-bottom: 1px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+
+.view-all::after {
+  content: " \2192"
+}
+
+.view-all:hover {
+  color: var(--paper);
+  border-bottom-color: var(--paper)
+}
+
 /* ---------- lightbox ---------- */
 .lb {
   position: fixed;
@@ -867,6 +897,14 @@ a.inline {
   cursor: zoom-in
 }
 
+/* --frame-cap is the cover's rendered width, measured in
+   js/site.js once it has loaded. Every frame below the cover is
+   held to it, so a supporting shot can never render larger than
+   the piece it supports. */
+.stage img:not(:first-of-type) {
+  max-width: min(100%, var(--frame-cap, 100%));
+}
+
 .frametag {
   font-family: var(--mono);
   font-size: 11px;
@@ -901,10 +939,50 @@ a.inline {
   right: 18px
 }
 
-.lb.zooming .lb-arrow,
+/* the caption goes; the arrows stay, because moving between pieces
+   while zoomed in is a thing you want to do and hiding the control
+   for it means zooming out and back in for every picture */
 .lb.zooming .panel-h {
   opacity: 0;
   pointer-events: none
+}
+
+/* darker once a picture is filling the screen — the backdrop stops
+   being a panel behind a viewer and becomes the room the work is
+   hanging in. Everything not the artwork should recede. */
+.lb.zooming {
+  background: rgba(2, 2, 2, .985)
+}
+
+.lb {
+  transition: background .3s ease
+}
+
+/* ---------- the controls hint ----------
+   pointer-events:none is essential — it sits directly under the
+   cursor, and a label you can accidentally click would swallow the
+   very interaction it is describing. */
+.zhint {
+  position: fixed;
+  z-index: 220;
+  pointer-events: none;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: .12em;
+  text-transform: lowercase;
+  white-space: nowrap;
+  color: var(--paper);
+  background: rgba(3, 3, 3, .82);
+  border: 1px solid var(--line-2);
+  padding: 6px 10px;
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity .28s ease, transform .28s ease;
+}
+
+.zhint.on {
+  opacity: 1;
+  transform: none
 }
 
 /* ---------- pan indicators ----------
