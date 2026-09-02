@@ -905,6 +905,23 @@ a.inline {
   max-width: min(100%, var(--frame-cap, 100%));
 }
 
+/* "2 more below" — sits under the cover only when there is
+   something under it. The stage scrolls, but nothing said so, and a
+   five-frame piece looked exactly like a one-frame piece until you
+   happened to try. */
+.morenote {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--dim-safe);
+  margin: 0;
+}
+
+.morenote::after {
+  content: " \2193"
+}
+
 .frametag {
   font-family: var(--mono);
   font-size: 11px;
@@ -939,10 +956,12 @@ a.inline {
   right: 18px
 }
 
-/* the caption goes; the arrows stay, because moving between pieces
-   while zoomed in is a thing you want to do and hiding the control
-   for it means zooming out and back in for every picture */
-.lb.zooming .panel-h {
+/* zoomed, NOTHING but the picture. the veil covers the viewer, and
+   these two would otherwise sit on top of it: the arrows are fixed
+   at z-index 130 and the caption rides the panel. Arrow KEYS still
+   work while zoomed — it is only the on-screen furniture that goes. */
+.lb.zooming .panel-h,
+.lb.zooming .lb-arrow {
   opacity: 0;
   pointer-events: none
 }
@@ -958,23 +977,63 @@ a.inline {
   transition: background .3s ease
 }
 
+/* ---------- the veil ----------
+   Above the whole viewer, below the enlarged picture. Everything
+   that is not the artwork disappears behind it.
+
+   pointer-events:none: clicking off the picture must still reach
+   .lb underneath, which is what steps back out of the zoom. */
+.zveil {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: #000;
+  opacity: .93;
+  pointer-events: none;
+}
+
+/* the way out, for anyone who does not think to press Escape */
+.zclose {
+  position: fixed;
+  top: 16px;
+  right: 18px;
+  z-index: 215;
+  width: 38px;
+  height: 38px;
+  line-height: 1;
+  font-size: 22px;
+  font-family: var(--mono);
+  color: var(--dim-safe);
+  background: rgba(3, 3, 3, .6);
+  border: 1px solid var(--line-2);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+
+.zclose:hover {
+  color: var(--paper);
+  border-color: var(--paper)
+}
+
 /* ---------- the controls hint ----------
-   pointer-events:none is essential — it sits directly under the
-   cursor, and a label you can accidentally click would swallow the
-   very interaction it is describing. */
+   Sits where you clicked and stays there. pointer-events are ON,
+   unlike the veil, because it carries its own dismiss — and the ×
+   lights up on hover so it reads as something you can act on. */
 .zhint {
   position: fixed;
   z-index: 220;
-  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--mono);
   font-size: 11.5px;
-  letter-spacing: .12em;
+  letter-spacing: .1em;
   text-transform: lowercase;
   white-space: nowrap;
   color: var(--paper);
-  background: rgba(3, 3, 3, .82);
+  background: rgba(3, 3, 3, .88);
   border: 1px solid var(--line-2);
-  padding: 6px 10px;
+  padding: 7px 8px 7px 11px;
   opacity: 0;
   transform: translateY(3px);
   transition: opacity .28s ease, transform .28s ease;
@@ -983,6 +1042,79 @@ a.inline {
 .zhint.on {
   opacity: 1;
   transform: none
+}
+
+.zhintx,
+.morex {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 3px;
+  color: var(--dim);
+  transition: color .12s;
+}
+
+/* hovering ANYWHERE on the label lights the × — the affordance has
+   to be findable before the pointer is already on top of it */
+.zhint:hover .zhintx,
+.zhintx:hover,
+.morenote:hover .morex,
+.morex:hover {
+  color: var(--paper)
+}
+
+/* ---------- "more below" ----------
+   An overlay at the foot of the stage. In the flow it displaced the
+   next picture and left you reading half a sentence; floating it
+   puts the sliver of the image below back on screen, which was
+   always the better signal. */
+.morenote {
+  position: absolute;
+  z-index: 125;
+  left: 50%;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: rgba(3, 3, 3, .88);
+  border: 1px solid var(--line-2);
+  padding: 7px 8px 7px 12px;
+  opacity: 0;
+  transform: translate(-50%, 10px);
+  transition: opacity .3s ease, transform .3s ease;
+  pointer-events: auto;
+}
+
+.morenote.on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  /* a slow nudge downward — the motion is the message, and it says
+     "this way" more directly than the word "below" does */
+  animation: nudge 1.9s ease-in-out infinite;
+}
+
+.morenote span::after {
+  content: " \2193"
+}
+
+@keyframes nudge {
+
+  0%,
+  100% {
+    transform: translate(-50%, 0)
+  }
+
+  50% {
+    transform: translate(-50%, 4px)
+  }
 }
 
 /* ---------- pan indicators ----------

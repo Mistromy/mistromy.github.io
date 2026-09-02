@@ -85,8 +85,12 @@ const PL = {
      unlike every other key they have no English original on the
      page to fall back to — site.js carries its own. keep both
      short: the hint sits under the cursor. */
-  "zoom.hint": "przeciągnij · przewiń · esc",
-  "zoom.hint.touch": "przeciągnij · szczypnij · dotknij aby zamknąć",
+  /* {n} is replaced with the number of frames below the cover */
+  "lb.more": "jeszcze {n} niżej",
+  "lb.dismiss": "Zamknij",
+  "zoom.close": "Zamknij pełny rozmiar",
+  "zoom.hint": "przeciągnij · przewiń · ctrl+scroll przybliża · esc zamyka",
+  "zoom.hint.touch": "przeciągnij · szczypnij · dotknij obok aby zamknąć",
 
   /* ---- the copy ----
      ✏ all three of these are your voice. the <span class="pending">

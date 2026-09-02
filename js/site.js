@@ -272,24 +272,56 @@ const AR = (() => {
   };
 })();
 
-const measure = it => {
-  const key = slug(it.title);
+/* ------------------------------------------------------------
+   TILES ARE NOT PIECES.
+
+   A piece is one entry in ART and one thing the viewer opens. A
+   tile is one rectangle in the grid — and a piece may put more
+   than one there.
+
+   Mark any frame in `images` with hero:true and it earns its own
+   tile, so a project with two strong images can show both in the
+   grid while either one still opens the entire set. That is why
+   the grid runs on TILES and the viewer runs on OPEN: they are
+   different lists with different lengths.
+
+       images: [
+         { src: "...", tag: "wireframe", hero: true },
+       ]
+   ------------------------------------------------------------ */
+const TILES = [];
+
+function tilesFor(it, pieceIdx) {
+  /* the cover always tiles; it has local thumbnails to try first */
+  const out = [{ it, pieceIdx, frame: 0, srcs: [...tileSrcs(it), it.img] }];
+  (it.images || []).forEach((f, n) => {
+    const o = typeof f === "string" ? { src: f } : f;
+    /* frame n+1, because frame 0 is the cover */
+    if (o.hero) out.push({ it, pieceIdx, frame: n + 1, srcs: [o.src] });
+  });
+  return out;
+}
+
+const measure = t => {
+  /* the frame number is part of the key — two tiles from one piece
+     are two different pictures with two different shapes */
+  const key = slug(t.it.title) + (t.frame ? "#" + t.frame : "");
   const hit = AR.get(key);
   /* a hit resolves synchronously — no request, no decode, no wait */
-  if (hit && hit.a > 0) return Promise.resolve(Object.assign(it, { _src: hit.s, _ar: hit.a }));
+  if (hit && hit.a > 0) { t._src = hit.s; t._ar = hit.a; return Promise.resolve(t); }
 
   return new Promise(res => {
-    const chain = [...tileSrcs(it), it.img];
     (function attempt(i) {
-      if (i >= chain.length) return res(null);
+      if (i >= t.srcs.length) return res(null);
       const im = new Image();
       im.onload = () => {
-        const ar = im.naturalWidth / im.naturalHeight;
-        AR.set(key, { s: chain[i], a: ar });
-        res(Object.assign(it, { _src: chain[i], _ar: ar }));
+        t._ar = im.naturalWidth / im.naturalHeight;
+        t._src = t.srcs[i];
+        AR.set(key, { s: t._src, a: t._ar });
+        res(t);
       };
       im.onerror = () => attempt(i + 1);
-      im.src = chain[i];
+      im.src = t.srcs[i];
     })(0);
   });
 };
@@ -346,17 +378,18 @@ function layout(mount, items, maxRows) {
     const el = document.createElement("div");
     /* a short tail is centred — left-aligned it reads as a mistake */
     el.className = "jrow" + (full[ri] ? "" : " jrow-tail");
-    r.forEach(it => {
+    r.forEach(t => {
+      const it = t.it;
       const extra = (it.images || []).length;
       const b = document.createElement("button");
       b.type = "button";
       b.className = "tile";
-      b.style.width = Math.round(it._ar * h) + "px";
+      b.style.width = Math.round(t._ar * h) + "px";
       b.style.height = Math.round(h) + "px";
       b.innerHTML =
         `<span class="tag">${mediums(it).join("·")} // ${it.year}</span>` +
         (extra ? `<span class="plus">+${extra}</span>` : "") +
-        `<img src="${it._src}" alt="${altFor(it).replace(/"/g, "&quot;")}" loading="lazy" decoding="async">` +
+        `<img src="${t._src}" alt="${altFor(it).replace(/"/g, "&quot;")}" loading="lazy" decoding="async">` +
         `<span class="name">${it.title}</span>`;
 
       /* The src may have come from the remembered ratios rather than
@@ -365,12 +398,12 @@ function layout(mount, items, maxRows) {
          uses; indexOf advances every time, so this cannot loop. */
       const im = b.querySelector("img");
       im.addEventListener("error", () => {
-        const chain = [...tileSrcs(it), it.img];
-        const next = chain.indexOf(im.getAttribute("src")) + 1;
-        if (next > 0 && next < chain.length) im.src = chain[next];
+        const next = t.srcs.indexOf(im.getAttribute("src")) + 1;
+        if (next > 0 && next < t.srcs.length) im.src = t.srcs[next];
       });
 
-      b.addEventListener("click", () => open(OPEN.indexOf(it)));
+      /* opens the whole piece, landing on the frame this tile shows */
+      b.addEventListener("click", () => open(t.pieceIdx, false, t.frame));
       el.appendChild(b);
     });
     mount.appendChild(el);
@@ -383,7 +416,16 @@ function layout(mount, items, maxRows) {
   if (!mount) return;
   const maxRows = parseInt(mount.dataset.rows || "0", 10);
   const pool = maxRows ? Math.min(ART.length, maxRows * 5) : ART.length;
-  (await Promise.all(ART.slice(0, pool).map(measure))).filter(Boolean).forEach(m => OPEN.push(m));
+
+  /* OPEN is every piece in the pool, in data order — the viewer's
+     sequence, and what a /p/<slug> deep link resolves against. It
+     holds pieces even if their picture failed, so a shared link
+     still opens rather than 404ing on a broken thumbnail.
+     TILES is the grid, which may be longer: see tilesFor(). */
+  const pieces = ART.slice(0, pool);
+  pieces.forEach(p => OPEN.push(p));
+  const wanted = pieces.flatMap((it, i) => tilesFor(it, i));
+  (await Promise.all(wanted.map(measure))).filter(Boolean).forEach(t => TILES.push(t));
   /* THE REMEMBERED WIDTH IS THE ONE LAYOUT USED, not the one the
      box has afterwards.
 
@@ -398,7 +440,7 @@ function layout(mount, items, maxRows) {
 
      Taking the width back from layout() closes that gap: the
      ResizeObserver sees 1089 against a remembered 1104 and relays. */
-  let w = layout(mount, OPEN, maxRows);
+  let w = layout(mount, TILES, maxRows);
 
   /* Check once, synchronously, whether filling the grid changed the
      grid. scrollbar-gutter handles the usual cause, but anything
@@ -406,14 +448,14 @@ function layout(mount, items, maxRows) {
      waiting for a ResizeObserver, which does not report at all in a
      throttled tab or some embedded webviews. Reading clientWidth
      forces layout, so this is exact rather than hopeful. */
-  if (mount.clientWidth !== w) w = layout(mount, OPEN, maxRows);
+  if (mount.clientWidth !== w) w = layout(mount, TILES, maxRows);
 
   /* a mount with no width yet (hidden tab, display:none ancestor, a
      container that hasn't been laid out) makes layout() bail — without
      a retry the gallery stays empty forever. watch the box itself. */
   const relayout = () => {
     if (mount.clientWidth === w) return;
-    w = layout(mount, OPEN, maxRows);
+    w = layout(mount, TILES, maxRows);
   };
   if ("ResizeObserver" in window) new ResizeObserver(relayout).observe(mount);
   addEventListener("resize", relayout);
@@ -439,10 +481,64 @@ let idx = 0, lastFocus = null, pushed = false;
 const lb = $("#lb"), stage = $("#lbStage");
 const Z = { img: null, clone: null, k: 1, x: 0, y: 0, base: null };
 
-function open(i, replace = false) {
+/* which frame of the open piece the arrows are standing on */
+let fIdx = 0;
+
+/* ============================================================
+   "more below"
+
+   An OVERLAY across the foot of the stage, not a line in the flow.
+   In the flow it pushed the next picture down and you ended up
+   looking at half a sentence — where before you at least saw the
+   top edge of the image below, which was doing the job better than
+   the label was. Floating it puts that sliver of picture back and
+   still says what it is.
+
+   It comes back for EVERY piece rather than once ever, because it
+   is not a tutorial — it is a fact about this particular piece,
+   and the answer changes. It arrives with a small bounce so the
+   motion itself reads as "there is a direction here", goes as soon
+   as you scroll a little, times out if you don't, and carries an ×
+   for anyone who wants it gone now.
+   ============================================================ */
+let moreTimer = null;
+
+function moreNote(count) {
+  const old = $(".morenote", lb);
+  if (old) old.remove();
+  clearTimeout(moreTimer);
+  if (count < 1) return;
+
+  const el = document.createElement("div");
+  el.className = "morenote";
+  el.innerHTML =
+    `<span>${((I18N.t("lb.more") || "{n} more below")).replace("{n}", count)}</span>` +
+    `<button type="button" class="morex" aria-label="${I18N.t("lb.dismiss") || "Dismiss"}">×</button>`;
+
+  const go = () => {
+    if (!el.isConnected) return;
+    el.classList.remove("on");
+    setTimeout(() => el.remove(), 320);
+    stage.removeEventListener("scroll", onScroll);
+    clearTimeout(moreTimer);
+  };
+  /* a nudge is enough — it should not wait for you to reach the
+     bottom before admitting you already understood */
+  const onScroll = () => { if (stage.scrollTop > 24) go(); };
+
+  el.querySelector(".morex").addEventListener("click", e => { e.stopPropagation(); go(); });
+  stage.addEventListener("scroll", onScroll, { passive: true });
+  lb.appendChild(el);
+  void el.offsetWidth;             /* flush, so the entrance can run */
+  el.classList.add("on");
+  moreTimer = setTimeout(go, 5200);
+}
+
+function open(i, replace = false, frame = 0) {
   if (i < 0 || !OPEN[i]) return;
-  unzoom(true);
+  unzoom();
   idx = i;
+  fIdx = frame;
   const it = OPEN[i];
   const frames = [it.img, ...(it.images || [])].map(f => typeof f === "string" ? { src: f } : f);
 
@@ -474,9 +570,11 @@ function open(i, replace = false) {
     img.addEventListener("click", e => {
       if (Z.dragged) return;
       e.stopPropagation();
+      fIdx = n;                 /* arrows continue from what you clicked */
       toggleZoom(img, e);
     });
     stage.appendChild(img);
+
     if (f.tag) {
       const tg = document.createElement("span");
       tg.className = "frametag";
@@ -505,6 +603,7 @@ function open(i, replace = false) {
   }
 
   stage.scrollTop = 0;
+  moreNote(frames.length - 1);
   lb.classList.add("open");
   document.body.classList.add("locked");
   lastFocus ||= document.activeElement;
@@ -519,7 +618,7 @@ function open(i, replace = false) {
 }
 
 function shut(fromPop = false) {
-  unzoom(true);
+  unzoom();
   lb.classList.remove("open");
   stage.innerHTML = "";
   document.body.classList.remove("locked");
@@ -534,21 +633,83 @@ function shut(fromPop = false) {
 }
 const step = d => open((idx + d + OPEN.length) % OPEN.length, true);
 
-/* Move through the gallery WITHOUT dropping out of the zoom.
+/* ============================================================
+   THE ARROWS WALK FRAMES FIRST, PIECES SECOND.
 
-   open() tears the zoom down to rebuild the stage, so the state has
-   to be carried across by hand and re-applied to the new cover. The
-   wait matters: a picture that has not loaded has no box yet, and
-   zooming to fit a zero-sized rect gives a scale of infinity. */
-function stepKeepingZoom(d) {
-  const wasZoomed = !!Z.img;
-  step(d);
-  if (!wasZoomed) return;
+   A piece with five frames is a small gallery of its own, and
+   inside it the arrows move between those frames. They only cross
+   into the next or previous piece once there is nowhere left to go
+   — so one continuous sequence runs through everything, and you
+   never have to know whether the thing you are looking at is a
+   "piece" or a "frame".
+
+   Zoomed, the next frame arrives zoomed as well: being close in on
+   one picture is exactly when you want the next one the same way.
+   Unzoomed, the stage scrolls to it instead.
+   ============================================================ */
+function showFrame(img) {
+  if (!img) return;
+  if (Z.img) {
+    unzoom(true);
+    const go = () => {
+      /* a picture that has not loaded has no box, and fitting a
+         zero-sized rect gives a scale of infinity */
+      if (img.getBoundingClientRect().width) {
+        /* false: a swap, not a zoom — see apply() */
+        toggleZoom(img, { clientX: innerWidth / 2, clientY: innerHeight / 2 }, false);
+      }
+    };
+    if (img.complete && img.naturalWidth) go();
+    else img.addEventListener("load", go, { once: true });
+  } else {
+    /* Set scrollTop directly rather than calling scrollIntoView.
+
+       Smooth scrolling is animated, so it needs frames — and in a
+       throttled tab or a non-painting context it simply never
+       happens, leaving the frame counter advanced and the stage
+       exactly where it was. Rects give the same centring with
+       arithmetic instead of a promise to animate. */
+    const sr = stage.getBoundingClientRect(), ir = img.getBoundingClientRect();
+    stage.scrollTop += (ir.top - sr.top) - (sr.height - ir.height) / 2;
+  }
+}
+
+/* THE ARROWS MEAN DIFFERENT THINGS AT DIFFERENT DEPTHS.
+
+   Not zoomed, you are browsing the gallery, so they move between
+   PIECES — the behaviour the viewer has always had.
+
+   Zoomed, you have gone into one piece, so they move between ITS
+   frames. Only when a piece runs out do they carry on into the next
+   one, so a long look never dead-ends.
+
+   The depth you are at decides, which means neither mode ever
+   surprises you: the arrows always do the thing that matches what
+   is currently filling the screen. */
+function stepFrame(d) {
+  if (!Z.img) return step(d);          /* browsing: piece to piece */
+
+  const imgs = $$("img", stage);
+  const next = fIdx + d;
+  if (next < 0 || next >= imgs.length) {
+    step(d);
+    showFrameWhenReady();
+    return;
+  }
+  fIdx = next;
+  showFrame(imgs[fIdx]);
+}
+
+/* after step() has rebuilt the stage, re-enter the zoom on the new
+   cover — Z.img is already null by then, so showFrame's zoomed
+   branch cannot be used */
+function showFrameWhenReady() {
   const img = stage.querySelector("img");
   if (!img) return;
   const go = () => {
-    if (!img.getBoundingClientRect().width) return;
-    toggleZoom(img, { clientX: innerWidth / 2, clientY: innerHeight / 2 });
+    if (img.getBoundingClientRect().width) {
+      toggleZoom(img, { clientX: innerWidth / 2, clientY: innerHeight / 2 }, false);
+    }
   };
   if (img.complete && img.naturalWidth) go();
   else img.addEventListener("load", go, { once: true });
@@ -564,6 +725,14 @@ function clamp(k, baseRect) {
   else y = Math.min(-baseRect.top, Math.max(innerHeight - h - baseRect.top, y));
   Z.x = x; Z.y = y;
 }
+/* Opening and closing the zoom ANIMATE — the growth is what tells
+   you where the small picture went and where it came back to.
+
+   Everything continuous does not: wheel, pinch and drag are driven
+   frame by frame by your hand, and a transition on top of that is
+   just lag. Arrow-cycling between frames does not either — there
+   the picture is being REPLACED, not moved, and animating a swap
+   makes every press a quarter-second of choreography. */
 function apply(animate) {
   Z.clone.style.transition = animate && !reduced ? "transform .28s cubic-bezier(.2,.7,.3,1)" : "none";
   Z.clone.style.transform = `translate(${Z.x}px,${Z.y}px) scale(${Z.k})`;
@@ -611,12 +780,13 @@ function hint(e) {
 
   const touch = matchMedia("(hover: none)").matches;
   const text = (touch ? I18N.t("zoom.hint.touch") : I18N.t("zoom.hint"))
-    || (touch ? "drag · pinch · tap to close" : "drag · scroll · esc");
+    || (touch
+      ? "drag to move · pinch to zoom · tap outside to close"
+      : "drag to move · scroll to move · ctrl+scroll to zoom · esc to close");
 
   const el = document.createElement("div");
   el.className = "zhint";
-  el.setAttribute("aria-hidden", "true");
-  el.textContent = text;
+  el.innerHTML = `<span>${text}</span><button type="button" class="zhintx" aria-label="${I18N.t("lb.dismiss") || "Dismiss"}">×</button>`;
   document.body.appendChild(el);
 
   const place = (x, y) => {
@@ -635,19 +805,60 @@ function hint(e) {
   void el.offsetWidth;
   el.classList.add("on");
 
-  const follow = ev => place(ev.clientX, ev.clientY);
+  /* placed where you clicked and then LEFT there. Following the
+     cursor meant a label chasing you around while you were trying
+     to read it — it only has to appear where you are already
+     looking, once. */
   const done = () => {
-    removeEventListener("pointermove", follow);
-    removeEventListener("pointerdown", done);
+    if (!el.isConnected) return;
     removeEventListener("wheel", done);
     clearTimeout(timer);
     el.classList.remove("on");
     setTimeout(() => el.remove(), 400);
   };
-  addEventListener("pointermove", follow, { passive: true });
-  addEventListener("pointerdown", done, { passive: true });
+  el.querySelector(".zhintx").addEventListener("click", e => { e.stopPropagation(); done(); });
+  /* a wheel means they are already using it; a click does not, since
+     the click that opened the zoom would dismiss it instantly */
   addEventListener("wheel", done, { passive: true });
-  const timer = setTimeout(done, 1600);
+  const timer = setTimeout(done, 4600);
+}
+
+/* ============================================================
+   the veil
+
+   A zoomed picture is the only thing that should be on screen. The
+   viewer's own furniture — the caption, the arrows, the panel edge
+   — sits BEHIND the enlarged image but around it, so it stays in
+   view and keeps offering buttons that no longer make sense.
+
+   So a dark layer is dropped in between: above the whole viewer,
+   below the zoomed image. Everything that isn't the artwork goes.
+
+   pointer-events stays none deliberately. Clicking off the picture
+   should still step back out of the zoom, and that handler lives on
+   .lb underneath — blocking the clicks would break it.
+   ============================================================ */
+function veil(on) {
+  if (on) {
+    if (Z.veil) return;
+    Z.veil = document.createElement("div");
+    Z.veil.className = "zveil";
+    Z.veil.setAttribute("aria-hidden", "true");
+    document.body.appendChild(Z.veil);
+
+    /* an unmissable way out, for anyone who does not think to press
+       Escape or click the background */
+    Z.x8 = document.createElement("button");
+    Z.x8.className = "zclose";
+    Z.x8.type = "button";
+    Z.x8.setAttribute("aria-label", I18N.t("zoom.close") || "Close full size");
+    Z.x8.textContent = "×";
+    Z.x8.addEventListener("click", e => { e.stopPropagation(); unzoom(); });
+    document.body.appendChild(Z.x8);
+    return;
+  }
+  Z.veil?.remove(); Z.veil = null;
+  Z.x8?.remove(); Z.x8 = null;
 }
 
 function makeBars() {
@@ -702,7 +913,7 @@ function updateBars() {
    screen point into the image's own unscaled coordinates, change k,
    then solve for the translate that puts the same image point back
    under the same screen point. */
-function zoomTo(k, cx, cy, animate) {
+function zoomTo(k, cx, cy) {
   const r = Z.base;
   if (!r) return;
   /* THE FLOOR IS THE FIT LEVEL, not 1.
@@ -720,7 +931,7 @@ function zoomTo(k, cx, cy, animate) {
   Z.x = cx - r.left - px * k;                /* ...put back under the cursor */
   Z.y = cy - r.top - py * k;
   clamp(k, r);
-  apply(animate);
+  apply(false);
 }
 
 /* the ORIGINAL <img> never moves. a COPY is lifted out and grown on top
@@ -729,7 +940,7 @@ function zoomTo(k, cx, cy, animate) {
    what fixes both bugs: the grid can't jitter (nothing left the flow)
    and closing the zoom can't teleport to the top (scrollTop never
    changed in the first place). */
-function toggleZoom(img, e) {
+function toggleZoom(img, e, animate = true) {
   if (Z.img) return unzoom();
   const r = img.getBoundingClientRect();
 
@@ -765,42 +976,48 @@ function toggleZoom(img, e) {
   Z.nat = img.naturalWidth / r.width || k;
   Z.min = k;                       /* fit — the floor, see zoomTo */
   Z.max = Math.min(Math.max(k, Z.nat) * 1.6, 8);
+  Z.base0 = r;                     /* where it grew FROM, for the return */
   makeBars();
-  hint(e);
+  veil(true);
+  if (animate) hint(e);            /* not on an arrow swap */
   apply(false);
-  /* flush this as the transition's starting point. reading a layout
-     property forces it synchronously — rAF would be the usual trick but
-     it doesn't fire in a throttled or hidden tab, and the FINAL position
-     must never depend on the frame loop running. */
+  /* flush the starting state as the transition's first frame.
+     reading a layout property forces it synchronously — rAF would be
+     the usual trick but it doesn't fire in a throttled or hidden
+     tab, and the FINAL position must never depend on the frame loop
+     running. */
   void clone.offsetWidth;
 
   Z.k = k;
   Z.x = (e.clientX - r.left) * (1 - k);
   Z.y = (e.clientY - r.top) * (1 - k);
   clamp(k, r);
-  apply(true);
+  apply(animate);
   lb.classList.add("zooming");
   clone.addEventListener("click", () => { if (!Z.dragged) unzoom(); });
   clone.addEventListener("pointerdown", onPointerDown);
 }
 
 function unzoom(instant = false) {
-  const { img, clone, base } = Z;
+  const { img, clone, base0 } = Z;
   if (!img || !clone) return;
   Z.img = null;
   lb.classList.remove("zooming");
   killBars();
+  veil(false);
+
   const done = () => { clone.remove(); img.style.visibility = ""; Z.clone = null; };
   if (instant || reduced) return done();
-  /* animate back onto wherever the original actually sits now, rather
-     than assuming it hasn't moved */
+
+  /* shrink back onto wherever the original actually sits NOW, rather
+     than assuming the page hasn't moved under it */
   const now = img.getBoundingClientRect();
   Z.k = 1;
-  Z.x = now.left - base.left;
-  Z.y = now.top - base.top;
+  Z.x = now.left - base0.left;
+  Z.y = now.top - base0.top;
   apply(true);
   clone.addEventListener("transitionend", done, { once: true });
-  setTimeout(done, 340);              /* transitionend can be skipped */
+  setTimeout(done, 340);            /* transitionend can be skipped */
 }
 
 /* ============================================================
@@ -858,7 +1075,7 @@ function onPointerMove(e) {
 
   if (pointers.size >= 2 && Z.pinch) {
     const p = pinchNow();
-    if (p.d > 0 && Z.pinch.d > 0) zoomTo(Z.pinch.k * (p.d / Z.pinch.d), p.cx, p.cy, false);
+    if (p.d > 0 && Z.pinch.d > 0) zoomTo(Z.pinch.k * (p.d / Z.pinch.d), p.cx, p.cy);
     return;
   }
   if (!Z.panFrom) return;
@@ -926,7 +1143,7 @@ if (lb) {
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1;
     if (e.ctrlKey || e.metaKey) {
       /* no close-on-zoom-out: zoomTo floors at the fit level */
-      zoomTo(Z.k * Math.exp(-e.deltaY * unit * 0.0035), e.clientX, e.clientY, false);
+      zoomTo(Z.k * Math.exp(-e.deltaY * unit * 0.0035), e.clientX, e.clientY);
       return;
     }
     Z.x -= e.deltaX * unit;
@@ -935,8 +1152,8 @@ if (lb) {
     apply(false);
   }, { passive: false });
 
-  $("#lbPrev").addEventListener("click", () => stepKeepingZoom(-1));
-  $("#lbNext").addEventListener("click", () => stepKeepingZoom(1));
+  $("#lbPrev").addEventListener("click", () => stepFrame(-1));
+  $("#lbNext").addEventListener("click", () => stepFrame(1));
   lb.addEventListener("click", e => {
     /* Zoomed: anything that is NOT the image steps back out of the
        zoom, rather than doing nothing. Reaching this handler already
@@ -970,8 +1187,8 @@ if (lb) {
     /* the arrows work zoomed as well as not — being close in on one
        picture is exactly when you want to see the next one the same
        way, and it saves zooming out and back in for every piece */
-    if (e.key === "ArrowLeft") return stepKeepingZoom(-1);
-    if (e.key === "ArrowRight") return stepKeepingZoom(1);
+    if (e.key === "ArrowLeft") return stepFrame(-1);
+    if (e.key === "ArrowRight") return stepFrame(1);
     if (Z.img) return;
     if (e.key === "Tab") {
       const f = $$("button, a[href]", lb).filter(el => el.offsetParent !== null);

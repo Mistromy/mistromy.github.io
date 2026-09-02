@@ -188,7 +188,7 @@ const ART = [
   {
     title: "BOB* Summer", year: "2026", medium: ["3d", "product"], img: "https://cdnb.artstation.com/p/assets/images/images/102/098/819/large/mist-beaththeheatwithbobblue.webp?1788359368", tags: "product · poster · summer",
     note: "a fiction drink brand made in collaboration with @hikikomori4646 ",
-    images: ["https://cdnb.artstation.com/p/assets/images/images/102/098/825/large/mist-beaththeheatwithbobyellow.webp?1788359373", "https://cdnb.artstation.com/p/assets/images/images/102/098/835/large/mist-boblemonandblue4.webp?1788359430", "https://cdna.artstation.com/p/assets/images/images/102/098/844/large/mist-bobbluenobg.webp?1788359448", "https://cdna.artstation.com/p/assets/images/images/102/098/868/large/mist-bobyellownobg.webp?1788359512"],
+    images: [{ src: "https://cdnb.artstation.com/p/assets/images/images/102/098/825/large/mist-beaththeheatwithbobyellow.webp?1788359373", hero: true }, "https://cdnb.artstation.com/p/assets/images/images/102/098/835/large/mist-boblemonandblue4.webp?1788359430", "https://cdna.artstation.com/p/assets/images/images/102/098/844/large/mist-bobbluenobg.webp?1788359448", "https://cdna.artstation.com/p/assets/images/images/102/098/868/large/mist-bobyellownobg.webp?1788359512"],
     post: { artstation: "https://www.artstation.com/artwork/8vwAKx" }
   },
   {
@@ -224,7 +224,14 @@ const ART = [
     note: "My lawyers say i can't sell this.", post: { artstation: "https://www.artstation.com/artwork/8BABGm" },
     /* images entries can be a plain url OR { src, tag } — the tag shows
        as a chip on that frame in the fullscreen view ("final",
-       "wireframe", "iteration", any word). mix both forms freely: */
+       "wireframe", "iteration", any word). mix both forms freely.
+
+       hero: true ALSO GIVES THAT FRAME ITS OWN TILE IN THE GRID.
+       Use it when a project has more than one image strong enough to
+       stand on its own: both appear in the gallery, and clicking
+       either one opens the whole set, landing on the one you clicked.
+       Everything without the flag stays inside the piece as before,
+       so adding it to nothing changes nothing. */
     images: [
       { src: "https://cdna.artstation.com/p/assets/images/images/098/446/088/large/mist-pillswireframe.webp?1777062954", tag: "wireframe" },
       { src: "https://cdnb.artstation.com/p/assets/images/images/098/446/139/large/mist-zrzut-ekranu-2026-04-24-213724.webp?1777063052", tag: "viewport" },

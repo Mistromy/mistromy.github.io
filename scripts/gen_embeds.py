@@ -37,7 +37,7 @@ import io
 import urllib.request
 from pathlib import Path
 
-BASE = "https://mistromy.github.io/"
+BASE = "https://mista.tech/"
 # tile image: what the gallery grid actually loads (rows are ~300 px
 # tall, so 900 px covers 2x screens) — this is the lighthouse fix.
 # one size, two formats: webp for everyone, jpg for the stragglers.

@@ -6,4 +6,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://mistromy.github.io/sitemap.xml
+Sitemap: https://mista.tech/sitemap.xml
