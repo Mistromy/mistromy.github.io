@@ -174,6 +174,24 @@ const STACK = [
                            either key alone is fine. */
 const ART = [
   {
+    title: "BOB* Keychains", year: "2026", medium: ["3d", "product"], img: "https://cdna.artstation.com/p/assets/images/images/102/099/512/large/mist-bobkeychains.webp?1788360863", tags: "product · merchandise · keychains",
+    note: "merchandise concepts for BOB*. collab with @hikikomori4646 ",
+    images: ["https://cdna.artstation.com/p/assets/images/images/102/099/524/large/mist-bluekeychain5.webp?1788360917", "https://cdna.artstation.com/p/assets/images/images/102/099/528/large/mist-bobkeychains1.webp?1788360923", "https://cdna.artstation.com/p/assets/images/images/102/099/534/large/mist-bluekeychain6.webp?1788360931", "https://cdna.artstation.com/p/assets/images/images/102/099/538/large/mist-alpha-bobkeychain-blue.jpg?1788360939", "https://cdnb.artstation.com/p/assets/images/images/102/099/543/large/mist-alpha-bobkeychain-orange.webp?1788360944"],
+    post: { artstation: "https://www.artstation.com/artwork/lERJBk" }
+  },
+  {
+    title: "BOB* Strawberry Rave", year: "2026", medium: ["3d", "product"], img: "https://cdnb.artstation.com/p/assets/images/images/102/099/417/large/mist-strawberryrave.webp?1788360696", tags: "product · poster · gothic",
+    note: "a fiction drink brand made in collaboration with @hikikomori4646 ",
+    images: ["https://cdnb.artstation.com/p/assets/images/images/102/099/407/large/mist-bobbb.jpg?1788360689", "https://cdna.artstation.com/p/assets/images/images/102/099/402/original/mist-bez-tla.gif?1788360677", "https://cdnb.artstation.com/p/assets/images/images/102/099/419/large/mist-zrzut-ekranu-2026-09-02-154558.jpg?1788360706", "https://cdnb.artstation.com/p/assets/images/images/102/099/425/large/mist-zrzut-ekranu-2026-09-02-154602.jpg?1788360713"],
+    post: { artstation: "https://www.artstation.com/artwork/8vwAKx" }
+  },
+  {
+    title: "BOB* Summer", year: "2026", medium: ["3d", "product"], img: "https://cdnb.artstation.com/p/assets/images/images/102/098/819/large/mist-beaththeheatwithbobblue.webp?1788359368", tags: "product · poster · summer",
+    note: "a fiction drink brand made in collaboration with @hikikomori4646 ",
+    images: ["https://cdnb.artstation.com/p/assets/images/images/102/098/825/large/mist-beaththeheatwithbobyellow.webp?1788359373", "https://cdnb.artstation.com/p/assets/images/images/102/098/835/large/mist-boblemonandblue4.webp?1788359430", "https://cdna.artstation.com/p/assets/images/images/102/098/844/large/mist-bobbluenobg.webp?1788359448", "https://cdna.artstation.com/p/assets/images/images/102/098/868/large/mist-bobyellownobg.webp?1788359512"],
+    post: { artstation: "https://www.artstation.com/artwork/8vwAKx" }
+  },
+  {
     title: "NO ENTRY", year: "2026", medium: ["2d", "photo"], img: "https://cdnb.artstation.com/p/assets/images/images/100/731/981/large/mist-no-entry2.jpg?1783886414", tags: "brutalist, color, print",
     note: "really enjoying making this. photo taken in Poznań",
     images: ["https://cdna.artstation.com/p/assets/images/images/100/723/294/large/mist-whatsapp-image-2026-07-07-at-22-19-58.jpg?1783861718"],
