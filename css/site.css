@@ -98,14 +98,17 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  /* NO PULL TO REFRESH.
-     On a phone the page is one long scroll, and an overscroll at the
-     top reloads it — which lands you back at the top, having thrown
-     away the position you were reading from. There is nothing on this
-     site that ever needs refreshing by hand; the gesture can only
-     cost something. `contain` also stops the scroll chaining out to
-     whatever is behind the page. */
-  overscroll-behavior-y: contain;
+  /* PULL TO REFRESH IS LEFT ALONE — deliberately, after taking it
+     away once and putting it back.
+
+     It was disabled on the theory that an overscroll at the top
+     reloads the page and dumps you back where you started. That was a
+     guess at a bug, the bug turned out to be something else, and the
+     gesture is one every phone user has. A guess is not a good enough
+     reason to remove a platform behaviour: this page has no state
+     worth protecting from a reload, and someone reaching for refresh
+     has a reason. Containment belongs on the modal scroller inside
+     the viewer, not on the document — see .stage. */
   /* Always reserve the scrollbar's width, whether or not there is
      one. Two things this fixes:
 
@@ -897,6 +900,11 @@ a.inline {
      middle of it with no idea there was anything above. A viewer has
      one obvious starting position and it is the top. */
   overflow-anchor: none;
+  /* HERE it is right, where it was wrong on <html>. This is a modal
+     scroller: reaching its end must not hand the rest of the gesture
+     to the page underneath, or to the browser's own pull-to-refresh
+     while a picture is filling the screen. */
+  overscroll-behavior: contain;
   min-height: 0;
   min-width: 0;
   padding: 18px;
@@ -908,9 +916,30 @@ a.inline {
   scrollbar-color: var(--line-2) transparent;
 }
 
+/* THE SHORTFALL IS THE MESSAGE.
+
+   No frame is allowed to fill the stage. A tall poster left to take
+   the full height lands its bottom edge exactly at the fold, the
+   piece looks like a single picture, and the four frames under it
+   are invisible until somebody happens to try scrolling.
+
+   There used to be a label saying "4 more below". This replaces it,
+   and does the job better: holding every frame short means the top
+   edge of the NEXT one is always showing. That is concrete,
+   permanent, needs no timeout or dismiss button, and needs no
+   translating. A picture of the thing beats a sentence about it.
+
+   ~20px, not the 40 it started at. The signal only has to be
+   unambiguous — enough of the next frame to read as another picture
+   rather than as a border — and past that point every extra pixel is
+   taken off the piece somebody actually came to look at. The cover is
+   the work; the hint is a hint.
+
+   Only tall frames are affected — a landscape image runs out of
+   WIDTH long before it reaches this, so nothing wide gets smaller. */
 .stage img {
   max-width: 100%;
-  max-height: calc(100vh - 190px);
+  max-height: calc(100vh - 210px);
   width: auto;
   height: auto;
   cursor: zoom-in
@@ -1090,11 +1119,27 @@ a.inline {
   font-size: 16px
 }
 
-/* tabular figures: without them 8% / 88% / 188% are three different
-   widths, and the two buttons shuffle sideways as you scroll */
+/* THE READOUT GETS THE SAME BOX AS THE BUTTONS.
+
+   It is a bare <span>, so its height was one line of 12px type while
+   the buttons next to it were 30px tall. With the row aligned to its
+   top, the number sat against the ceiling and the − and + sat centred
+   in their taller boxes, a good 8px lower. Nothing was wrong with the
+   type; the boxes were different heights.
+
+   Centring both inside an identical 30px box also settles the other
+   half of it — the steps are set at 16px and the number at 12px, so
+   even matched boxes would not have shared a baseline. Optical centre
+   is the right alignment here anyway: − and + are symmetrical marks
+   about the maths axis, not letters sitting on a baseline.
+
+   Tabular figures, or 8% / 88% / 188% are three different widths and
+   the two buttons shuffle sideways as you scroll. */
 .zbar .zlvl {
+  display: grid;
+  place-items: center;
+  height: 30px;
   min-width: 54px;
-  text-align: center;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
@@ -1144,8 +1189,7 @@ a.inline {
   transform: none
 }
 
-.zhintx,
-.morex {
+.zhintx {
   background: none;
   border: none;
   cursor: pointer;
@@ -1153,8 +1197,8 @@ a.inline {
   font-size: 14px;
   line-height: 1;
   padding: 0 3px;
-  /* paper held back, not a dim brown: these two also sit over the
-     artwork. Same reasoning as .zbar. */
+  /* paper held back, not a dim brown: this sits over the artwork.
+     Same reasoning as .zbar. */
   color: rgba(255, 246, 233, .62);
   text-shadow: inherit;
   transition: color .12s;
@@ -1163,69 +1207,8 @@ a.inline {
 /* hovering ANYWHERE on the label lights the × — the affordance has
    to be findable before the pointer is already on top of it */
 .zhint:hover .zhintx,
-.zhintx:hover,
-.morenote:hover .morex,
-.morex:hover {
+.zhintx:hover {
   color: var(--paper)
-}
-
-/* ---------- "more below" ----------
-   An overlay at the foot of the stage. In the flow it displaced the
-   next picture and left you reading half a sentence; floating it
-   puts the sliver of the image below back on screen, which was
-   always the better signal. */
-.morenote {
-  position: absolute;
-  z-index: 125;
-  left: 50%;
-  bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--mono);
-  font-size: 11.5px;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--paper);
-  /* A HALO, not a scrim. The bar at the top can afford to darken its
-     whole band; this one cannot — the entire point of floating it is
-     that the sliver of the NEXT picture stays visible underneath, and
-     a gradient across the bottom would cover exactly that. Tight
-     stacked shadows outline the type instead and leave the image
-     alone. See the note on .zhint. */
-  text-shadow:
-    0 0 3px rgba(0, 0, 0, .95),
-    0 0 3px rgba(0, 0, 0, .95),
-    0 0 7px rgba(0, 0, 0, .85),
-    0 1px 2px rgba(0, 0, 0, .95);
-  opacity: 0;
-  transform: translate(-50%, 10px);
-  transition: opacity .3s ease, transform .3s ease;
-  pointer-events: auto;
-}
-
-.morenote.on {
-  opacity: 1;
-  transform: translate(-50%, 0);
-  /* a slow nudge downward — the motion is the message, and it says
-     "this way" more directly than the word "below" does */
-  animation: nudge 1.9s ease-in-out infinite;
-}
-
-.morenote span::after {
-  content: " \2193"
-}
-
-@keyframes nudge {
-
-  0%,
-  100% {
-    transform: translate(-50%, 0)
-  }
-
-  50% {
-    transform: translate(-50%, 4px)
-  }
 }
 
 /* ---------- pan indicators ----------

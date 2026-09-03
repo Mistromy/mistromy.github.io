@@ -530,23 +530,20 @@ const Z = { img: null, clone: null, k: 1, x: 0, y: 0, base: null };
 let fIdx = 0;
 
 /* ============================================================
-   "more below"
+   THERE IS NO "MORE BELOW" LABEL, AND THAT IS THE DESIGN.
 
-   An OVERLAY across the foot of the stage, not a line in the flow.
-   In the flow it pushed the next picture down and you ended up
-   looking at half a sentence — where before you at least saw the
-   top edge of the image below, which was doing the job better than
-   the label was. Floating it puts that sliver of picture back and
-   still says what it is.
+   There was one — an overlay across the foot of the stage saying how
+   many frames were under the cover. It went because the thing it was
+   describing says it better: the top edge of the NEXT picture,
+   showing above the fold, is a concrete, permanent, wordless signal
+   that there is more, and it needs no timeout, no dismiss button and
+   no translation.
 
-   It comes back for EVERY piece rather than once ever, because it
-   is not a tutorial — it is a fact about this particular piece,
-   and the answer changes. It arrives with a small bounce so the
-   motion itself reads as "there is a direction here", goes as soon
-   as you scroll a little, times out if you don't, and carries an ×
-   for anyone who wants it gone now.
+   The label was competing with that signal for the same strip of
+   screen. So instead of writing the fact down, css/site.css simply
+   holds every frame far enough short of the viewport that the next
+   one is always in view — see the max-height note on .stage img.
    ============================================================ */
-let moreTimer = null;
 
 /* ============================================================
    EVERY PIECE OPENS AT ITS TOP
@@ -565,63 +562,40 @@ let moreTimer = null;
    So the top is HELD while the frames land, and released the moment
    the reader touches anything — after that the position is theirs,
    and correcting it would be the actual bug.
-
-   `settling` is what the "more below" note checks: the snap back to
-   zero fires a scroll event, and without it the note would read that
-   as "they have already scrolled" and dismiss itself before it had
-   been on screen for a frame.
    ============================================================ */
-let settling = false, holdTimer = null;
+let holdTimer = null;
 
-function holdTop() {
+/* `frame` is which picture to hold in view, not always the first.
+
+   A tile marked hero:true in data.js is a supporting frame with its
+   own square in the grid, and clicking it should land on THAT frame —
+   otherwise the grid shows you one picture and the viewer opens a
+   different one. The position is recomputed on every tick rather than
+   set once, because the frames above it are still loading and each
+   one that arrives pushes the target further down. */
+function holdTop(frame = 0) {
   clearInterval(holdTimer);
-  settling = true;
-  stage.scrollTop = 0;
+
+  const settle = () => {
+    const img = frame ? $$("img", stage)[frame] : null;
+    if (!img) { stage.scrollTop = 0; return; }
+    const sr = stage.getBoundingClientRect(), ir = img.getBoundingClientRect();
+    stage.scrollTop += (ir.top - sr.top) - (sr.height - ir.height) / 2;
+  };
+  settle();
 
   const release = () => {
     clearInterval(holdTimer);
     holdTimer = null;
-    settling = false;
     for (const ev of ["wheel", "touchstart", "pointerdown", "keydown"])
       stage.removeEventListener(ev, release);
   };
 
-  holdTimer = setInterval(() => { stage.scrollTop = 0; }, 60);
+  holdTimer = setInterval(settle, 60);
   /* pointerdown covers dragging the scrollbar, which fires no wheel */
   for (const ev of ["wheel", "touchstart", "pointerdown", "keydown"])
     stage.addEventListener(ev, release, { passive: true });
   setTimeout(release, 1200);
-}
-
-function moreNote(count) {
-  const old = $(".morenote", lb);
-  if (old) old.remove();
-  clearTimeout(moreTimer);
-  if (count < 1) return;
-
-  const el = document.createElement("div");
-  el.className = "morenote";
-  el.innerHTML =
-    `<span>${((I18N.t("lb.more") || "{n} more below")).replace("{n}", count)}</span>` +
-    `<button type="button" class="morex" aria-label="${I18N.t("lb.dismiss") || "Dismiss"}">×</button>`;
-
-  const go = () => {
-    if (!el.isConnected) return;
-    el.classList.remove("on");
-    setTimeout(() => el.remove(), 320);
-    stage.removeEventListener("scroll", onScroll);
-    clearTimeout(moreTimer);
-  };
-  /* a nudge is enough — it should not wait for you to reach the
-     bottom before admitting you already understood */
-  const onScroll = () => { if (!settling && stage.scrollTop > 24) go(); };
-
-  el.querySelector(".morex").addEventListener("click", e => { e.stopPropagation(); go(); });
-  stage.addEventListener("scroll", onScroll, { passive: true });
-  lb.appendChild(el);
-  void el.offsetWidth;             /* flush, so the entrance can run */
-  el.classList.add("on");
-  moreTimer = setTimeout(go, 5200);
 }
 
 function open(i, replace = false, frame = 0) {
@@ -703,8 +677,7 @@ function open(i, replace = false, frame = 0) {
     else cover.addEventListener("load", cap, { once: true });
   }
 
-  holdTop();
-  moreNote(frames.length - 1);
+  holdTop(frame);
   lb.classList.add("open");
   document.body.classList.add("locked");
   lastFocus ||= document.activeElement;
@@ -721,7 +694,7 @@ function open(i, replace = false, frame = 0) {
 function shut(fromPop = false) {
   unzoom();
   lb.classList.remove("open");
-  clearInterval(holdTimer); holdTimer = null; settling = false;
+  clearInterval(holdTimer); holdTimer = null;
   stage.innerHTML = "";
   document.body.classList.remove("locked");
   if (pushed && !fromPop) { pushed = false; history.back(); }
@@ -1402,10 +1375,16 @@ function onPointerDown(e) {
     stopGlide();
     Z.dragged = false;
     Z.downAt = { x: e.clientX, y: e.clientY };
+    /* where the WHOLE gesture began. Z.downAt is re-anchored when a
+       finger lifts out of a pinch; this one is not, so the swipe test
+       always measures the real travel. */
+    Z.downAt0 = { x: e.clientX, y: e.clientY };
     Z.panFrom = { x: e.clientX - Z.x, y: e.clientY - Z.y };
     Z.vx = Z.vy = 0;
     Z.vt = performance.now();
     Z.lx = Z.x; Z.ly = Z.y;
+    Z.yAtDown = Z.y;          /* for the swipe-down-to-close test */
+    Z.touch = e.pointerType !== "mouse";
     Z.clone.style.cursor = "grabbing";
   } else if (pointers.size === 2) {
     const p = pinchNow();
@@ -1465,11 +1444,40 @@ function onPointerUp(e) {
     Z.vx = Z.vy = 0;
     Z.vt = performance.now();
     Z.lx = Z.x; Z.ly = Z.y;
+    /* a pinch is not a swipe — cancel the dismiss test for this
+       gesture rather than letting the leftover finger complete one */
+    Z.downAt0 = null;
     return;
   }
   if (pointers.size) return;
 
-  Z.panFrom = Z.downAt = null;
+  /* SWIPE DOWN TO LEAVE FULL SIZE.
+
+     The same gesture that closes the viewer should close the zoom,
+     and on a phone it is the only way out that does not involve
+     finding a 30px × with your thumb.
+
+     The conflict is that dragging is already panning. What separates
+     them is whether the picture HAD anywhere to go: if the drag moved
+     it, you were panning; if the picture did not move at all — either
+     it fits the screen, or you were already against its top edge —
+     then the gesture had no other meaning, and a firm pull downwards
+     is a dismiss. That is the same rubber-band rule the viewer's own
+     pull-to-close uses, and it needs no threshold nobody can see.
+
+     Touch and pen only. A mouse drag down is someone panning a
+     picture that happens to be clamped, and closing on them would be
+     baffling. */
+  if (Z.img && Z.touch && Z.downAt0) {
+    const dx = e.clientX - Z.downAt0.x, dy = e.clientY - Z.downAt0.y;
+    if (dy > 90 && Math.abs(dy) > 1.5 * Math.abs(dx) && Math.abs(Z.y - Z.yAtDown) < 1) {
+      Z.panFrom = Z.downAt = Z.downAt0 = null;
+      setTimeout(() => Z.dragged = false, 0);
+      return unzoom();
+    }
+  }
+
+  Z.panFrom = Z.downAt = Z.downAt0 = null;
   if (Z.clone) Z.clone.style.cursor = "zoom-out";
   if (Z.dragged) glide();
   setTimeout(() => Z.dragged = false, 0);   /* let the click handler see it */
@@ -1578,19 +1586,74 @@ if (lb) {
      when I began pulling" is what separates a dismiss from an
      ordinary scroll. Reading it afterwards would mean a fast scroll
      that lands at the top also closes the viewer. */
-  let sx = null, sy = null, sTop = 0;
+  let sx = null, sy = null, sTop = 0, pulling = false;
+  const panel = $("#lbPanel");
+
+  const dropPanel = () => {
+    pulling = false;
+    panel.style.transition = "transform .22s ease, opacity .22s ease";
+    panel.style.transform = "";
+    panel.style.opacity = "";
+  };
+
   lb.addEventListener("touchstart", e => {
     sx = e.touches[0].clientX;
     sy = e.touches[0].clientY;
     sTop = stage.scrollTop;
+    pulling = false;
   }, { passive: true });
+
+  /* THE PULL MUST NOT SCROLL THE STAGE FIRST.
+
+     Dragging down to dismiss and dragging down to scroll are the same
+     finger movement, and the stage was winning: you pulled, the
+     frames scrolled up under you, and only when you let go did the
+     viewer close — so a single gesture did two unrelated things, one
+     of which you did not ask for.
+
+     Deciding at touchSTART is what separates them. If the stage was
+     already at its top when the finger landed, a downward pull cannot
+     mean "scroll" — there is nothing above to scroll to — so it is a
+     dismiss, and preventDefault stops the browser treating it as one.
+     Anywhere else in the stack it is an ordinary scroll and is left
+     completely alone.
+
+     preventDefault has to happen on the FIRST move of the gesture. A
+     scroll the browser has already started cannot be called back,
+     which is why this is a non-passive listener rather than the tidy
+     passive one everywhere else in this file.
+
+     The panel follows the finger at 60% — moving less than your hand
+     reads as resistance, which is the thing that says "let go and
+     this closes" without a word of instruction. */
+  lb.addEventListener("touchmove", e => {
+    if (sx == null || Z.img || e.touches.length > 1) return;
+    const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+    if (!pulling) {
+      if (sTop > 0 || dy < 8 || Math.abs(dy) < Math.abs(dx)) return;
+      pulling = true;
+      panel.style.transition = "none";
+    }
+    e.preventDefault();
+    panel.style.transform = `translateY(${dy * .6}px)`;
+    panel.style.opacity = String(Math.max(.4, 1 - dy / 620));
+  }, { passive: false });
+
   lb.addEventListener("touchend", e => {
-    if (sx == null || Z.img) return;
+    if (sx == null || Z.img) { sx = sy = null; return; }
     const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) step(dx < 0 ? 1 : -1);
-    else if (dy > 90 && Math.abs(dy) > 1.5 * Math.abs(dx) && sTop <= 0) shut();
     sx = sy = null;
+    if (pulling) {
+      /* far enough is a dismiss; anything less springs back, so a
+         half-hearted pull is a question you can withdraw */
+      dropPanel();
+      if (dy > 90) shut();
+      return;
+    }
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) step(dx < 0 ? 1 : -1);
   }, { passive: true });
+
+  lb.addEventListener("touchcancel", dropPanel, { passive: true });
 }
 
 /* arriving on /p/<slug> or #p/<slug> opens that piece */

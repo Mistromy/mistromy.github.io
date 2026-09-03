@@ -81,12 +81,10 @@ const PL = {
   "art.viewall": "Zobacz wszystko",
 
   /* ---- the viewer ----
-     these two are rendered by js/site.js, not by the HTML, so
-     unlike every other key they have no English original on the
-     page to fall back to — site.js carries its own. keep both
-     short: the hint sits under the cursor. */
-  /* {n} is replaced with the number of frames below the cover */
-  "lb.more": "jeszcze {n} niżej",
+     these are rendered by js/site.js, not by the HTML, so unlike
+     every other key they have no English original on the page to
+     fall back to — site.js carries its own. keep them short: the
+     hint sits under the cursor. */
   "lb.dismiss": "Zamknij",
   "zoom.close": "Zamknij pełny rozmiar",
   /* the toolbar's two buttons. screen-reader labels only — the
