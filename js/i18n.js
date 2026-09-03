@@ -89,6 +89,10 @@ const PL = {
   "lb.more": "jeszcze {n} niżej",
   "lb.dismiss": "Zamknij",
   "zoom.close": "Zamknij pełny rozmiar",
+  /* the toolbar's two buttons. screen-reader labels only — the
+     buttons themselves show − and +, which need no translating */
+  "zoom.in": "Przybliż",
+  "zoom.out": "Oddal",
   "zoom.hint": "przeciągnij · przewiń · ctrl+scroll przybliża · esc zamyka",
   "zoom.hint.touch": "przeciągnij · szczypnij · dotknij obok aby zamknąć",
 

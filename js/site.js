@@ -122,6 +122,35 @@ if (yrEl) yrEl.textContent = new Date().getFullYear();
   if ("ResizeObserver" in window) new ResizeObserver(sync).observe(rail);
   addEventListener("resize", sync);
   addEventListener("langchange", sync);   /* polish labels wrap differently */
+
+  /* ---------- a scroll is not a tap ----------
+
+     On a phone the rail is a FIXED BAR ACROSS THE BOTTOM OF THE
+     SCREEN — deliberately, so it sits at thumb height. Which is also
+     exactly where a thumb lands to start a scroll, and the bar is a
+     solid row of navigation: "Home" points at #top and "Art" at #art.
+     A swipe that begins on it and is read as a tap therefore jumps
+     the page — and because <html> is scroll-behavior:smooth, it does
+     not jump so much as sail, which is what makes it look like the
+     page teleporting rather than a link being followed.
+
+     Capture phase, so this runs before the anchor does anything. 12px
+     is well under the smallest deliberate movement and well over the
+     wobble of a finger lifting off glass. */
+  let sx = 0, sy = 0, moved = false;
+  rail.addEventListener("touchstart", e => {
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; moved = false;
+  }, { passive: true });
+  rail.addEventListener("touchmove", e => {
+    const t = e.touches[0];
+    if (Math.hypot(t.clientX - sx, t.clientY - sy) > 12) moved = true;
+  }, { passive: true });
+  rail.addEventListener("click", e => {
+    if (!moved) return;
+    moved = false;
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
 })();
 
 /* ---------- lock the tagline to the width of the signature ----------
@@ -354,6 +383,21 @@ function layout(mount, items, maxRows) {
   }
   if (row.length && (!maxRows || rows.length < maxRows)) { rows.push(row); full.push(false); }
 
+  /* EMPTYING THE GRID COLLAPSES THE PAGE.
+
+     innerHTML = "" takes every row out at once, the document briefly
+     becomes viewport height, and the browser CLAMPS the scroll offset
+     to whatever still fits — 969px becomes 279px. Re-adding the rows
+     restores the height but not the offset it was holding. So any
+     relayout that happened while you were part way down the archive
+     dropped you somewhere else, and on a phone that reads as the page
+     throwing you around while you scroll.
+
+     Read it before, put it back after. behavior:"instant" is
+     load-bearing: `scroll-behavior: smooth` is set on <html>, so a
+     bare scrollTo would ANIMATE the correction and you would watch
+     the page glide back to where it already was. */
+  const keepY = scrollY;
   mount.innerHTML = "";
   const heights = [];
   rows.forEach((r, ri) => {
@@ -408,6 +452,7 @@ function layout(mount, items, maxRows) {
     });
     mount.appendChild(el);
   });
+  if (scrollY !== keepY) scrollTo({ top: keepY, behavior: "instant" });
   return W;
 }
 
@@ -503,6 +548,51 @@ let fIdx = 0;
    ============================================================ */
 let moreTimer = null;
 
+/* ============================================================
+   EVERY PIECE OPENS AT ITS TOP
+
+   `stage.scrollTop = 0` on a stage that has just been filled means
+   nothing: the frames have no height yet, so there is nothing to
+   scroll and nothing to reset. They arrive a moment later, the
+   scroller comes back to life — and Chrome restores the offset this
+   same element was last left at. Scroll to the end of a five frame
+   piece, close it, open it again, and you land in the middle of it
+   with no sign that anything was above.
+
+   overflow-anchor does not cover this. That governs content shifting
+   underneath a reader; this is a scroller being revived.
+
+   So the top is HELD while the frames land, and released the moment
+   the reader touches anything — after that the position is theirs,
+   and correcting it would be the actual bug.
+
+   `settling` is what the "more below" note checks: the snap back to
+   zero fires a scroll event, and without it the note would read that
+   as "they have already scrolled" and dismiss itself before it had
+   been on screen for a frame.
+   ============================================================ */
+let settling = false, holdTimer = null;
+
+function holdTop() {
+  clearInterval(holdTimer);
+  settling = true;
+  stage.scrollTop = 0;
+
+  const release = () => {
+    clearInterval(holdTimer);
+    holdTimer = null;
+    settling = false;
+    for (const ev of ["wheel", "touchstart", "pointerdown", "keydown"])
+      stage.removeEventListener(ev, release);
+  };
+
+  holdTimer = setInterval(() => { stage.scrollTop = 0; }, 60);
+  /* pointerdown covers dragging the scrollbar, which fires no wheel */
+  for (const ev of ["wheel", "touchstart", "pointerdown", "keydown"])
+    stage.addEventListener(ev, release, { passive: true });
+  setTimeout(release, 1200);
+}
+
 function moreNote(count) {
   const old = $(".morenote", lb);
   if (old) old.remove();
@@ -524,7 +614,7 @@ function moreNote(count) {
   };
   /* a nudge is enough — it should not wait for you to reach the
      bottom before admitting you already understood */
-  const onScroll = () => { if (stage.scrollTop > 24) go(); };
+  const onScroll = () => { if (!settling && stage.scrollTop > 24) go(); };
 
   el.querySelector(".morex").addEventListener("click", e => { e.stopPropagation(); go(); });
   stage.addEventListener("scroll", onScroll, { passive: true });
@@ -536,7 +626,18 @@ function moreNote(count) {
 
 function open(i, replace = false, frame = 0) {
   if (i < 0 || !OPEN[i]) return;
-  unzoom();
+  /* INSTANT, not animated. The shrink-back animates the clone down
+     onto the original <img> over 280ms — but this function is about
+     to wipe the stage that <img> lives in, so it would be animating
+     towards a box that no longer exists, on top of the next picture
+     that is already being zoomed in.
+
+     That overlap is what locked the viewer when an arrow carried you
+     out of one piece and into the next: the old zoom's cleanup ran a
+     third of a second later and cleared Z.clone — which by then was
+     the NEW picture's clone. Z.img still said "zoomed", nothing had a
+     clone to move, and neither panning nor closing could do anything. */
+  unzoom(true);
   idx = i;
   fIdx = frame;
   const it = OPEN[i];
@@ -602,7 +703,7 @@ function open(i, replace = false, frame = 0) {
     else cover.addEventListener("load", cap, { once: true });
   }
 
-  stage.scrollTop = 0;
+  holdTop();
   moreNote(frames.length - 1);
   lb.classList.add("open");
   document.body.classList.add("locked");
@@ -620,6 +721,7 @@ function open(i, replace = false, frame = 0) {
 function shut(fromPop = false) {
   unzoom();
   lb.classList.remove("open");
+  clearInterval(holdTimer); holdTimer = null; settling = false;
   stage.innerHTML = "";
   document.body.classList.remove("locked");
   if (pushed && !fromPop) { pushed = false; history.back(); }
@@ -693,7 +795,11 @@ function stepFrame(d) {
   const next = fIdx + d;
   if (next < 0 || next >= imgs.length) {
     step(d);
-    showFrameWhenReady();
+    /* Backwards lands on the LAST frame of the piece behind, not on
+       its cover. Otherwise Left followed by Right does not put you
+       back where you were, and a piece's supporting frames are
+       unreachable from the piece after it. */
+    showFrameWhenReady(d < 0);
     return;
   }
   fIdx = next;
@@ -703,9 +809,11 @@ function stepFrame(d) {
 /* after step() has rebuilt the stage, re-enter the zoom on the new
    cover — Z.img is already null by then, so showFrame's zoomed
    branch cannot be used */
-function showFrameWhenReady() {
-  const img = stage.querySelector("img");
-  if (!img) return;
+function showFrameWhenReady(last = false) {
+  const imgs = $$("img", stage);
+  if (!imgs.length) return;
+  fIdx = last ? imgs.length - 1 : 0;
+  const img = imgs[fIdx];
   const go = () => {
     if (img.getBoundingClientRect().width) {
       toggleZoom(img, { clientX: innerWidth / 2, clientY: innerHeight / 2 }, false);
@@ -737,6 +845,7 @@ function apply(animate) {
   Z.clone.style.transition = animate && !reduced ? "transform .28s cubic-bezier(.2,.7,.3,1)" : "none";
   Z.clone.style.transform = `translate(${Z.x}px,${Z.y}px) scale(${Z.k})`;
   updateBars();
+  updateLevel();
 }
 
 /* ============================================================
@@ -811,16 +920,34 @@ function hint(e) {
      looking, once. */
   const done = () => {
     if (!el.isConnected) return;
-    removeEventListener("wheel", done);
+    removeEventListener("wheel", onWheel);
     clearTimeout(timer);
     el.classList.remove("on");
     setTimeout(() => el.remove(), 400);
   };
+
+  /* IT DOES NOT LEAVE WHILE YOU ARE READING IT.
+
+     The timeout is generous, but it is still a timeout, and there is
+     nothing worse than a label that vanishes half way through the
+     sentence — especially this one, which is a list of four controls
+     and is the only place any of them are written down. The pointer
+     resting on it is the clearest possible statement that it is being
+     read, so the clock stops, and restarts short when you leave.
+
+     The same rule covers the wheel: scrolling with the pointer parked
+     on the hint is not "I have worked it out", it is a scroll that
+     happens to be under it. */
+  let over = false;
+  el.addEventListener("pointerenter", () => { over = true; clearTimeout(timer); });
+  el.addEventListener("pointerleave", () => { over = false; timer = setTimeout(done, 1600); });
+
   el.querySelector(".zhintx").addEventListener("click", e => { e.stopPropagation(); done(); });
   /* a wheel means they are already using it; a click does not, since
      the click that opened the zoom would dismiss it instantly */
-  addEventListener("wheel", done, { passive: true });
-  const timer = setTimeout(done, 4600);
+  const onWheel = () => { if (!over) done(); };
+  addEventListener("wheel", onWheel, { passive: true });
+  let timer = setTimeout(done, 4600);
 }
 
 /* ============================================================
@@ -846,19 +973,67 @@ function veil(on) {
     Z.veil.setAttribute("aria-hidden", "true");
     document.body.appendChild(Z.veil);
 
-    /* an unmissable way out, for anyone who does not think to press
-       Escape or click the background */
-    Z.x8 = document.createElement("button");
-    Z.x8.className = "zclose";
-    Z.x8.type = "button";
-    Z.x8.setAttribute("aria-label", I18N.t("zoom.close") || "Close full size");
-    Z.x8.textContent = "×";
-    Z.x8.addEventListener("click", e => { e.stopPropagation(); unzoom(); });
-    document.body.appendChild(Z.x8);
+    /* ---- the toolbar ----
+
+       There is no browser control for this. Native page zoom is a
+       different thing entirely — it scales the whole document, it is
+       not addressable from script, and it would not know the picture
+       exists. So: the smallest bar that does the job, laid out the
+       way every PDF reader already lays it out, because that is the
+       arrangement nobody has to be taught.
+
+           −   140%   +  │  ×
+
+       The reading is against the file's OWN pixels, so 100% means one
+       image pixel per screen pixel — the same thing it means in a PDF
+       viewer or in Photoshop, rather than a number relative to
+       whatever size the thumbnail happened to be. */
+    const bar = document.createElement("div");
+    bar.className = "zbar";
+    bar.innerHTML =
+      `<button type="button" class="zstep zout" aria-label="${I18N.t("zoom.out") || "Zoom out"}">−</button>` +
+      `<span class="zlvl" role="status" aria-live="off">100%</span>` +
+      `<button type="button" class="zstep zin" aria-label="${I18N.t("zoom.in") || "Zoom in"}">+</button>` +
+      `<button type="button" class="zclose" aria-label="${I18N.t("zoom.close") || "Close full size"}">×</button>`;
+
+    /* stopPropagation on every one of them: a click that reaches .lb
+       is read as "off the picture, step back out", which would undo
+       the zoom the button just changed */
+    const stop = fn => e => { e.stopPropagation(); fn(); };
+    /* about the middle of the screen, which is the part you are
+       looking at — anchoring on a corner walks the subject away */
+    const nudge = f => zoomTo(Z.k * f, innerWidth / 2, innerHeight / 2, true);
+    bar.querySelector(".zout").addEventListener("click", stop(() => nudge(1 / 1.3)));
+    bar.querySelector(".zin").addEventListener("click", stop(() => nudge(1.3)));
+    bar.querySelector(".zclose").addEventListener("click", stop(unzoom));
+    /* a drag that begins on the bar must not pan the picture */
+    bar.addEventListener("pointerdown", e => e.stopPropagation());
+
+    document.body.appendChild(bar);
+    Z.bar = bar;
+    Z.lvl = bar.querySelector(".zlvl");
+    Z.zin = bar.querySelector(".zin");
+    Z.zout = bar.querySelector(".zout");
+    updateLevel();
     return;
   }
   Z.veil?.remove(); Z.veil = null;
-  Z.x8?.remove(); Z.x8 = null;
+  Z.bar?.remove(); Z.bar = null;
+  Z.lvl = Z.zin = Z.zout = null;
+}
+
+/* the readout and the two buttons' enabled state, refreshed from
+   apply() so wheel, pinch, drag and the buttons all keep it honest */
+function updateLevel() {
+  if (!Z.lvl) return;
+  /* Z.nat is the scale at which the clone renders 1:1. A picture
+     whose natural size never arrived falls back to the fit level, so
+     the bar reads relative to SOMETHING rather than showing NaN%. */
+  const unit = Z.nat > 0 ? Z.nat : (Z.min || 1);
+  Z.lvl.textContent = Math.round(Z.k / unit * 100) + "%";
+  const e = 1e-3;
+  Z.zin.disabled = Z.k >= Z.max - e;
+  Z.zout.disabled = Z.k <= Z.min + e;
 }
 
 function makeBars() {
@@ -913,9 +1088,10 @@ function updateBars() {
    screen point into the image's own unscaled coordinates, change k,
    then solve for the translate that puts the same image point back
    under the same screen point. */
-function zoomTo(k, cx, cy) {
+function zoomTo(k, cx, cy, animate = false) {
   const r = Z.base;
   if (!r) return;
+  stopGlide();
   /* THE FLOOR IS THE FIT LEVEL, not 1.
 
      Zooming out bottoms out at "the whole picture on screen" and
@@ -931,8 +1107,157 @@ function zoomTo(k, cx, cy) {
   Z.x = cx - r.left - px * k;                /* ...put back under the cursor */
   Z.y = cy - r.top - py * k;
   clamp(k, r);
+  /* animated only for the toolbar's two buttons: a discrete press
+     with no motion behind it reads as the picture having been
+     swapped for a different one. Wheel and pinch stay instant — they
+     are continuous, and a transition on top of a live gesture is
+     just lag. */
+  apply(animate);
+}
+
+/* ============================================================
+   momentum
+
+   A flick should carry. Every photo viewer and every map on a phone
+   behaves this way, and a drag that stops dead the moment you lift
+   reads as the picture being heavy — you end up making four small
+   drags where one throw would have done it.
+
+   The velocity comes from the last few milliseconds of the drag
+   rather than an average of the whole of it, so a careful
+   repositioning that happens to end with a flourish does not launch,
+   and a genuine throw is not damped away by the slow part before it.
+
+   ON A TIMER, NOT requestAnimationFrame — the same call this file
+   makes everywhere else, for the same reason. rAF is the textbook
+   answer for an animation loop and it reports nothing at all in a
+   throttled tab or an embedded webview, which is how the scroll spy
+   ended up on a clock too. The distance travelled is computed from
+   the elapsed time rather than from a frame count, so a late tick
+   covers the ground it missed instead of shortening the throw, and
+   16ms lands on the same cadence a display would give it anyway.
+   ============================================================ */
+function stopGlide() {
+  clearInterval(Z.raf);
+  Z.raf = 0;
+}
+
+function glide() {
+  stopGlide();
+  let vx = Z.vx || 0, vy = Z.vy || 0;          /* px per ms */
+  if (Math.hypot(vx, vy) < 0.08) return;       /* a drag, not a throw */
+  let last = performance.now();
+  /* a hard deadline as well as the decay. On a machine that is
+     throttling timers the ticks arrive late, each one is capped at
+     48ms of credit, and the decay therefore takes far longer in wall
+     clock than the ~400ms it is tuned for. A throw is over in half a
+     second or it is not a throw. */
+  const until = last + 1200;
+
+  const tick = () => {
+    if (!Z.clone) return stopGlide();
+    const now = performance.now();
+    if (now > until) return stopGlide();
+    /* a tick the browser sat on must not teleport the picture across
+       the room, so the step it can account for is capped */
+    const dt = Math.min(48, now - last);
+    last = now;
+    if (dt <= 0) return;
+    /* the per-16ms decay, resolved for the interval actually elapsed,
+       so a throw covers the same ground on a busy machine as on an
+       idle one */
+    const f = Math.pow(.93, dt / 16);
+    vx *= f; vy *= f;
+
+    const bx = Z.x, by = Z.y;
+    Z.x += vx * dt; Z.y += vy * dt;
+    clamp(Z.k, Z.base);
+    /* an axis that has reached its stop is finished. Without this it
+       keeps spending velocity into the clamp while the other axis
+       runs on, which looks like the picture sliding along a wall. */
+    if (Z.x === bx) vx = 0;
+    if (Z.y === by) vy = 0;
+    apply(false);
+
+    if (Math.hypot(vx, vy) <= .02) stopGlide();
+  };
+  Z.raf = setInterval(tick, 16);
+}
+
+/* ============================================================
+   the window changed size under a zoomed picture
+
+   Z.base is the original <img>'s rectangle, measured once when the
+   zoom opened, and every other number is derived from it: where the
+   clone is pinned, how far it may be panned, what "fit" means, what
+   100% means. Resize the window and all of them describe a layout
+   that no longer exists — the stage has re-flowed, the original has
+   moved and changed size, and the clone stays nailed to coordinates
+   that point nowhere. Panning then hits invisible walls in the wrong
+   places and the picture can be left stranded off screen.
+
+   So re-measure, re-derive, and keep whatever was in the middle of
+   the screen in the middle of the screen. That is the part worth
+   preserving: you were looking at something.
+   ============================================================ */
+function rebase() {
+  if (!Z.img || !Z.clone) return;
+
+  /* an opening transition is still in flight — the geometry it is
+     animating towards is about to be replaced, and snapping the
+     picture out of the animation would undo the one bit of motion
+     that tells you where it came from. Come back when it has landed. */
+  if (Z.animUntil && Date.now() < Z.animUntil) {
+    clearTimeout(Z.reTimer);
+    Z.reTimer = setTimeout(rebase, Z.animUntil - Date.now() + 20);
+    return;
+  }
+  stopGlide();
+
+  const old = Z.base;
+  /* what sits under the middle of the screen, as a FRACTION of the
+     picture — the one description of "where you are" that survives
+     the picture changing size */
+  const fx = old.width ? (innerWidth / 2 - old.left - Z.x) / Z.k / old.width : .5;
+  const fy = old.height ? (innerHeight / 2 - old.top - Z.y) / Z.k / old.height : .5;
+
+  const r = Z.img.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  Z.base = Z.base0 = r;
+  Z.clone.style.left = r.left + "px";
+  Z.clone.style.top = r.top + "px";
+  Z.clone.style.width = r.width + "px";
+  Z.clone.style.height = r.height + "px";
+
+  const fit = Math.max(1, Math.min(innerWidth / r.width, innerHeight / r.height));
+  Z.nat = Z.img.naturalWidth / r.width || fit;
+  Z.min = fit;
+  Z.max = Math.min(Math.max(fit, Z.nat) * 1.6, 8);
+  /* a window that grew past the old fit level pulls the picture up
+     with it, so "fit" keeps meaning fit */
+  Z.k = Math.max(Z.min, Math.min(Z.k, Z.max));
+
+  Z.x = innerWidth / 2 - r.left - fx * r.width * Z.k;
+  Z.y = innerHeight / 2 - r.top - fy * r.height * Z.k;
+  clamp(Z.k, r);
   apply(false);
 }
+/* TWICE: once now, and once after everything else has stopped moving.
+
+   Several other things on this page listen for a resize — the gallery
+   re-lays its rows out, the rail republishes its height, the masthead
+   re-solves the tagline — and any of them can shift the <img> AFTER
+   this handler has already measured it. A rect read before the layout
+   has settled pins the clone to coordinates that are stale the moment
+   they are written, which is the original bug wearing a hat. The
+   second pass costs one rect read and closes it. */
+const resettle = () => {
+  rebase();
+  clearTimeout(Z.reSettle);
+  Z.reSettle = setTimeout(rebase, 120);
+};
+addEventListener("resize", resettle);
+addEventListener("orientationchange", resettle);
 
 /* the ORIGINAL <img> never moves. a COPY is lifted out and grown on top
    of it, and the original just goes visibility:hidden — which keeps its
@@ -993,6 +1318,10 @@ function toggleZoom(img, e, animate = true) {
   Z.y = (e.clientY - r.top) * (1 - k);
   clamp(k, r);
   apply(animate);
+  /* how long rebase() has to keep its hands off. A window resize that
+     lands in the middle of the growth animation would re-derive the
+     geometry the animation is travelling towards and cut it in half. */
+  Z.animUntil = animate && !reduced ? Date.now() + 300 : 0;
   lb.classList.add("zooming");
   clone.addEventListener("click", () => { if (!Z.dragged) unzoom(); });
   clone.addEventListener("pointerdown", onPointerDown);
@@ -1002,11 +1331,21 @@ function unzoom(instant = false) {
   const { img, clone, base0 } = Z;
   if (!img || !clone) return;
   Z.img = null;
+  Z.animUntil = 0;
+  clearTimeout(Z.reTimer);
+  clearTimeout(Z.reSettle);
+  stopGlide();
   lb.classList.remove("zooming");
   killBars();
   veil(false);
 
-  const done = () => { clone.remove(); img.style.visibility = ""; Z.clone = null; };
+  /* `Z.clone === clone` before clearing: a deferred cleanup must never
+     disown a zoom that started after it. See the note in open(). */
+  const done = () => {
+    clone.remove();
+    img.style.visibility = "";
+    if (Z.clone === clone) Z.clone = null;
+  };
   if (instant || reduced) return done();
 
   /* shrink back onto wherever the original actually sits NOW, rather
@@ -1058,9 +1397,15 @@ function onPointerDown(e) {
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
   if (pointers.size === 1) {
+    /* catching a picture that is still gliding stops it dead, the way
+       catching a spinning wheel does */
+    stopGlide();
     Z.dragged = false;
     Z.downAt = { x: e.clientX, y: e.clientY };
     Z.panFrom = { x: e.clientX - Z.x, y: e.clientY - Z.y };
+    Z.vx = Z.vy = 0;
+    Z.vt = performance.now();
+    Z.lx = Z.x; Z.ly = Z.y;
     Z.clone.style.cursor = "grabbing";
   } else if (pointers.size === 2) {
     const p = pinchNow();
@@ -1086,6 +1431,24 @@ function onPointerMove(e) {
   Z.y = e.clientY - Z.panFrom.y;
   clamp(Z.k, Z.base);
   apply(false);
+
+  /* Measured from the CLAMPED position, so a drag that is already
+     pressed against an edge builds no speed and cannot launch into a
+     wall. Weighted towards the newest sample: the last few
+     milliseconds are the throw, everything before them is aim.
+
+     A gap over 100ms means the finger stopped and then lifted — a
+     placement, not a flick — so the throw is cancelled outright
+     rather than resurrected from whatever it was doing before. */
+  const now = performance.now();
+  const dt = now - (Z.vt || now);
+  if (dt >= 100) { Z.vx = Z.vy = 0; }
+  else if (dt > 0) {
+    const a = .7;
+    Z.vx = a * ((Z.x - Z.lx) / dt) + (1 - a) * (Z.vx || 0);
+    Z.vy = a * ((Z.y - Z.ly) / dt) + (1 - a) * (Z.vy || 0);
+  }
+  Z.vt = now; Z.lx = Z.x; Z.ly = Z.y;
 }
 
 function onPointerUp(e) {
@@ -1097,12 +1460,18 @@ function onPointerUp(e) {
     const [p] = [...pointers.values()];
     Z.panFrom = { x: p.x - Z.x, y: p.y - Z.y };
     Z.downAt = { x: p.x, y: p.y };
+    /* the finger that stayed has not been moving on its own, so it
+       inherits no speed from the pinch it was half of */
+    Z.vx = Z.vy = 0;
+    Z.vt = performance.now();
+    Z.lx = Z.x; Z.ly = Z.y;
     return;
   }
   if (pointers.size) return;
 
   Z.panFrom = Z.downAt = null;
   if (Z.clone) Z.clone.style.cursor = "zoom-out";
+  if (Z.dragged) glide();
   setTimeout(() => Z.dragged = false, 0);   /* let the click handler see it */
   /* a pinch that runs out of room settles at the fit level and
      stays open — see the floor note in zoomTo */
@@ -1146,6 +1515,7 @@ if (lb) {
       zoomTo(Z.k * Math.exp(-e.deltaY * unit * 0.0035), e.clientX, e.clientY);
       return;
     }
+    stopGlide();
     Z.x -= e.deltaX * unit;
     Z.y -= e.deltaY * unit;
     clamp(Z.k, Z.base);

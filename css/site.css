@@ -98,6 +98,14 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /* NO PULL TO REFRESH.
+     On a phone the page is one long scroll, and an overscroll at the
+     top reloads it — which lands you back at the top, having thrown
+     away the position you were reading from. There is nothing on this
+     site that ever needs refreshing by hand; the gesture can only
+     cost something. `contain` also stops the scroll chaining out to
+     whatever is behind the page. */
+  overscroll-behavior-y: contain;
   /* Always reserve the scrollbar's width, whether or not there is
      one. Two things this fixes:
 
@@ -878,6 +886,17 @@ a.inline {
 .stage {
   overflow-y: auto;
   overflow-x: hidden;
+  /* EVERY PIECE OPENS AT ITS TOP.
+
+     Scroll anchoring is normally the right behaviour — it keeps what
+     you are reading still while images load above it. Here it did the
+     opposite: js/site.js sets scrollTop to 0 while the stage is still
+     empty, then the frames load, and the browser helpfully restores
+     the offset the LAST piece was left at. Open a five-frame piece,
+     scroll to the end, close it, open it again and you land in the
+     middle of it with no idea there was anything above. A viewer has
+     one obvious starting position and it is the top. */
+  overflow-anchor: none;
   min-height: 0;
   min-width: 0;
   padding: 18px;
@@ -903,23 +922,6 @@ a.inline {
    the piece it supports. */
 .stage img:not(:first-of-type) {
   max-width: min(100%, var(--frame-cap, 100%));
-}
-
-/* "2 more below" — sits under the cover only when there is
-   something under it. The stage scrolls, but nothing said so, and a
-   five-frame piece looked exactly like a one-frame piece until you
-   happened to try. */
-.morenote {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--dim-safe);
-  margin: 0;
-}
-
-.morenote::after {
-  content: " \2193"
 }
 
 .frametag {
@@ -992,27 +994,116 @@ a.inline {
   pointer-events: none;
 }
 
-/* the way out, for anyone who does not think to press Escape */
-.zclose {
+/* ---------- the zoom toolbar ----------
+
+   −   48%   +        ×
+
+   NO PLATE. A panel with a border and a blurred backdrop is the
+   answer to a contrast problem, and there is no contrast problem
+   here: the veil is already at 93% black, so the type is sitting on
+   near-solid ink and a box around it is drawing a box for its own
+   sake. The rest of this site never draws one either — the rail is
+   bare text on the ground, and this should read as the same voice
+   in a different room.
+
+   What carries it instead is what carries the rail: Consolas, wide
+   tracking, quiet at rest and full --paper under the pointer.
+
+   WHITE, though, not --dim-safe. The rail can be dim because the
+   rail sits on near-black and nothing ever moves underneath it. This
+   sits over the artwork, and a 12px brown-grey over a bright
+   photograph is not restrained, it is illegible. So the restraint is
+   carried by OPACITY rather than by hue: paper at three quarters
+   reads as plain white text, still recedes next to the work, and
+   still has somewhere to go when you point at it.
+
+   WHAT A TEXT SHADOW COULD NOT DO. The first pass leaned on a glow
+   alone, and over a pale poster — a white-on-ice-blue can filling
+   the screen — it vanished completely. A glow can rescue type from a
+   busy ground; it cannot rescue white type from a white one.
+
+   So the contrast comes from a SCRIM: the top of the screen darkened
+   on a gradient that reaches nothing by 76px. It is still not a box.
+   A box has edges, sits at a size, and reads as a panel laid over the
+   picture; this has no edge anywhere, and over the veil — which is
+   already black — it is not visible at all. It only appears when the
+   artwork itself is bright enough to need it, which is the same
+   principle the glow was reaching for, done at a scale that works.
+
+   pointer-events stay off across the whole band so that clicking the
+   dark strip still steps out of the zoom like clicking anywhere else
+   off the picture. Only the three controls take clicks. */
+.zbar {
   position: fixed;
-  top: 16px;
-  right: 18px;
   z-index: 215;
-  width: 38px;
-  height: 38px;
-  line-height: 1;
-  font-size: 22px;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 76px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15px;
   font-family: var(--mono);
-  color: var(--dim-safe);
-  background: rgba(3, 3, 3, .6);
-  border: 1px solid var(--line-2);
-  cursor: pointer;
-  transition: color .15s, border-color .15s;
+  font-size: 12px;
+  letter-spacing: .12em;
+  color: rgba(255, 246, 233, .82);
+  background: linear-gradient(to bottom,
+      rgba(0, 0, 0, .72) 0%,
+      rgba(0, 0, 0, .52) 34%,
+      rgba(0, 0, 0, .24) 66%,
+      rgba(0, 0, 0, 0) 100%);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
+  user-select: none;
+  pointer-events: none;
 }
 
-.zclose:hover {
-  color: var(--paper);
-  border-color: var(--paper)
+.zbar button {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  text-shadow: inherit;
+  pointer-events: auto;
+  /* nothing is drawn, but the target is still 30px square — a
+     control you cannot reliably hit is not minimal, it is small */
+  min-width: 30px;
+  height: 30px;
+  transition: color .15s;
+}
+
+.zbar button:hover:not(:disabled) {
+  color: var(--paper)
+}
+
+/* at the fit level there is no out, at the ceiling there is no in.
+   Dimmed rather than removed — a control that disappears takes the
+   row's width with it and you lose the one next to it mid-click. */
+.zbar button:disabled {
+  color: rgba(255, 246, 233, .26);
+  cursor: default
+}
+
+.zbar .zstep {
+  font-size: 16px
+}
+
+/* tabular figures: without them 8% / 88% / 188% are three different
+   widths, and the two buttons shuffle sideways as you scroll */
+.zbar .zlvl {
+  min-width: 54px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* set apart from the other two — leaving is a different kind of verb
+   from zooming, and the gap says so without a divider having to */
+.zbar .zclose {
+  margin-left: 20px;
+  font-size: 16px;
 }
 
 /* ---------- the controls hint ----------
@@ -1031,9 +1122,18 @@ a.inline {
   text-transform: lowercase;
   white-space: nowrap;
   color: var(--paper);
-  background: rgba(3, 3, 3, .88);
-  border: 1px solid var(--line-2);
-  padding: 7px 8px 7px 11px;
+  /* No plate and no scrim — this one is placed wherever you clicked,
+     so there is no edge of the screen to darken. What works instead
+     is a HALO: several shadows stacked tight to the letterforms
+     rather than one wide diffuse glow. A 26px blur spreads its
+     darkness so thin it does nothing against a pale picture; 3px of
+     it, three times over, effectively outlines each glyph and costs
+     no area at all. */
+  text-shadow:
+    0 0 3px rgba(0, 0, 0, .95),
+    0 0 3px rgba(0, 0, 0, .95),
+    0 0 7px rgba(0, 0, 0, .85),
+    0 1px 2px rgba(0, 0, 0, .95);
   opacity: 0;
   transform: translateY(3px);
   transition: opacity .28s ease, transform .28s ease;
@@ -1053,7 +1153,10 @@ a.inline {
   font-size: 14px;
   line-height: 1;
   padding: 0 3px;
-  color: var(--dim);
+  /* paper held back, not a dim brown: these two also sit over the
+     artwork. Same reasoning as .zbar. */
+  color: rgba(255, 246, 233, .62);
+  text-shadow: inherit;
   transition: color .12s;
 }
 
@@ -1084,9 +1187,17 @@ a.inline {
   letter-spacing: .14em;
   text-transform: uppercase;
   color: var(--paper);
-  background: rgba(3, 3, 3, .88);
-  border: 1px solid var(--line-2);
-  padding: 7px 8px 7px 12px;
+  /* A HALO, not a scrim. The bar at the top can afford to darken its
+     whole band; this one cannot — the entire point of floating it is
+     that the sliver of the NEXT picture stays visible underneath, and
+     a gradient across the bottom would cover exactly that. Tight
+     stacked shadows outline the type instead and leave the image
+     alone. See the note on .zhint. */
+  text-shadow:
+    0 0 3px rgba(0, 0, 0, .95),
+    0 0 3px rgba(0, 0, 0, .95),
+    0 0 7px rgba(0, 0, 0, .85),
+    0 1px 2px rgba(0, 0, 0, .95);
   opacity: 0;
   transform: translate(-50%, 10px);
   transition: opacity .3s ease, transform .3s ease;
