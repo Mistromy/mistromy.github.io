@@ -152,11 +152,12 @@ if (yrEl) yrEl.textContent = new Date().getFullYear();
      document moved, it was not a tap, whatever the finger did.
 
      Capture phase, so this runs before the anchor does. */
-  let sx = 0, sy = 0, sYAt = 0, moved = false;
+  let sx = 0, sy = 0, sYAt = 0, moved = false, touched = false;
   rail.addEventListener("touchstart", e => {
     sx = e.touches[0].clientX; sy = e.touches[0].clientY;
     sYAt = scrollY;
     moved = false;
+    touched = true;
   }, { passive: true });
   rail.addEventListener("touchmove", e => {
     const t = e.touches[0];
@@ -165,8 +166,19 @@ if (yrEl) yrEl.textContent = new Date().getFullYear();
   /* the browser stealing the gesture is itself proof it was a scroll */
   rail.addEventListener("touchcancel", () => { moved = true; }, { passive: true });
   rail.addEventListener("click", e => {
-    if (!moved && Math.abs(scrollY - sYAt) <= 4) return;
-    moved = false;
+    const wasTouch = touched, wasMoved = moved;
+    touched = moved = false;
+    /* A MOUSE CLICK IS NEVER GUARDED.
+
+       This is the bug that killed every rail link on a scrolled
+       desktop page. sYAt only gets a value on touchstart, so a click
+       with no touch behind it compared the live scroll position
+       against zero — which is "> 4" the moment you have scrolled at
+       all, and every link cancelled itself. The guard is about
+       telling a scroll from a tap; with no touch there was never a
+       scroll to tell it from. */
+    if (!wasTouch) return;
+    if (!wasMoved && Math.abs(scrollY - sYAt) <= 4) return;
     e.preventDefault();
     e.stopPropagation();
   }, true);
@@ -684,7 +696,14 @@ function open(i, replace = false, frame = 0) {
   });
   const x = document.createElement("button");
   x.textContent = "close [esc]";
-  x.addEventListener("click", shut);
+  /* WRAPPED, NOT PASSED. `addEventListener("click", shut)` hands the
+     click Event straight into shut()'s first parameter — which is
+     `fromPop`, the flag meaning "the browser already moved the
+     history, do not touch it". An Event object is truthy, so every
+     click on this button claimed to be a popstate and the address bar
+     was left sitting on /p/<slug> after the viewer had closed.
+     Escape worked because it calls shut() properly. */
+  x.addEventListener("click", () => shut());
   tools.appendChild(x);
 
   stage.innerHTML = "";
@@ -815,8 +834,46 @@ function showFrame(img) {
    The depth you are at decides, which means neither mode ever
    surprises you: the arrows always do the thing that matches what
    is currently filling the screen. */
+/* ============================================================
+   THE DESKTOP SWAP
+
+   On a phone the swipe carries the piece off the screen and brings
+   the next one on, so the movement is the gesture. With a keyboard or
+   the on-screen arrows there is no gesture to carry it, and the panel
+   was simply replaced between one frame and the next — which reads as
+   a glitch rather than a step, because nothing told you a change had
+   happened or which direction it went.
+
+   So: a short push in the direction you asked for, the swap while it
+   is out of the way, and it comes back from the far side. Fast enough
+   that holding the arrow key still walks the gallery quickly — the
+   whole thing is under a third of a second — but present, which is
+   the entire point.
+   ============================================================ */
+function stepNudge(d) {
+  const panel = $("#lbPanel");
+  if (!panel || reduced) return step(d);
+  const out = d > 0 ? -26 : 26;
+  panel.style.transition = `transform ${MS.step}ms ease-in, opacity ${MS.step}ms ease-in`;
+  panel.style.transform = `translateX(${out}px)`;
+  panel.style.opacity = ".2";
+  setTimeout(() => {
+    step(d);
+    /* park it on the far side with no transition, force the style to
+       flush, then let it come in. Reading offsetWidth is what makes
+       the browser take the parked position as the starting frame — rAF
+       would be the usual trick and does not fire in a throttled tab. */
+    panel.style.transition = "none";
+    panel.style.transform = `translateX(${-out}px)`;
+    void panel.offsetWidth;
+    panel.style.transition = `transform ${MS.step + 50}ms cubic-bezier(.2,.7,.3,1), opacity ${MS.step + 50}ms ease-out`;
+    panel.style.transform = "";
+    panel.style.opacity = "";
+  }, MS.step);
+}
+
 function stepFrame(d) {
-  if (!Z.img) return step(d);          /* browsing: piece to piece */
+  if (!Z.img) return stepNudge(d);     /* browsing: piece to piece */
 
   const imgs = $$("img", stage);
   const next = fIdx + d;
@@ -860,6 +917,25 @@ function clamp(k, baseRect) {
   else y = Math.min(-baseRect.top, Math.max(innerHeight - h - baseRect.top, y));
   Z.x = x; Z.y = y;
 }
+/* ============================================================
+   HOW LONG ANYTHING TAKES
+
+   Touch gets shorter durations than a mouse, and not by preference —
+   a finger is ALREADY ON the thing. Any wait after that reads as the
+   page being slow, because the reader has already committed and is
+   watching a delay. A mouse click has no such contact, so a slightly
+   longer move still reads as motion rather than lag.
+
+   These were all a third longer, and on a phone it was badly wrong.
+   ============================================================ */
+const TOUCH = matchMedia("(hover: none)").matches;
+const MS = {
+  zoom: TOUCH ? 170 : 240,   /* growing into and out of full size */
+  slide: TOUCH ? 150 : 190,  /* a piece or frame leaving sideways */
+  back: TOUCH ? 130 : 170,   /* a gesture that did not go far enough */
+  step: TOUCH ? 120 : 140,   /* the desktop swap */
+};
+
 /* Opening and closing the zoom ANIMATE — the growth is what tells
    you where the small picture went and where it came back to.
 
@@ -868,11 +944,36 @@ function clamp(k, baseRect) {
    just lag. Arrow-cycling between frames does not either — there
    the picture is being REPLACED, not moved, and animating a swap
    makes every press a quarter-second of choreography. */
-function apply(animate) {
-  Z.clone.style.transition = animate && !reduced ? "transform .28s cubic-bezier(.2,.7,.3,1)" : "none";
-  Z.clone.style.transform = `translate(${Z.x}px,${Z.y}px) scale(${Z.k})`;
+function apply(animate, ms = MS.zoom) {
+  Z.clone.style.transition = animate && !reduced ? `transform ${ms}ms cubic-bezier(.2,.7,.3,1)` : "none";
+  Z.clone.style.transform = dragPrefix() + `translate(${Z.x}px,${Z.y}px) scale(${Z.k})`;
   updateBars();
   updateLevel();
+}
+
+/* ============================================================
+   THE DRAG LAYER
+
+   A dismiss or a sideways swipe is applied ON TOP of the zoom
+   transform rather than folded into it, so the two never have to
+   agree about anything. Z.x/Z.y/Z.k keep meaning "where the zoom
+   is"; the drag is a separate offset that composes in front and is
+   thrown away when the gesture ends. Cancelling a half-finished
+   drag is then just setting it back to zero — no state to unwind.
+
+   The scale is bracketed by a move to the middle of the screen and
+   back, because transform-origin on the clone is 0 0. Without that
+   the picture does not shrink, it slides into the top-left corner
+   while getting smaller, which reads as it falling off the screen.
+   ============================================================ */
+const span = () => innerWidth + 40;
+
+function dragPrefix() {
+  const d = Z.drag, r = Z.base;
+  if (!d || !r) return "";
+  const cx = innerWidth / 2 - r.left, cy = innerHeight / 2 - r.top;
+  return `translate(${d.x}px,${d.y}px) ` +
+    (d.s === 1 ? "" : `translate(${cx}px,${cy}px) scale(${d.s}) translate(${-cx}px,${-cy}px) `);
 }
 
 /* ============================================================
@@ -1272,7 +1373,7 @@ function toggleZoom(img, e, animate = true) {
   /* how long rebase() has to keep its hands off. A window resize that
      lands in the middle of the growth animation would re-derive the
      geometry the animation is travelling towards and cut it in half. */
-  Z.animUntil = animate && !reduced ? Date.now() + 300 : 0;
+  Z.animUntil = animate && !reduced ? Date.now() + MS.zoom + 30 : 0;
   lb.classList.add("zooming");
   clone.addEventListener("click", () => { if (!Z.dragged) unzoom(); });
   clone.addEventListener("pointerdown", onPointerDown);
@@ -1287,6 +1388,12 @@ function unzoom(instant = false) {
   clearTimeout(Z.reSettle);
   stopGlide();
   lb.classList.remove("zooming");
+  /* Dropped BEFORE the return is applied, deliberately. The transform
+     currently on screen still carries the drag, and a transition
+     interpolates from whatever is rendered — so clearing it here
+     makes the picture animate from where the finger left it to where
+     it belongs, in one movement. */
+  killDrag();
   killBars();
   veil(false);
 
@@ -1317,7 +1424,7 @@ function unzoom(instant = false) {
   Z.y = now.top - base0.top;
   apply(true);
   clone.addEventListener("transitionend", done, { once: true });
-  setTimeout(done, 340);            /* transitionend can be skipped */
+  setTimeout(done, MS.zoom + 60);   /* transitionend can be skipped */
 }
 
 /* ============================================================
@@ -1332,6 +1439,135 @@ function unzoom(instant = false) {
                        however far the other finger had travelled.
    ============================================================ */
 const pointers = new Map();
+
+/* ============================================================
+   THE NEXT PICTURE IS ALREADY THERE
+
+   A sideways swipe used to swap on release, so the frame you were
+   asking for did not exist until the gesture was over. Building a
+   copy of it one screen-width away and moving both with the finger
+   is what turns the swipe from a command into a movement — you can
+   see what you are pulling towards, and how far is left.
+
+   Only within a piece. At a piece boundary the neighbouring frame
+   is not in the stage yet, so there is nothing to preview and the
+   swipe falls back to a plain swap; a boundary crossing being
+   slightly different is honest, since it IS different.
+   ============================================================ */
+function buildPeer(dir) {
+  const nxt = $$("img", stage)[fIdx + dir];
+  if (!nxt || !nxt.complete || !nxt.naturalWidth) return null;
+  const r = nxt.getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+
+  /* sized the way toggleZoom would size it, so the picture that
+     arrives is the picture the swipe was showing you */
+  const fit = Math.max(1, Math.min(innerWidth / r.width, innerHeight / r.height));
+  const w = r.width * fit, h = r.height * fit;
+
+  const c = nxt.cloneNode(true);
+  c.removeAttribute("id");
+  c.style.cssText =
+    `position:fixed;left:${(innerWidth - w) / 2}px;top:${(innerHeight - h) / 2}px;` +
+    `width:${w}px;height:${h}px;margin:0;max-width:none;max-height:none;` +
+    `z-index:199;pointer-events:none;transform:translateX(${dir * span()}px);`;
+  document.body.appendChild(c);
+  return c;
+}
+
+function startDrag(axis, dir) {
+  stopGlide();
+  Z.drag = { axis, dir, x: 0, y: 0, s: 1 };
+  if (axis === "x") Z.drag.peer = buildPeer(dir);
+}
+
+function dragTo(dx, dy) {
+  const d = Z.drag;
+  if (d.axis === "y") {
+    d.y = dy;
+    /* a little sideways drift, damped — the picture should feel held
+       rather than railed, but not so loose that it wanders */
+    d.x = dx * .3;
+    /* 1:1 until the pull is clearly deliberate, and only then does it
+       start to shrink. Shrinking from the first pixel makes an
+       accidental touch look like the picture is leaving. */
+    d.s = dy > 60 ? Math.max(.82, 1 - (dy - 60) / 900) : 1;
+    /* the room comes back as the picture goes — the veil lifting is
+       what says "behind this is where you are headed" */
+    if (Z.veil) Z.veil.style.opacity = String(Math.max(.3, .93 - Math.abs(dy) / 650));
+  } else {
+    d.x = dx; d.y = 0; d.s = 1;
+    if (d.peer) {
+      d.peer.style.transition = "none";
+      d.peer.style.transform = `translateX(${d.dir * span() + dx}px)`;
+    }
+  }
+  apply(false);
+}
+
+/* returns true if it consumed the gesture */
+function endDrag(dx, dy) {
+  const d = Z.drag;
+  if (!d) return false;
+
+  if (d.axis === "y") {
+    if (dy > 90) {
+      /* HANDED STRAIGHT TO unzoom, which animates the picture home
+         from wherever the transform currently is. The drag and the
+         return are one continuous movement rather than two, which is
+         why it lands back exactly as it always did — just starting
+         from where the finger left it. */
+      Z.drag = null;
+      if (Z.veil) Z.veil.style.opacity = "";
+      unzoom();
+      return true;
+    }
+    d.x = d.y = 0; d.s = 1;
+    if (Z.veil) {
+      Z.veil.style.transition = `opacity ${MS.back}ms ease`;
+      Z.veil.style.opacity = "";
+    }
+    apply(true, MS.back);
+    setTimeout(() => {
+      Z.drag = null;
+      if (Z.veil) Z.veil.style.transition = "";
+    }, MS.back + 20);
+    return true;
+  }
+
+  const ease = "cubic-bezier(.3,0,.2,1)";
+  if (Math.abs(dx) > 60) {
+    const dir = d.dir, peer = d.peer;
+    d.x = -dir * span();
+    apply(true, MS.slide);
+    if (peer) {
+      peer.style.transition = `transform ${MS.slide}ms ${ease}`;
+      peer.style.transform = "translateX(0px)";
+    }
+    setTimeout(() => {
+      Z.drag = null;
+      stepFrame(dir);        /* rebuilds the zoom on the frame that arrived */
+      peer?.remove();        /* after, so there is never a gap on screen */
+    }, MS.slide);
+    return true;
+  }
+
+  d.x = 0;
+  apply(true, MS.back);
+  if (d.peer) {
+    d.peer.style.transition = `transform ${MS.back}ms ${ease}`;
+    d.peer.style.transform = `translateX(${d.dir * span()}px)`;
+  }
+  const peer = d.peer;
+  setTimeout(() => { Z.drag = null; peer?.remove(); }, MS.back + 20);
+  return true;
+}
+
+function killDrag() {
+  Z.drag?.peer?.remove();
+  Z.drag = null;
+  if (Z.veil) { Z.veil.style.transition = ""; Z.veil.style.opacity = ""; }
+}
 
 /* a tap is not a drag. without a threshold the few pixels a finger
    moves while lifting would count as a pan, and the tap-to-close
@@ -1395,9 +1631,42 @@ function onPointerMove(e) {
   if (Z.downAt && Math.hypot(e.clientX - Z.downAt.x, e.clientY - Z.downAt.y) > DRAG_SLOP) {
     Z.dragged = true;
   }
-  Z.x = e.clientX - Z.panFrom.x;
-  Z.y = e.clientY - Z.panFrom.y;
-  clamp(Z.k, Z.base);
+
+  /* total travel since the gesture began, which is what the dismiss
+     and swipe tests read — Z.downAt gets re-anchored after a pinch */
+  const tdx = Z.downAt0 ? e.clientX - Z.downAt0.x : 0;
+  const tdy = Z.downAt0 ? e.clientY - Z.downAt0.y : 0;
+
+  if (!Z.drag) {
+    Z.x = e.clientX - Z.panFrom.x;
+    Z.y = e.clientY - Z.panFrom.y;
+    clamp(Z.k, Z.base);
+
+    /* THE MOMENT THE PAN RUNS OUT, THE FINGER TAKES THE WHOLE PICTURE.
+
+       These gestures used to do nothing at all until you let go, and
+       then everything at once. That is what made them feel slow — not
+       the duration of any animation, but that for the entire length of
+       the swipe there was no evidence the page had noticed. Nothing
+       moves, you lift, and only then does it react.
+
+       Now the test that used to run on release runs on the FIRST move
+       instead: if the picture cannot pan any further in the direction
+       you are pulling, the pull is not a pan, so hand the picture to
+       the finger and let it follow. The decision is identical, it just
+       happens 300ms earlier — which is the difference between a
+       control and a delay. */
+    if (Z.touch && Z.downAt0) {
+      const stuckY = Math.abs(Z.y - Z.yAtDown) < 1;
+      const stuckX = Math.abs(Z.x - Z.xAtDown) < 1;
+      if (tdy > 14 && Math.abs(tdy) > Math.abs(tdx) && stuckY) startDrag("y");
+      else if (Math.abs(tdx) > 14 && Math.abs(tdx) > Math.abs(tdy) && stuckX) {
+        startDrag("x", tdx < 0 ? 1 : -1);
+      }
+    }
+  }
+
+  if (Z.drag) { dragTo(tdx, tdy); return; }
   apply(false);
 
   /* Measured from the CLAMPED position, so a drag that is already
@@ -1457,26 +1726,18 @@ function onPointerUp(e) {
      Touch and pen only. A mouse drag down is someone panning a
      picture that happens to be clamped, and closing on them would be
      baffling. */
-  if (Z.img && Z.touch && Z.downAt0) {
-    const dx = e.clientX - Z.downAt0.x, dy = e.clientY - Z.downAt0.y;
-    const stuckY = Math.abs(Z.y - Z.yAtDown) < 1;
-    const stuckX = Math.abs(Z.x - Z.xAtDown) < 1;
-    const end = () => { Z.panFrom = Z.downAt = Z.downAt0 = null; setTimeout(() => Z.dragged = false, 0); };
+  /* A DRAG IN PROGRESS DECIDES ITS OWN ENDING.
 
-    if (dy > 90 && Math.abs(dy) > 1.5 * Math.abs(dx) && stuckY) {
-      end();
-      return unzoom();
-    }
-    /* SIDEWAYS, WHILE ZOOMED, GOES TO THE NEXT PICTURE — by the same
-       rule. Zoomed out to fit there is no sideways room, so a swipe
-       across cannot mean pan and can only mean "the next one", which
-       is the gesture every phone photo viewer has trained people to
-       expect. Zoomed IN there is room, the picture moves, and the
-       same swipe stays a pan. The image decides, not a mode. */
-    if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy) && stuckX) {
-      end();
-      return stepFrame(dx < 0 ? 1 : -1);
-    }
+     The dismiss and the sideways swipe are no longer detected here —
+     onPointerMove has already committed to one of them and has been
+     following the finger ever since. All that is left is which way it
+     resolves: far enough and it completes, short and it goes back.
+     Zoomed IN there is room to pan, no drag was ever started, and
+     this whole branch is skipped — the image decides, not a mode. */
+  if (Z.img && Z.downAt0 && endDrag(e.clientX - Z.downAt0.x, e.clientY - Z.downAt0.y)) {
+    Z.panFrom = Z.downAt = Z.downAt0 = null;
+    setTimeout(() => Z.dragged = false, 0);
+    return;
   }
 
   Z.panFrom = Z.downAt = Z.downAt0 = null;
@@ -1595,7 +1856,7 @@ if (lb) {
      you are allowed to withdraw */
   const springBack = () => {
     axis = null;
-    panel.style.transition = "transform .22s ease, opacity .22s ease";
+    panel.style.transition = `transform ${MS.back}ms ease, opacity ${MS.back}ms ease`;
     panel.style.transform = "";
     panel.style.opacity = "";
   };
@@ -1615,10 +1876,10 @@ if (lb) {
      bit that makes a swipe feel like it moved something rather than
      just triggering something. */
   const flingOut = (tx, ty, after) => {
-    panel.style.transition = "transform .19s cubic-bezier(.4,0,1,1), opacity .19s ease-in";
+    panel.style.transition = `transform ${MS.slide}ms cubic-bezier(.4,0,1,1), opacity ${MS.slide}ms ease-in`;
     panel.style.transform = `translate(${tx},${ty})`;
     panel.style.opacity = "0";
-    setTimeout(after, 190);
+    setTimeout(after, MS.slide);
   };
 
   const slideTo = d => flingOut(`${d < 0 ? 60 : -60}%`, "0", () => {
@@ -1628,7 +1889,7 @@ if (lb) {
     panel.style.transition = "none";
     panel.style.transform = `translate(${d < 0 ? -60 : 60}%,0)`;
     void panel.offsetWidth;
-    panel.style.transition = "transform .24s cubic-bezier(.2,.7,.3,1), opacity .24s ease-out";
+    panel.style.transition = `transform ${MS.slide + 40}ms cubic-bezier(.2,.7,.3,1), opacity ${MS.slide + 40}ms ease-out`;
     panel.style.transform = "";
     panel.style.opacity = "";
     axis = null;
