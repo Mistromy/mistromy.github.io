@@ -85,14 +85,11 @@ const PL = {
      every other key they have no English original on the page to
      fall back to — site.js carries its own. keep them short: the
      hint sits under the cursor. */
-  "lb.dismiss": "Zamknij",
   "zoom.close": "Zamknij pełny rozmiar",
   /* the toolbar's two buttons. screen-reader labels only — the
      buttons themselves show − and +, which need no translating */
   "zoom.in": "Przybliż",
   "zoom.out": "Oddal",
-  "zoom.hint": "przeciągnij · przewiń · ctrl+scroll przybliża · esc zamyka",
-  "zoom.hint.touch": "przeciągnij · szczypnij · dotknij obok aby zamknąć",
 
   /* ---- the copy ----
      ✏ all three of these are your voice. the <span class="pending">

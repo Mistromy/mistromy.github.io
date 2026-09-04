@@ -1151,66 +1151,6 @@ a.inline {
   font-size: 16px;
 }
 
-/* ---------- the controls hint ----------
-   Sits where you clicked and stays there. pointer-events are ON,
-   unlike the veil, because it carries its own dismiss — and the ×
-   lights up on hover so it reads as something you can act on. */
-.zhint {
-  position: fixed;
-  z-index: 220;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--mono);
-  font-size: 11.5px;
-  letter-spacing: .1em;
-  text-transform: lowercase;
-  white-space: nowrap;
-  color: var(--paper);
-  /* No plate and no scrim — this one is placed wherever you clicked,
-     so there is no edge of the screen to darken. What works instead
-     is a HALO: several shadows stacked tight to the letterforms
-     rather than one wide diffuse glow. A 26px blur spreads its
-     darkness so thin it does nothing against a pale picture; 3px of
-     it, three times over, effectively outlines each glyph and costs
-     no area at all. */
-  text-shadow:
-    0 0 3px rgba(0, 0, 0, .95),
-    0 0 3px rgba(0, 0, 0, .95),
-    0 0 7px rgba(0, 0, 0, .85),
-    0 1px 2px rgba(0, 0, 0, .95);
-  opacity: 0;
-  transform: translateY(3px);
-  transition: opacity .28s ease, transform .28s ease;
-}
-
-.zhint.on {
-  opacity: 1;
-  transform: none
-}
-
-.zhintx {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-  line-height: 1;
-  padding: 0 3px;
-  /* paper held back, not a dim brown: this sits over the artwork.
-     Same reasoning as .zbar. */
-  color: rgba(255, 246, 233, .62);
-  text-shadow: inherit;
-  transition: color .12s;
-}
-
-/* hovering ANYWHERE on the label lights the × — the affordance has
-   to be findable before the pointer is already on top of it */
-.zhint:hover .zhintx,
-.zhintx:hover {
-  color: var(--paper)
-}
-
 /* ---------- pan indicators ----------
    Sized and positioned from --len / --pos, both set in js/site.js as
    percentages of the viewport, which is what `position:fixed` sizes

@@ -123,30 +123,49 @@ if (yrEl) yrEl.textContent = new Date().getFullYear();
   addEventListener("resize", sync);
   addEventListener("langchange", sync);   /* polish labels wrap differently */
 
-  /* ---------- a scroll is not a tap ----------
+  /* ---------- A FLICK IS NOT A TAP ----------
+     THIS IS THE HOMEPAGE'S TELEPORT-TO-THE-TOP.
 
      On a phone the rail is a FIXED BAR ACROSS THE BOTTOM OF THE
-     SCREEN — deliberately, so it sits at thumb height. Which is also
+     SCREEN — deliberately, so it sits at thumb height. Which is
      exactly where a thumb lands to start a scroll, and the bar is a
-     solid row of navigation: "Home" points at #top and "Art" at #art.
-     A swipe that begins on it and is read as a tap therefore jumps
-     the page — and because <html> is scroll-behavior:smooth, it does
-     not jump so much as sail, which is what makes it look like the
-     page teleporting rather than a link being followed.
+     solid row of navigation. On the homepage "Home" points at #top.
 
-     Capture phase, so this runs before the anchor does anything. 12px
-     is well under the smallest deliberate movement and well over the
-     wobble of a finger lifting off glass. */
-  let sx = 0, sy = 0, moved = false;
+     So: you flick upward from the bottom of the screen, the page
+     flings down, and at the end of the fling the browser delivers a
+     click to whatever was under your thumb when it landed. That is
+     "Start". <html> is scroll-behavior:smooth, so the page does not
+     jump back up so much as sail back up — arriving just as the fling
+     finishes, which is precisely how it looks: scrolls down smoothly,
+     then goes back to the top on its own.
+
+     /art never did it because /art's Home link is href="/" — a real
+     navigation, which is obvious when it happens rather than looking
+     like the page misbehaving. Same bug, different disguise.
+
+     TWO TESTS, because one is not enough. Distance covers a slow
+     drag. But during a fling the browser takes the gesture over and
+     can stop delivering touchmove to the element entirely, so the
+     distance test never sees anything — which is why the first
+     version of this guard did not fix it. Comparing the page's own
+     scroll offset across the gesture catches that case: if the
+     document moved, it was not a tap, whatever the finger did.
+
+     Capture phase, so this runs before the anchor does. */
+  let sx = 0, sy = 0, sYAt = 0, moved = false;
   rail.addEventListener("touchstart", e => {
-    sx = e.touches[0].clientX; sy = e.touches[0].clientY; moved = false;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    sYAt = scrollY;
+    moved = false;
   }, { passive: true });
   rail.addEventListener("touchmove", e => {
     const t = e.touches[0];
     if (Math.hypot(t.clientX - sx, t.clientY - sy) > 12) moved = true;
   }, { passive: true });
+  /* the browser stealing the gesture is itself proof it was a scroll */
+  rail.addEventListener("touchcancel", () => { moved = true; }, { passive: true });
   rail.addEventListener("click", e => {
-    if (!moved) return;
+    if (!moved && Math.abs(scrollY - sYAt) <= 4) return;
     moved = false;
     e.preventDefault();
     e.stopPropagation();
@@ -190,11 +209,41 @@ if (yrEl) yrEl.textContent = new Date().getFullYear();
     /* measure at a known size, then solve. width is near enough
        linear in font-size — letter-spacing is in em, so it scales
        with the type rather than fighting it — which is why a single
-       pass lands instead of needing a search. */
+       pass lands instead of needing a search.
+
+       ON A COPY, AND THE COPY IS position:FIXED. Both halves matter.
+       This is the homepage's teleport-to-the-top bug.
+
+       .tagline is white-space:nowrap, and at the 100px probe size it
+       measures about 2440px — far wider than a phone. Measuring it in
+       place meant the real element was briefly that wide, which put
+       2440px of horizontal overflow into the document. The browser
+       responds to the document's scrollable area changing out from
+       under it by resetting the scroll offset. Measured here: 889 ->
+       0, every single time, synchronously.
+
+       And the trigger is `resize`, which on a phone fires when the
+       URL bar retracts — i.e. in the middle of a flick. You scroll,
+       the bar hides, the tagline is measured, and you are thrown back
+       to the top just as the fling finishes. /art never did it
+       because /art has no tagline to measure.
+
+       Taking the copy out of FLOW is not enough: an absolutely
+       positioned element still contributes to the document's
+       scrollable overflow, and still resets the scroll (889 -> 0).
+       Only `fixed` is genuinely inert — it is laid out against the
+       viewport and adds nothing to the document's scroll area at all.
+       Same measurement, 2440px, and the offset does not move. */
     const probe = 100;
-    el.style.fontSize = probe + "px";
-    const at100 = el.scrollWidth;
-    if (!at100) { el.style.fontSize = ""; return; }
+    const ghost = el.cloneNode(true);
+    ghost.removeAttribute("id");
+    ghost.style.cssText =
+      `position:fixed;visibility:hidden;pointer-events:none;` +
+      `left:-99999px;top:0;white-space:nowrap;font-size:${probe}px;`;
+    el.parentNode.appendChild(ghost);
+    const at100 = ghost.scrollWidth;
+    ghost.remove();
+    if (!at100) return;
     const size = probe * (target / at100);
     el.style.fontSize = size + "px";
 
@@ -388,16 +437,21 @@ function layout(mount, items, maxRows) {
      innerHTML = "" takes every row out at once, the document briefly
      becomes viewport height, and the browser CLAMPS the scroll offset
      to whatever still fits — 969px becomes 279px. Re-adding the rows
-     restores the height but not the offset it was holding. So any
-     relayout that happened while you were part way down the archive
-     dropped you somewhere else, and on a phone that reads as the page
-     throwing you around while you scroll.
+     restores the height but not the offset it was holding.
 
-     Read it before, put it back after. behavior:"instant" is
-     load-bearing: `scroll-behavior: smooth` is set on <html>, so a
-     bare scrollTo would ANIMATE the correction and you would watch
-     the page glide back to where it already was. */
-  const keepY = scrollY;
+     The first attempt at this read the offset before and wrote it
+     back after. That worked, but it fought anything already moving:
+     a scrollTo lands as an instruction, and an instruction issued
+     mid-flick cancels the flick. Correcting a symptom by moving the
+     page is exactly the wrong shape of fix.
+
+     Holding the height means the symptom never happens. The mount
+     keeps the height it had while its rows are replaced, so the
+     document never shrinks, the browser never clamps anything, and no
+     correction is needed — the scroll offset is simply never
+     disturbed in the first place. */
+  const keepH = mount.offsetHeight;
+  if (keepH) mount.style.minHeight = keepH + "px";
   mount.innerHTML = "";
   const heights = [];
   rows.forEach((r, ri) => {
@@ -452,7 +506,7 @@ function layout(mount, items, maxRows) {
     });
     mount.appendChild(el);
   });
-  if (scrollY !== keepY) scrollTo({ top: keepY, behavior: "instant" });
+  mount.style.minHeight = "";
   return W;
 }
 
@@ -838,92 +892,17 @@ function apply(animate) {
    present exactly while they are relevant and never become
    furniture. Nothing is drawn at all when an axis has no overflow.
    ============================================================ */
-/* ============================================================
-   the controls hint
+/* THERE IS NO CONTROLS HINT.
 
-   Rides next to the cursor for a couple of seconds the first time
-   you zoom, then goes. Next to the cursor rather than pinned to a
-   corner because that is where you are already looking — a label in
-   a fixed position is something you have to notice, and a label
-   under your hand is something you cannot miss.
+   There was: a line next to the cursor listing drag / scroll /
+   ctrl+scroll / esc, once per session. It went because it was a
+   caption explaining gestures that everybody already has — dragging a
+   picture that is bigger than its frame, and pinching to zoom, are
+   not conventions anyone needs told. A label that teaches what the
+   reader already knows is not helpful, it is in the way, and it
+   arrives at the exact moment they are trying to look at something.
 
-   Once per SESSION, not per zoom: repeating it on the fortieth
-   picture would be nagging. sessionStorage rather than
-   localStorage, so a visitor coming back next week is reminded
-   once rather than never.
-
-   It also leaves the moment anything is dragged, scrolled or
-   pinched — at that point the reader has worked it out, and a hint
-   that outlives its usefulness is just something in the way.
-   ============================================================ */
-function hint(e) {
-  const KEY = "mist.zoomhint";
-  try { if (sessionStorage.getItem(KEY)) return; sessionStorage.setItem(KEY, "1"); } catch { }
-
-  const touch = matchMedia("(hover: none)").matches;
-  const text = (touch ? I18N.t("zoom.hint.touch") : I18N.t("zoom.hint"))
-    || (touch
-      ? "drag to move · pinch to zoom · tap outside to close"
-      : "drag to move · scroll to move · ctrl+scroll to zoom · esc to close");
-
-  const el = document.createElement("div");
-  el.className = "zhint";
-  el.innerHTML = `<span>${text}</span><button type="button" class="zhintx" aria-label="${I18N.t("lb.dismiss") || "Dismiss"}">×</button>`;
-  document.body.appendChild(el);
-
-  const place = (x, y) => {
-    /* flip to the other side of the cursor near an edge, so it is
-       never clipped off screen */
-    const w = el.offsetWidth, h = el.offsetHeight;
-    el.style.left = Math.min(x + 18, innerWidth - w - 8) + "px";
-    el.style.top = (y + h + 30 > innerHeight ? y - h - 14 : y + 22) + "px";
-  };
-  place(e.clientX ?? innerWidth / 2, e.clientY ?? innerHeight / 2);
-  /* flush the hidden state as the transition's starting point.
-     reading a layout property forces it synchronously — rAF is the
-     usual trick and is wrong here for the same reason it is wrong
-     in toggleZoom: it does not fire in a throttled or hidden tab,
-     and the hint would then sit at opacity 0 forever. */
-  void el.offsetWidth;
-  el.classList.add("on");
-
-  /* placed where you clicked and then LEFT there. Following the
-     cursor meant a label chasing you around while you were trying
-     to read it — it only has to appear where you are already
-     looking, once. */
-  const done = () => {
-    if (!el.isConnected) return;
-    removeEventListener("wheel", onWheel);
-    clearTimeout(timer);
-    el.classList.remove("on");
-    setTimeout(() => el.remove(), 400);
-  };
-
-  /* IT DOES NOT LEAVE WHILE YOU ARE READING IT.
-
-     The timeout is generous, but it is still a timeout, and there is
-     nothing worse than a label that vanishes half way through the
-     sentence — especially this one, which is a list of four controls
-     and is the only place any of them are written down. The pointer
-     resting on it is the clearest possible statement that it is being
-     read, so the clock stops, and restarts short when you leave.
-
-     The same rule covers the wheel: scrolling with the pointer parked
-     on the hint is not "I have worked it out", it is a scroll that
-     happens to be under it. */
-  let over = false;
-  el.addEventListener("pointerenter", () => { over = true; clearTimeout(timer); });
-  el.addEventListener("pointerleave", () => { over = false; timer = setTimeout(done, 1600); });
-
-  el.querySelector(".zhintx").addEventListener("click", e => { e.stopPropagation(); done(); });
-  /* a wheel means they are already using it; a click does not, since
-     the click that opened the zoom would dismiss it instantly */
-  const onWheel = () => { if (!over) done(); };
-  addEventListener("wheel", onWheel, { passive: true });
-  let timer = setTimeout(done, 4600);
-}
-
-/* ============================================================
+   ============================================================
    the veil
 
    A zoomed picture is the only thing that should be on screen. The
@@ -1277,7 +1256,6 @@ function toggleZoom(img, e, animate = true) {
   Z.base0 = r;                     /* where it grew FROM, for the return */
   makeBars();
   veil(true);
-  if (animate) hint(e);            /* not on an arrow swap */
   apply(false);
   /* flush the starting state as the transition's first frame.
      reading a layout property forces it synchronously — rAF would be
@@ -1314,6 +1292,16 @@ function unzoom(instant = false) {
 
   /* `Z.clone === clone` before clearing: a deferred cleanup must never
      disown a zoom that started after it. See the note in open(). */
+  /* THE DEPARTING CLONE MUST NOT TAKE CLICKS.
+
+     It is position:fixed at z-index 200 and stays on screen for the
+     280ms of the shrink. A tap landing in that window hit the clone,
+     whose own handler says "if we are zoomed, unzoom" — and we are
+     not zoomed any more, so it did nothing at all and the tap was
+     swallowed. On a phone that is the two-taps-to-reopen bug: the
+     first tap was eaten by a picture that had already closed. */
+  clone.style.pointerEvents = "none";
+
   const done = () => {
     clone.remove();
     img.style.visibility = "";
@@ -1383,6 +1371,7 @@ function onPointerDown(e) {
     Z.vx = Z.vy = 0;
     Z.vt = performance.now();
     Z.lx = Z.x; Z.ly = Z.y;
+    Z.xAtDown = Z.x;          /* for the swipe-sideways-to-step test */
     Z.yAtDown = Z.y;          /* for the swipe-down-to-close test */
     Z.touch = e.pointerType !== "mouse";
     Z.clone.style.cursor = "grabbing";
@@ -1470,10 +1459,23 @@ function onPointerUp(e) {
      baffling. */
   if (Z.img && Z.touch && Z.downAt0) {
     const dx = e.clientX - Z.downAt0.x, dy = e.clientY - Z.downAt0.y;
-    if (dy > 90 && Math.abs(dy) > 1.5 * Math.abs(dx) && Math.abs(Z.y - Z.yAtDown) < 1) {
-      Z.panFrom = Z.downAt = Z.downAt0 = null;
-      setTimeout(() => Z.dragged = false, 0);
+    const stuckY = Math.abs(Z.y - Z.yAtDown) < 1;
+    const stuckX = Math.abs(Z.x - Z.xAtDown) < 1;
+    const end = () => { Z.panFrom = Z.downAt = Z.downAt0 = null; setTimeout(() => Z.dragged = false, 0); };
+
+    if (dy > 90 && Math.abs(dy) > 1.5 * Math.abs(dx) && stuckY) {
+      end();
       return unzoom();
+    }
+    /* SIDEWAYS, WHILE ZOOMED, GOES TO THE NEXT PICTURE — by the same
+       rule. Zoomed out to fit there is no sideways room, so a swipe
+       across cannot mean pan and can only mean "the next one", which
+       is the gesture every phone photo viewer has trained people to
+       expect. Zoomed IN there is room, the picture moves, and the
+       same swipe stays a pan. The image decides, not a mode. */
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy) && stuckX) {
+      end();
+      return stepFrame(dx < 0 ? 1 : -1);
     }
   }
 
@@ -1586,21 +1588,57 @@ if (lb) {
      when I began pulling" is what separates a dismiss from an
      ordinary scroll. Reading it afterwards would mean a fast scroll
      that lands at the top also closes the viewer. */
-  let sx = null, sy = null, sTop = 0, pulling = false;
+  let sx = null, sy = null, sTop = 0, axis = null;
   const panel = $("#lbPanel");
 
-  const dropPanel = () => {
-    pulling = false;
+  /* back to rest — a gesture that did not go far enough is a question
+     you are allowed to withdraw */
+  const springBack = () => {
+    axis = null;
     panel.style.transition = "transform .22s ease, opacity .22s ease";
     panel.style.transform = "";
     panel.style.opacity = "";
   };
 
+  /* ---------- the gesture FINISHES ITSELF ----------
+
+     A pull that has passed the threshold should not stop where your
+     thumb left it and vanish. It should carry on the way it was
+     already going and leave, because that is what the movement was
+     describing — the finger starts it, the animation completes it.
+     Anything else reads as the picture being deleted rather than
+     dismissed.
+
+     Sideways is the same idea with a second half: the piece you were
+     looking at leaves in the direction you pushed it, and the next
+     one arrives from the side it would have come from. That is the
+     bit that makes a swipe feel like it moved something rather than
+     just triggering something. */
+  const flingOut = (tx, ty, after) => {
+    panel.style.transition = "transform .19s cubic-bezier(.4,0,1,1), opacity .19s ease-in";
+    panel.style.transform = `translate(${tx},${ty})`;
+    panel.style.opacity = "0";
+    setTimeout(after, 190);
+  };
+
+  const slideTo = d => flingOut(`${d < 0 ? 60 : -60}%`, "0", () => {
+    step(d);
+    /* place it off the far side with no transition, flush, then let
+       it come in — the flush is why this cannot use rAF */
+    panel.style.transition = "none";
+    panel.style.transform = `translate(${d < 0 ? -60 : 60}%,0)`;
+    void panel.offsetWidth;
+    panel.style.transition = "transform .24s cubic-bezier(.2,.7,.3,1), opacity .24s ease-out";
+    panel.style.transform = "";
+    panel.style.opacity = "";
+    axis = null;
+  });
+
   lb.addEventListener("touchstart", e => {
     sx = e.touches[0].clientX;
     sy = e.touches[0].clientY;
     sTop = stage.scrollTop;
-    pulling = false;
+    axis = null;
   }, { passive: true });
 
   /* THE PULL MUST NOT SCROLL THE STAGE FIRST.
@@ -1629,31 +1667,65 @@ if (lb) {
   lb.addEventListener("touchmove", e => {
     if (sx == null || Z.img || e.touches.length > 1) return;
     const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
-    if (!pulling) {
-      if (sTop > 0 || dy < 8 || Math.abs(dy) < Math.abs(dx)) return;
-      pulling = true;
-      panel.style.transition = "none";
+
+    /* THE AXIS IS CHOSEN ONCE, on the first movement worth reading,
+       and then held for the rest of the gesture. Re-deciding every
+       frame makes the panel jitter between the two as your thumb
+       wanders, and a gesture that keeps changing its mind is one you
+       cannot commit to. `false` is a real answer here: it means "this
+       is an ordinary scroll", and it sticks, so the stage is never
+       interfered with half way down. */
+    if (axis === null) {
+      if (Math.hypot(dx, dy) < 8) return;
+      if (Math.abs(dx) > Math.abs(dy)) axis = "x";
+      /* a downward pull only means dismiss if the stack was already
+         at its top when the finger landed — otherwise there is
+         something above to scroll to, and that is what it means */
+      else if (dy > 0 && sTop <= 0) axis = "y";
+      else axis = false;
+      if (axis) panel.style.transition = "none";
     }
+    if (!axis) return;
+
+    /* preventDefault has to land on the first committed move: a
+       scroll the browser has already started cannot be called back */
     e.preventDefault();
-    panel.style.transform = `translateY(${dy * .6}px)`;
-    panel.style.opacity = String(Math.max(.4, 1 - dy / 620));
+    if (axis === "y") {
+      /* the panel moves LESS than your hand. Moving with it feels
+         weightless; lagging behind it reads as resistance, which is
+         what says "keep going and this closes". */
+      panel.style.transform = `translateY(${dy * .6}px)`;
+      panel.style.opacity = String(Math.max(.4, 1 - dy / 620));
+    } else {
+      panel.style.transform = `translateX(${dx * .55}px)`;
+      panel.style.opacity = String(Math.max(.55, 1 - Math.abs(dx) / 900));
+    }
   }, { passive: false });
 
   lb.addEventListener("touchend", e => {
-    if (sx == null || Z.img) { sx = sy = null; return; }
+    if (sx == null || Z.img) { sx = sy = null; axis = null; return; }
     const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    const a = axis;
     sx = sy = null;
-    if (pulling) {
-      /* far enough is a dismiss; anything less springs back, so a
-         half-hearted pull is a question you can withdraw */
-      dropPanel();
-      if (dy > 90) shut();
+    if (!a) return;
+    if (a === "y") {
+      if (dy > 90) flingOut("0", "105vh", () => {
+        shut();
+        /* no transition on the way back: the viewer is closed, so
+           this is bookkeeping, not an animation anybody sees */
+        axis = null;
+        panel.style.transition = "none";
+        panel.style.transform = "";
+        panel.style.opacity = "";
+      });
+      else springBack();
       return;
     }
-    if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) step(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) > 60) slideTo(dx < 0 ? 1 : -1);
+    else springBack();
   }, { passive: true });
 
-  lb.addEventListener("touchcancel", dropPanel, { passive: true });
+  lb.addEventListener("touchcancel", springBack, { passive: true });
 }
 
 /* arriving on /p/<slug> or #p/<slug> opens that piece */
